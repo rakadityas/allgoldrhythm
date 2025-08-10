@@ -4,6 +4,8 @@ With the rise of AI (Artificial Intelligence), the need for understanding and im
 
 AllGoldRhythm will help you learn and visualize algorithms in a fun and interactive way. It is a comprehensive Data Structures and Algorithms (DSA) visualization app that helps users learn and understand complex algorithm concepts through interactive simulations, step-by-step explanations, and code examples. Inspired by @yangshun [Tech Interview Handbook](https://github.com/yangshun/tech-interview-handbook) and Navdeep Singh's [NeetCode](https://neetcode.io/).
 
+DEMO HERE: [Chrome build](https://drive.google.com/file/d/1Ko2AnSJWDN1GCw5uRlI9Zw-jWQplYZKK/view?usp=drive_link)
+
 ## 🚀 Tech Stack
 
 ### Frontend Framework
