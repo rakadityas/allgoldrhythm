@@ -35,6 +35,7 @@ class HomeScreen extends StatelessWidget {
               category,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
+            initiallyExpanded: category == 'Data Structures & Algorithm',
             children: categoryAlgorithms.map((algorithm) {
               return ListTile(
                 title: Text(algorithm.name),
