@@ -705,6 +705,184 @@ class AlgorithmData {
           ),
         ],
       ),
+      Algorithm(
+        id: 'binary_search',
+        name: 'Binary Search',
+        category: 'Data Structures & Algorithm',
+        description: 'Binary search is an efficient algorithm for finding a target value in a sorted array. '
+            'It works by repeatedly dividing the search interval in half, comparing the target with the middle element, '
+            'and eliminating half of the remaining elements. Time complexity: O(log n), Space complexity: O(1).',
+        steps: [
+          'Initialize left pointer to 0 and right pointer to array length - 1',
+          'Calculate middle index as (left + right) / 2',
+          'Compare target with middle element',
+          'If target equals middle element, return the index',
+          'If target is less than middle, search left half (right = mid - 1)',
+          'If target is greater than middle, search right half (left = mid + 1)',
+          'Repeat until target is found or left > right'
+        ],
+        visualizations: [
+          AlgorithmVisualization(
+            type: 'simulation',
+            title: 'Binary Search for Target Value',
+            description: 'This simulation shows how binary search efficiently finds a target value in a sorted array by dividing the search space in half.',
+            steps: [
+              VisualizationStep(
+                highlightIndices: [0, 9],
+                previousIndices: [],
+                explanation: 'Initialize: left = 0, right = 9. Searching for target value 35 in sorted array [5, 12, 18, 23, 35, 42, 56, 67, 78, 89].',
+              ),
+              VisualizationStep(
+                highlightIndices: [4],
+                previousIndices: [0, 9],
+                explanation: 'Calculate middle: mid = (0 + 9) / 2 = 4. Compare target 35 with array[4] = 35. Found match!',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Target found at index 4. Binary search completed successfully in 1 comparison.',
+              ),
+              VisualizationStep(
+                highlightIndices: [0, 9],
+                previousIndices: [],
+                explanation: 'New search: Looking for target value 67. Reset: left = 0, right = 9.',
+              ),
+              VisualizationStep(
+                highlightIndices: [4],
+                previousIndices: [0, 9],
+                explanation: 'Calculate middle: mid = (0 + 9) / 2 = 4. Compare target 67 with array[4] = 35. Target > 35, search right half.',
+              ),
+              VisualizationStep(
+                highlightIndices: [5, 9],
+                previousIndices: [0, 4],
+                explanation: 'Update search range: left = 5, right = 9. Eliminated left half of array.',
+              ),
+              VisualizationStep(
+                highlightIndices: [7],
+                previousIndices: [5, 9],
+                explanation: 'Calculate middle: mid = (5 + 9) / 2 = 7. Compare target 67 with array[7] = 67. Found match!',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Target found at index 7. Binary search completed in 2 comparisons.',
+              ),
+              VisualizationStep(
+                highlightIndices: [0, 9],
+                previousIndices: [],
+                explanation: 'New search: Looking for target value 12. Reset: left = 0, right = 9.',
+              ),
+              VisualizationStep(
+                highlightIndices: [4],
+                previousIndices: [0, 9],
+                explanation: 'Calculate middle: mid = (0 + 9) / 2 = 4. Compare target 12 with array[4] = 35. Target < 35, search left half.',
+              ),
+              VisualizationStep(
+                highlightIndices: [0, 3],
+                previousIndices: [4, 9],
+                explanation: 'Update search range: left = 0, right = 3. Eliminated right half of array.',
+              ),
+              VisualizationStep(
+                highlightIndices: [1],
+                previousIndices: [0, 3],
+                explanation: 'Calculate middle: mid = (0 + 3) / 2 = 1. Compare target 12 with array[1] = 12. Found match!',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Target found at index 1. Binary search completed in 2 comparisons.',
+              ),
+              VisualizationStep(
+                highlightIndices: [0, 9],
+                previousIndices: [],
+                explanation: 'New search: Looking for target value 100 (not in array). Reset: left = 0, right = 9.',
+              ),
+              VisualizationStep(
+                highlightIndices: [4],
+                previousIndices: [0, 9],
+                explanation: 'Calculate middle: mid = (0 + 9) / 2 = 4. Compare target 100 with array[4] = 35. Target > 35, search right half.',
+              ),
+              VisualizationStep(
+                highlightIndices: [5, 9],
+                previousIndices: [0, 4],
+                explanation: 'Update search range: left = 5, right = 9.',
+              ),
+              VisualizationStep(
+                highlightIndices: [7],
+                previousIndices: [5, 9],
+                explanation: 'Calculate middle: mid = (5 + 9) / 2 = 7. Compare target 100 with array[7] = 67. Target > 67, search right half.',
+              ),
+              VisualizationStep(
+                highlightIndices: [8, 9],
+                previousIndices: [5, 7],
+                explanation: 'Update search range: left = 8, right = 9.',
+              ),
+              VisualizationStep(
+                highlightIndices: [8],
+                previousIndices: [9],
+                explanation: 'Calculate middle: mid = (8 + 9) / 2 = 8. Compare target 100 with array[8] = 78. Target > 78, search right half.',
+              ),
+              VisualizationStep(
+                highlightIndices: [9],
+                previousIndices: [8],
+                explanation: 'Update search range: left = 9, right = 9. Only one element left.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Compare target 100 with array[9] = 89. Target > 89. Left > right, target not found. Return -1.',
+              ),
+            ],
+          ),
+          AlgorithmVisualization(
+            type: 'interactive_review',
+            title: 'Binary Search Concepts Quiz',
+            description: 'Test your understanding of binary search algorithm and its properties.',
+            steps: [
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 1: What is the prerequisite for using binary search?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: The array must be sorted in ascending or descending order.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 2: What is the time complexity of binary search?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: O(log n) - we eliminate half the search space in each iteration.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 3: How do you calculate the middle index in binary search?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: middle = (left + right) / 2, where left and right are the current search boundaries.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 4: When do you update the left pointer in binary search?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: When the target is greater than the middle element, set left = mid + 1.',
+              ),
+            ],
+          ),
+        ],
+      ),
     ];
   }
 }

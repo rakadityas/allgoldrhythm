@@ -547,4 +547,89 @@ print(f"Reversed list: {print_list(reversed_head)}")
 ''',
     };
   }
+
+  static Map<String, String> getBinarySearchExamples() {
+    return {
+      'Basic Binary Search': '''
+# Binary Search Implementation
+# Efficiently finds target value in sorted array
+def binary_search(arr, target):
+    """Binary search algorithm - iterative approach"""
+    left, right = 0, len(arr) - 1
+    
+    while left <= right:
+        mid = (left + right) // 2
+        
+        if arr[mid] == target:
+            return mid  # Target found, return index
+        elif arr[mid] < target:
+            left = mid + 1  # Search right half
+        else:
+            right = mid - 1  # Search left half
+    
+    return -1  # Target not found
+
+# Example usage
+sorted_array = [5, 12, 18, 23, 35, 42, 56, 67, 78, 89]
+targets = [35, 67, 12, 100, 5]
+
+for target in targets:
+    result = binary_search(sorted_array, target)
+    if result != -1:
+        print(f"Target {target} found at index {result}")
+    else:
+        print(f"Target {target} not found in array")
+
+# Output:
+# Target 35 found at index 4
+# Target 67 found at index 7
+# Target 12 found at index 1
+# Target 100 not found in array
+# Target 5 found at index 0
+''',
+
+      'Binary Search with Bounds': '''
+# Binary Search with Left and Right Bounds
+# Find first and last occurrence of target
+def binary_search_left_bound(arr, target):
+    """Find the leftmost (first) occurrence of target"""
+    left, right = 0, len(arr)
+    
+    while left < right:
+        mid = (left + right) // 2
+        if arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid
+    
+    return left if left < len(arr) and arr[left] == target else -1
+
+def binary_search_right_bound(arr, target):
+    """Find the rightmost (last) occurrence of target"""
+    left, right = 0, len(arr)
+    
+    while left < right:
+        mid = (left + right) // 2
+        if arr[mid] <= target:
+            left = mid + 1
+        else:
+            right = mid
+    
+    return left - 1 if left > 0 and arr[left - 1] == target else -1
+
+# Example with duplicates
+array_with_duplicates = [1, 2, 2, 2, 3, 4, 4, 5, 5, 5]
+target = 2
+
+left_bound = binary_search_left_bound(array_with_duplicates, target)
+right_bound = binary_search_right_bound(array_with_duplicates, target)
+
+print(f"Array: {array_with_duplicates}")
+print(f"Target {target}:")
+print(f"First occurrence at index: {left_bound}")
+print(f"Last occurrence at index: {right_bound}")
+print(f"Total occurrences: {right_bound - left_bound + 1 if left_bound != -1 else 0}")
+''',
+    };
+  }
 }

@@ -27,6 +27,12 @@ class _CodeExamplesScreenState extends State<CodeExamplesScreen> {
       examples = AlgorithmPythonExamples.getTwoPointersExamples();
     } else if (widget.algorithm.id == 'sliding_window') {
       examples = AlgorithmPythonExamples.getSlidingWindowExamples();
+    } else if (widget.algorithm.id == 'stack') {
+      examples = AlgorithmPythonExamples.getStackExamples();
+    } else if (widget.algorithm.id == 'linked_list') {
+      examples = AlgorithmPythonExamples.getLinkedListExamples();
+    } else if (widget.algorithm.id == 'binary_search') {
+      examples = AlgorithmPythonExamples.getBinarySearchExamples();
     }
 
     if (examples.isNotEmpty) {

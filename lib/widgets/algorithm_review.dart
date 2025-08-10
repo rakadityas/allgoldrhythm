@@ -92,6 +92,73 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
       } else {
         _patternIdentified = 'Incomplete Window (Select more elements)';
       }
+    } else if (widget.algorithm.id == 'binary_search') {
+      // Identify Binary Search patterns
+      if (_selectedIndices.length == 1) {
+        int selectedIndex = _selectedIndices.first;
+        int arrayLength = 10; // Assuming 10 elements as per simulation
+        int middle = arrayLength ~/ 2;
+        
+        if (selectedIndex == middle) {
+          _patternIdentified = 'Middle Element Selection (Binary Search Start)';
+        } else if (selectedIndex < middle) {
+          _patternIdentified = 'Left Half Selection (Search Left)';
+        } else {
+          _patternIdentified = 'Right Half Selection (Search Right)';
+        }
+      } else if (_selectedIndices.length == 2) {
+        _selectedIndices.sort();
+        int left = _selectedIndices[0];
+        int right = _selectedIndices[1];
+        int middle = (left + right) ~/ 2;
+        
+        _patternIdentified = 'Binary Search Range: Left=$left, Right=$right, Middle=$middle';
+      } else if (_selectedIndices.length > 2) {
+        _patternIdentified = 'Binary Search Sequence (Multiple Steps)';
+      } else {
+        _patternIdentified = 'Select elements to demonstrate binary search';
+      }
+    } else if (widget.algorithm.id == 'stack') {
+      // Identify Stack patterns
+      if (_selectedIndices.length == 1) {
+        _patternIdentified = 'Single Element (Stack Top)';
+      } else if (_selectedIndices.length > 1) {
+        // Check if selection follows LIFO pattern
+        bool isLIFO = true;
+        for (int i = 1; i < _selectedIndices.length; i++) {
+          if (_selectedIndices[i] < _selectedIndices[i-1]) {
+            isLIFO = false;
+            break;
+          }
+        }
+        
+        if (isLIFO) {
+          _patternIdentified = 'LIFO Pattern (Last In First Out)';
+        } else {
+          _patternIdentified = 'Non-LIFO Pattern (Not Stack Behavior)';
+        }
+      }
+    } else if (widget.algorithm.id == 'linked_list') {
+      // Identify Linked List patterns
+      if (_selectedIndices.length == 1) {
+        _patternIdentified = 'Single Node Selection';
+      } else if (_selectedIndices.length > 1) {
+        // Check if selection follows sequential pattern
+        bool isSequential = true;
+        _selectedIndices.sort();
+        for (int i = 1; i < _selectedIndices.length; i++) {
+          if (_selectedIndices[i] != _selectedIndices[i-1] + 1) {
+            isSequential = false;
+            break;
+          }
+        }
+        
+        if (isSequential) {
+          _patternIdentified = 'Sequential Traversal (Linked List Pattern)';
+        } else {
+          _patternIdentified = 'Non-sequential Access (Random Access Pattern)';
+        }
+      }
     }
   }
 
