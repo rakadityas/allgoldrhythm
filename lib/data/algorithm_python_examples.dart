@@ -751,7 +751,488 @@ while not queue.is_empty():
     print(f"Processing: {current_task}")
     queue.display()
 
-print("\\nAll tasks completed!")
+print("\nAll tasks completed!")
+''',
+    };
+  }
+
+  static Map<String, String> getTreesExamples() {
+    return {
+      'Binary Tree Traversal': '''
+# Binary Tree In-Order Traversal
+# Traverse a binary tree in the order: Left -> Root -> Right
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def inorder_traversal(root):
+    """In-order traversal: Left -> Root -> Right"""
+    result = []
+    
+    def inorder(node):
+        if node:
+            inorder(node.left)   # Visit left subtree
+            result.append(node.val)  # Visit root
+            inorder(node.right)  # Visit right subtree
+    
+    inorder(root)
+    return result
+
+def preorder_traversal(root):
+    """Pre-order traversal: Root -> Left -> Right"""
+    result = []
+    
+    def preorder(node):
+        if node:
+            result.append(node.val)  # Visit root
+            preorder(node.left)      # Visit left subtree
+            preorder(node.right)     # Visit right subtree
+    
+    preorder(root)
+    return result
+
+def postorder_traversal(root):
+    """Post-order traversal: Left -> Right -> Root"""
+    result = []
+    
+    def postorder(node):
+        if node:
+            postorder(node.left)     # Visit left subtree
+            postorder(node.right)    # Visit right subtree
+            result.append(node.val)  # Visit root
+    
+    postorder(root)
+    return result
+
+# Example: Create a binary tree
+#       50
+#      /  \\
+#     25   75
+#    / \\   / \\
+#   15  30 60  80
+#  /  \\
+# 10   20
+
+root = TreeNode(50)
+root.left = TreeNode(25)
+root.right = TreeNode(75)
+root.left.left = TreeNode(15)
+root.left.right = TreeNode(30)
+root.right.left = TreeNode(60)
+root.right.right = TreeNode(80)
+root.left.left.left = TreeNode(10)
+root.left.left.right = TreeNode(20)
+
+print("In-order traversal:", inorder_traversal(root))
+print("Pre-order traversal:", preorder_traversal(root))
+print("Post-order traversal:", postorder_traversal(root))
+''',
+
+      'Binary Search Tree Insertion': '''
+# Binary Search Tree (BST) Operations
+# Insert, search, and delete operations in a BST
+class BSTNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class BinarySearchTree:
+    def __init__(self):
+        self.root = None
+    
+    def insert(self, val):
+        """Insert a value into the BST"""
+        self.root = self._insert_recursive(self.root, val)
+    
+    def _insert_recursive(self, node, val):
+        # Base case: if node is None, create new node
+        if not node:
+            return BSTNode(val)
+        
+        # If value is less than current node, go left
+        if val < node.val:
+            node.left = self._insert_recursive(node.left, val)
+        # If value is greater than current node, go right
+        elif val > node.val:
+            node.right = self._insert_recursive(node.right, val)
+        # If value already exists, don't insert duplicate
+        
+        return node
+    
+    def search(self, val):
+        """Search for a value in the BST"""
+        return self._search_recursive(self.root, val)
+    
+    def _search_recursive(self, node, val):
+        # Base case: node is None or value found
+        if not node or node.val == val:
+            return node is not None
+        
+        # If value is less than current node, search left
+        if val < node.val:
+            return self._search_recursive(node.left, val)
+        # If value is greater than current node, search right
+        else:
+            return self._search_recursive(node.right, val)
+    
+    def inorder_display(self):
+        """Display BST in sorted order (in-order traversal)"""
+        result = []
+        self._inorder_recursive(self.root, result)
+        return result
+    
+    def _inorder_recursive(self, node, result):
+        if node:
+            self._inorder_recursive(node.left, result)
+            result.append(node.val)
+            self._inorder_recursive(node.right, result)
+
+# Example usage
+bst = BinarySearchTree()
+
+# Insert values
+values = [50, 25, 75, 15, 30, 60, 80, 10, 20, 35]
+print("Inserting values:", values)
+for val in values:
+    bst.insert(val)
+    print(f"Inserted {val}")
+
+print("\nBST in sorted order:", bst.inorder_display())
+
+# Search for values
+search_values = [30, 45, 60, 90]
+for val in search_values:
+    found = bst.search(val)
+    print(f"Search {val}: {'Found' if found else 'Not Found'}")
+''',
+
+      'Depth-First Search (DFS)': '''
+# Depth-First Search (DFS) - Tree Traversal
+# DFS explores as far as possible along each branch before backtracking
+from collections import deque
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def dfs_recursive(root):
+    """DFS using recursion (Pre-order traversal)"""
+    if not root:
+        return []
+    
+    result = []
+    
+    def dfs_helper(node):
+        if node:
+            result.append(node.val)  # Visit current node
+            dfs_helper(node.left)    # Recursively visit left subtree
+            dfs_helper(node.right)   # Recursively visit right subtree
+    
+    dfs_helper(root)
+    return result
+
+def dfs_iterative(root):
+    """DFS using iterative approach with stack"""
+    if not root:
+        return []
+    
+    result = []
+    stack = [root]  # Use stack for DFS
+    
+    while stack:
+        node = stack.pop()  # Pop from stack (LIFO)
+        result.append(node.val)
+        
+        # Add children to stack (right first, then left)
+        # This ensures left child is processed first
+        if node.right:
+            stack.append(node.right)
+        if node.left:
+            stack.append(node.left)
+    
+    return result
+
+def dfs_all_paths(root, target):
+    """Find all paths from root to target using DFS"""
+    if not root:
+        return []
+    
+    all_paths = []
+    
+    def dfs_path_helper(node, current_path, target_val):
+        if not node:
+            return
+        
+        # Add current node to path
+        current_path.append(node.val)
+        
+        # If we found the target, save the path
+        if node.val == target_val:
+            all_paths.append(current_path.copy())
+        else:
+            # Continue searching in left and right subtrees
+            dfs_path_helper(node.left, current_path, target_val)
+            dfs_path_helper(node.right, current_path, target_val)
+        
+        # Backtrack: remove current node from path
+        current_path.pop()
+    
+    dfs_path_helper(root, [], target)
+    return all_paths
+
+# Example: Create a binary tree
+#       50
+#      /  \\
+#     30   70
+#    / \\   / \\
+#   20  40 60  80
+
+root = TreeNode(50)
+root.left = TreeNode(30)
+root.right = TreeNode(70)
+root.left.left = TreeNode(20)
+root.left.right = TreeNode(40)
+root.right.left = TreeNode(60)
+root.right.right = TreeNode(80)
+
+print("DFS Recursive:", dfs_recursive(root))
+print("DFS Iterative:", dfs_iterative(root))
+print("All paths to 40:", dfs_all_paths(root, 40))
+print("All paths to 80:", dfs_all_paths(root, 80))
+''',
+
+      'Breadth-First Search (BFS)': '''
+# Breadth-First Search (BFS) - Level Order Traversal
+# BFS explores all nodes at the current depth before moving to the next depth
+from collections import deque
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def bfs_level_order(root):
+    """BFS traversal returning nodes level by level"""
+    if not root:
+        return []
+    
+    result = []
+    queue = deque([root])  # Use queue for BFS (FIFO)
+    
+    while queue:
+        node = queue.popleft()  # Dequeue from front (FIFO)
+        result.append(node.val)
+        
+        # Add children to queue (left first, then right)
+        if node.left:
+            queue.append(node.left)
+        if node.right:
+            queue.append(node.right)
+    
+    return result
+
+def bfs_by_levels(root):
+    """BFS returning nodes grouped by levels"""
+    if not root:
+        return []
+    
+    result = []
+    queue = deque([root])
+    
+    while queue:
+        level_size = len(queue)  # Number of nodes at current level
+        current_level = []
+        
+        # Process all nodes at current level
+        for _ in range(level_size):
+            node = queue.popleft()
+            current_level.append(node.val)
+            
+            # Add children for next level
+            if node.left:
+                queue.append(node.left)
+            if node.right:
+                queue.append(node.right)
+        
+        result.append(current_level)
+    
+    return result
+
+def bfs_find_level(root, target):
+    """Find the level of a target node using BFS"""
+    if not root:
+        return -1
+    
+    queue = deque([(root, 0)])  # Store (node, level) pairs
+    
+    while queue:
+        node, level = queue.popleft()
+        
+        if node.val == target:
+            return level
+        
+        # Add children with incremented level
+        if node.left:
+            queue.append((node.left, level + 1))
+        if node.right:
+            queue.append((node.right, level + 1))
+    
+    return -1  # Target not found
+
+def bfs_right_view(root):
+    """Get the right view of the tree (rightmost node at each level)"""
+    if not root:
+        return []
+    
+    result = []
+    queue = deque([root])
+    
+    while queue:
+        level_size = len(queue)
+        
+        for i in range(level_size):
+            node = queue.popleft()
+            
+            # If this is the last node in the level, add to result
+            if i == level_size - 1:
+                result.append(node.val)
+            
+            # Add children for next level
+            if node.left:
+                queue.append(node.left)
+            if node.right:
+                queue.append(node.right)
+    
+    return result
+
+# Example: Create a binary tree
+#       50
+#      /  \\
+#     30   70
+#    / \\   / \\
+#   20  40 60  80
+
+root = TreeNode(50)
+root.left = TreeNode(30)
+root.right = TreeNode(70)
+root.left.left = TreeNode(20)
+root.left.right = TreeNode(40)
+root.right.left = TreeNode(60)
+root.right.right = TreeNode(80)
+
+print("BFS Level Order:", bfs_level_order(root))
+print("BFS By Levels:", bfs_by_levels(root))
+print("Level of node 40:", bfs_find_level(root, 40))
+print("Level of node 80:", bfs_find_level(root, 80))
+print("Right View:", bfs_right_view(root))
+
+# Queue explanation:
+# BFS uses a queue (First In, First Out - FIFO)
+# 1. Start with root in queue: [50]
+# 2. Dequeue 50, add its children: [30, 70]
+# 3. Dequeue 30, add its children: [70, 20, 40]
+# 4. Dequeue 70, add its children: [20, 40, 60, 80]
+# 5. Continue until queue is empty
+''',
+
+      'Tree Height and Depth': '''
+# Calculate Tree Height and Node Depth
+# Height: longest path from node to leaf
+# Depth: distance from root to node
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def calculate_height(root):
+    """Calculate the height of a tree"""
+    if not root:
+        return -1  # Height of empty tree is -1
+    
+    # Height = 1 + max(left_height, right_height)
+    left_height = calculate_height(root.left)
+    right_height = calculate_height(root.right)
+    
+    return 1 + max(left_height, right_height)
+
+def calculate_depth(root, target_val, current_depth=0):
+    """Calculate the depth of a specific node"""
+    if not root:
+        return -1  # Node not found
+    
+    if root.val == target_val:
+        return current_depth
+    
+    # Search in left subtree
+    left_depth = calculate_depth(root.left, target_val, current_depth + 1)
+    if left_depth != -1:
+        return left_depth
+    
+    # Search in right subtree
+    right_depth = calculate_depth(root.right, target_val, current_depth + 1)
+    return right_depth
+
+def is_balanced(root):
+    """Check if a binary tree is height-balanced"""
+    def check_balance(node):
+        if not node:
+            return 0, True  # height, is_balanced
+        
+        left_height, left_balanced = check_balance(node.left)
+        right_height, right_balanced = check_balance(node.right)
+        
+        # Tree is balanced if:
+        # 1. Left and right subtrees are balanced
+        # 2. Height difference is at most 1
+        current_balanced = (left_balanced and right_balanced and 
+                          abs(left_height - right_height) <= 1)
+        current_height = 1 + max(left_height, right_height)
+        
+        return current_height, current_balanced
+    
+    _, balanced = check_balance(root)
+    return balanced
+
+# Example: Create a tree with depth 5
+#           50
+#         /    \\
+#        25     75
+#       / \\    / \\
+#      15  30  60  80
+#     / \\      \\
+#    10  20      65
+#   /
+#  5
+
+root = TreeNode(50)
+root.left = TreeNode(25)
+root.right = TreeNode(75)
+root.left.left = TreeNode(15)
+root.left.right = TreeNode(30)
+root.right.left = TreeNode(60)
+root.right.right = TreeNode(80)
+root.left.left.left = TreeNode(10)
+root.left.left.right = TreeNode(20)
+root.right.left.right = TreeNode(65)
+root.left.left.left.left = TreeNode(5)
+
+print(f"Tree height: {calculate_height(root)}")
+print(f"Depth of node 65: {calculate_depth(root, 65)}")
+print(f"Depth of node 5: {calculate_depth(root, 5)}")
+print(f"Is tree balanced: {is_balanced(root)}")
+
+# Test with different nodes
+test_nodes = [50, 25, 15, 10, 5, 75, 80]
+for node_val in test_nodes:
+    depth = calculate_depth(root, node_val)
+    print(f"Node {node_val} is at depth: {depth}")
 ''',
     };
   }

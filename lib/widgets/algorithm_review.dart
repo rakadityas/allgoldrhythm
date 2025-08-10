@@ -1,5 +1,62 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import '../models/algorithm.dart';
+
+class TreeReviewPainter extends CustomPainter {
+  final Set<int> selectedIndices;
+
+  TreeReviewPainter(this.selectedIndices);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey[400]!
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    // Draw connections between nodes
+    final connections = [
+      [0, 1], // Root to left child
+      [0, 2], // Root to right child
+      [1, 3], // Left child to left-left
+      [1, 4], // Left child to left-right
+      [2, 5], // Right child to right-left
+      [2, 6], // Right child to right-right
+    ];
+
+    for (final connection in connections) {
+      final fromIndex = connection[0];
+      final toIndex = connection[1];
+      
+      if (fromIndex < 7 && toIndex < 7) { // Ensure indices are valid
+        final fromPos = _getNodePosition(fromIndex);
+        final toPos = _getNodePosition(toIndex);
+        
+        canvas.drawLine(fromPos, toPos, paint);
+      }
+    }
+  }
+
+  Offset _getNodePosition(int index) {
+    const double centerX = 150;
+    const double startY = 40;
+    const double levelHeight = 70;
+    
+    switch (index) {
+      case 0: return const Offset(centerX, startY); // Root
+      case 1: return const Offset(centerX - 60, startY + levelHeight); // Left child
+      case 2: return const Offset(centerX + 60, startY + levelHeight); // Right child
+      case 3: return const Offset(centerX - 90, startY + 2 * levelHeight); // Left-left
+      case 4: return const Offset(centerX - 30, startY + 2 * levelHeight); // Left-right
+      case 5: return const Offset(centerX + 30, startY + 2 * levelHeight); // Right-left
+      case 6: return const Offset(centerX + 90, startY + 2 * levelHeight); // Right-right
+      default: return const Offset(centerX, startY);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
 
 class AlgorithmReview extends StatefulWidget {
   final Algorithm algorithm;
@@ -14,6 +71,9 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
   final int _arraySize = 10;
   List<int> _selectedIndices = [];
   String _patternIdentified = '';
+  
+  // Tree-specific properties
+  final List<int> _treeValues = [50, 30, 70, 20, 40, 60, 80];
 
   void _toggleIndex(int index) {
     setState(() {
@@ -42,7 +102,33 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
       return;
     }
 
-    if (widget.algorithm.id == 'two_pointers') {
+    if (widget.algorithm.id == 'trees') {
+      // Identify Tree patterns
+      if (_selectedIndices.length == 1) {
+        int selectedIndex = _selectedIndices.first;
+        if (selectedIndex == 0) {
+          _patternIdentified = 'Root Node Selection';
+        } else if (selectedIndex == 1 || selectedIndex == 2) {
+          _patternIdentified = 'Level 1 Node Selection';
+        } else if (selectedIndex >= 3 && selectedIndex <= 6) {
+          _patternIdentified = 'Leaf Node Selection';
+        }
+      } else if (_selectedIndices.length == 3) {
+        if (_selectedIndices.contains(3) && _selectedIndices.contains(1) && _selectedIndices.contains(4)) {
+          _patternIdentified = 'In-Order Traversal Pattern (Left-Root-Right)';
+        } else if (_selectedIndices.contains(0) && _selectedIndices.contains(1) && _selectedIndices.contains(3)) {
+          _patternIdentified = 'Pre-Order Traversal Pattern (Root-Left-Right)';
+        } else if (_selectedIndices.contains(3) && _selectedIndices.contains(4) && _selectedIndices.contains(1)) {
+          _patternIdentified = 'Post-Order Traversal Pattern (Left-Right-Root)';
+        } else {
+          _patternIdentified = 'Custom Tree Pattern';
+        }
+      } else if (_selectedIndices.length == 7) {
+        _patternIdentified = 'Complete Tree Selection';
+      } else {
+        _patternIdentified = 'Partial Tree Selection';
+      }
+    } else if (widget.algorithm.id == 'two_pointers') {
       // Identify Two Pointers patterns
       if (_selectedIndices.length == 2) {
         if (_selectedIndices[0] == 0 && _selectedIndices[1] == _arraySize - 1) {
@@ -190,6 +276,113 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
     }
   }
 
+  Widget _buildArrayVisualization() {
+    return SizedBox(
+      height: 80,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(_arraySize, (index) {
+          final isSelected = _selectedIndices.contains(index);
+          return GestureDetector(
+            onTap: () => _toggleIndex(index),
+            child: Container(
+              width: 30,
+              height: 50,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.amber : Colors.grey[200],
+                border: Border.all(color: Colors.grey[400]!),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  '${index + 1}',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildTreeVisualization() {
+    return SizedBox(
+      height: 250,
+      child: Stack(
+        children: [
+          CustomPaint(
+             size: const Size(300, 250),
+             painter: TreeReviewPainter(_selectedIndices.toSet()),
+           ),
+          ..._buildTreeNodes(),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildTreeNodes() {
+    final List<Widget> nodes = [];
+    for (int i = 0; i < _treeValues.length; i++) {
+      final position = _getNodePosition(i);
+      final isSelected = _selectedIndices.contains(i);
+      
+      nodes.add(
+        Positioned(
+          left: position.dx - 20,
+          top: position.dy - 20,
+          child: GestureDetector(
+            onTap: () => _toggleIndex(i),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.amber : Colors.blue[100],
+                border: Border.all(
+                  color: isSelected ? Colors.orange : Colors.blue,
+                  width: 2,
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  '${_treeValues[i]}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? Colors.black : Colors.blue[800],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return nodes;
+  }
+
+  Offset _getNodePosition(int index) {
+    const double centerX = 150;
+    const double startY = 40;
+    const double levelHeight = 70;
+    
+    switch (index) {
+      case 0: return Offset(centerX, startY); // Root
+      case 1: return Offset(centerX - 60, startY + levelHeight); // Left child
+      case 2: return Offset(centerX + 60, startY + levelHeight); // Right child
+      case 3: return Offset(centerX - 90, startY + 2 * levelHeight); // Left-left
+      case 4: return Offset(centerX - 30, startY + 2 * levelHeight); // Left-right
+      case 5: return Offset(centerX + 30, startY + 2 * levelHeight); // Right-left
+      case 6: return Offset(centerX + 90, startY + 2 * levelHeight); // Right-right
+      default: return Offset(centerX, startY);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -211,38 +404,8 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
             ),
             const SizedBox(height: 16),
             
-            // Interactive array
-            SizedBox(
-              height: 80,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_arraySize, (index) {
-                  final isSelected = _selectedIndices.contains(index);
-                  return GestureDetector(
-                    onTap: () => _toggleIndex(index),
-                    child: Container(
-                      width: 30,
-                      height: 50,
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                        color: isSelected ? Colors.amber : Colors.grey[200],
-                        border: Border.all(color: Colors.grey[400]!),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${index + 1}',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
+            // Interactive visualization (array or tree)
+            widget.algorithm.id == 'trees' ? _buildTreeVisualization() : _buildArrayVisualization(),
             const SizedBox(height: 16),
             
             // Pattern identification result

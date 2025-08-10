@@ -1033,6 +1033,201 @@ class AlgorithmData {
             ],
           ),
         ],
+      ),
+      Algorithm(
+        id: 'trees',
+        name: 'Trees',
+        category: 'Data Structures & Algorithm',
+        description: 'A tree is a hierarchical data structure consisting of nodes connected by edges. '
+            'Each tree has a root node, and every node has zero or more child nodes. '
+            'Trees are used for organizing data hierarchically, enabling efficient searching, insertion, and deletion operations.',
+        steps: [
+          'Start with the root node at the top level',
+          'Each node can have multiple children (left, right, or more)',
+          'Leaf nodes are nodes with no children',
+          'Traverse the tree using different methods (in-order, pre-order, post-order)',
+          'Perform operations like insertion, deletion, and searching'
+        ],
+        visualizations: [
+          AlgorithmVisualization(
+            type: 'simulation',
+            title: 'Depth-First Search (DFS)',
+            description: 'Explore tree nodes by going as deep as possible before backtracking.',
+            steps: [
+              VisualizationStep(
+                highlightIndices: [0],
+                previousIndices: [],
+                explanation: 'Start DFS at root (50). Visit and mark as explored.',
+              ),
+              VisualizationStep(
+                highlightIndices: [1],
+                previousIndices: [0],
+                explanation: 'Go deep: visit left child (30). Continue exploring depth-first.',
+              ),
+              VisualizationStep(
+                highlightIndices: [3],
+                previousIndices: [1, 0],
+                explanation: 'Go deeper: visit left child (20). Keep going deep.',
+              ),
+              VisualizationStep(
+                highlightIndices: [3],
+                previousIndices: [1, 0],
+                explanation: 'Node 20 has no left child. Backtrack and try right subtree.',
+              ),
+              VisualizationStep(
+                highlightIndices: [4],
+                previousIndices: [3, 1, 0],
+                explanation: 'Visit right child of 30: node 40. Continue DFS.',
+              ),
+              VisualizationStep(
+                highlightIndices: [4],
+                previousIndices: [3, 1, 0],
+                explanation: 'Node 40 has no children. Backtrack to explore right subtree of root.',
+              ),
+              VisualizationStep(
+                highlightIndices: [2],
+                previousIndices: [4, 3, 1, 0],
+                explanation: 'Visit right child of root: node 70. Continue DFS.',
+              ),
+              VisualizationStep(
+                highlightIndices: [5],
+                previousIndices: [2, 4, 3, 1, 0],
+                explanation: 'Visit left child of 70: node 60. Continue DFS.',
+              ),
+              VisualizationStep(
+                highlightIndices: [6],
+                previousIndices: [5, 2, 4, 3, 1, 0],
+                explanation: 'Visit right child of 70: node 80. DFS exploration complete!',
+              ),
+            ],
+          ),
+          AlgorithmVisualization(
+            type: 'simulation',
+            title: 'Breadth-First Search (BFS)',
+            description: 'Explore tree level by level using a queue data structure.',
+            steps: [
+              VisualizationStep(
+                highlightIndices: [0],
+                previousIndices: [],
+                explanation: 'Start BFS at root (50). Add root to queue: [50]',
+              ),
+              VisualizationStep(
+                highlightIndices: [0],
+                previousIndices: [],
+                explanation: 'Dequeue root (50). Add its children to queue: [30, 70]',
+              ),
+              VisualizationStep(
+                highlightIndices: [1],
+                previousIndices: [0],
+                explanation: 'Dequeue 30. Add its children to queue: [70, 20, 40]',
+              ),
+              VisualizationStep(
+                highlightIndices: [2],
+                previousIndices: [1, 0],
+                explanation: 'Dequeue 70. Add its children to queue: [20, 40, 60, 80]',
+              ),
+              VisualizationStep(
+                highlightIndices: [3],
+                previousIndices: [2, 1, 0],
+                explanation: 'Dequeue 20. No children to add. Queue: [40, 60, 80]',
+              ),
+              VisualizationStep(
+                highlightIndices: [4],
+                previousIndices: [3, 2, 1, 0],
+                explanation: 'Dequeue 40. No children to add. Queue: [60, 80]',
+              ),
+              VisualizationStep(
+                highlightIndices: [5],
+                previousIndices: [4, 3, 2, 1, 0],
+                explanation: 'Dequeue 60. No children to add. Queue: [80]',
+              ),
+              VisualizationStep(
+                highlightIndices: [6],
+                previousIndices: [5, 4, 3, 2, 1, 0],
+                explanation: 'Dequeue 80. No children to add. Queue empty. BFS complete!',
+              ),
+            ],
+          ),
+          AlgorithmVisualization(
+            type: 'simulation',
+            title: 'Binary Tree Insertion',
+            description: 'Insert a new node into a binary tree maintaining structure.',
+            steps: [
+              VisualizationStep(
+                highlightIndices: [0],
+                previousIndices: [],
+                explanation: 'Start at root (50). We want to insert value 35.',
+              ),
+              VisualizationStep(
+                highlightIndices: [1],
+                previousIndices: [0],
+                explanation: 'Compare 35 < 50, go to left child (30).',
+              ),
+              VisualizationStep(
+                highlightIndices: [4],
+                previousIndices: [1, 0],
+                explanation: 'Compare 35 > 30, go to right child (40).',
+              ),
+              VisualizationStep(
+                highlightIndices: [4],
+                previousIndices: [1, 0],
+                explanation: 'Compare 35 < 40, try to go left but no left child exists.',
+              ),
+              VisualizationStep(
+                highlightIndices: [8],
+                previousIndices: [4, 1, 0],
+                explanation: 'Insert 35 as left child of node 40. Insertion complete!',
+              ),
+            ],
+          ),
+          AlgorithmVisualization(
+            type: 'simulation',
+            title: 'Tree Concepts Quiz',
+            description: 'Test your understanding of tree data structure concepts.',
+            steps: [
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 1: What is the root node in a tree?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: The root node is the topmost node in a tree with no parent.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 2: What are leaf nodes?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: Leaf nodes are nodes that have no children.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 3: What is the height of a tree?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: The height is the longest path from root to any leaf node.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 4: In a binary search tree, where do smaller values go?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: Smaller values go to the left subtree of each node.',
+              ),
+            ],
+          ),
+        ],
       )
     ];
   }
