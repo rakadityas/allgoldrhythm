@@ -15,7 +15,7 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
   int _currentVisualizationIndex = 0;
   int _currentStepIndex = 0;
   bool _isPlaying = false;
-  final int _arraySize = 10;
+  final int _arraySize = 8;
 
   void _nextStep() {
     setState(() {

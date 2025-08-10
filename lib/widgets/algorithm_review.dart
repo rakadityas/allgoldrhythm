@@ -68,7 +68,7 @@ class AlgorithmReview extends StatefulWidget {
 }
 
 class _AlgorithmReviewState extends State<AlgorithmReview> {
-  final int _arraySize = 10;
+  final int _arraySize = 8;
   List<int> _selectedIndices = [];
   String _patternIdentified = '';
   
@@ -182,7 +182,7 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
       // Identify Binary Search patterns
       if (_selectedIndices.length == 1) {
         int selectedIndex = _selectedIndices.first;
-        int arrayLength = 10; // Assuming 10 elements as per simulation
+        int arrayLength = 8; // Assuming 10 elements as per simulation
         int middle = arrayLength ~/ 2;
         
         if (selectedIndex == middle) {
