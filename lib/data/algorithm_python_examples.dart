@@ -1,0 +1,330 @@
+import '../models/algorithm.dart';
+
+class AlgorithmPythonExamples {
+  static Map<String, String> getTwoPointersExamples() {
+    return {
+      'Left-Right Two Pointers': '''
+# Two Sum (Left-Right Two Pointers)
+# Find two numbers in a sorted array that add up to a target
+def two_sum(nums, target):
+    left, right = 0, len(nums) - 1
+    
+    while left < right:
+        current_sum = nums[left] + nums[right]
+        
+        if current_sum == target:
+            return [left, right]  # Return indices of the two numbers
+        elif current_sum < target:
+            left += 1  # Move left pointer to increase sum
+        else:
+            right -= 1  # Move right pointer to decrease sum
+    
+    return []  # No solution found
+
+# Example usage
+nums = [1, 3, 4, 5, 7, 11]
+target = 9
+print(two_sum(nums, target))  # Output: [1, 4] (3 + 7 = 9)
+''',
+
+      'Fast-Slow Two Pointers': '''
+# Detect Cycle in Linked List (Fast-Slow Two Pointers)
+# Floyd's Cycle-Finding Algorithm
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+def has_cycle(head):
+    if not head or not head.next:
+        return False
+    
+    # Initialize slow and fast pointers
+    slow = head
+    fast = head
+    
+    # Move slow by 1 step and fast by 2 steps
+    while fast and fast.next:
+        slow = slow.next       # Move slow pointer by 1
+        fast = fast.next.next  # Move fast pointer by 2
+        
+        # If there's a cycle, the pointers will meet
+        if slow == fast:
+            return True
+    
+    # If fast reaches the end, there's no cycle
+    return False
+
+# Example usage
+# Create a linked list with a cycle: 1->2->3->4->2 (cycles back to 2)
+node1 = ListNode(1)
+node2 = ListNode(2)
+node3 = ListNode(3)
+node4 = ListNode(4)
+node1.next = node2
+node2.next = node3
+node3.next = node4
+node4.next = node2  # Creates a cycle
+
+print(has_cycle(node1))  # Output: True
+''',
+
+      'Same Direction Two Pointers': '''
+# Remove Duplicates from Sorted Array (Same Direction Two Pointers)
+def remove_duplicates(nums):
+    if not nums:
+        return 0
+    
+    # Initialize the pointer for the position to place the next unique element
+    unique_pos = 1
+    
+    # Iterate through the array starting from the second element
+    for i in range(1, len(nums)):
+        # If the current element is different from the previous one
+        if nums[i] != nums[i-1]:
+            # Place it at the position marked by unique_pos
+            nums[unique_pos] = nums[i]
+            unique_pos += 1
+    
+    return unique_pos  # Return the length of the array with duplicates removed
+
+# Example usage
+nums = [1, 1, 2, 2, 3, 4, 4, 5]
+k = remove_duplicates(nums)
+print(nums[:k])  # Output: [1, 2, 3, 4, 5]
+''',
+
+      'Three Pointers': '''
+# 3Sum (Three Pointers)
+# Find all unique triplets in the array that give the sum of zero
+def three_sum(nums):
+    result = []
+    nums.sort()  # Sort the array first
+    
+    for i in range(len(nums) - 2):
+        # Skip duplicate values for i
+        if i > 0 and nums[i] == nums[i-1]:
+            continue
+        
+        # Use two pointers technique for the remaining array
+        left = i + 1
+        right = len(nums) - 1
+        
+        while left < right:
+            total = nums[i] + nums[left] + nums[right]
+            
+            if total < 0:
+                left += 1
+            elif total > 0:
+                right -= 1
+            else:  # total == 0, we found a triplet
+                result.append([nums[i], nums[left], nums[right]])
+                
+                # Skip duplicates
+                while left < right and nums[left] == nums[left+1]:
+                    left += 1
+                while left < right and nums[right] == nums[right-1]:
+                    right -= 1
+                
+                # Move both pointers
+                left += 1
+                right -= 1
+    
+    return result
+
+# Example usage
+nums = [-1, 0, 1, 2, -1, -4]
+print(three_sum(nums))  # Output: [[-1, -1, 2], [-1, 0, 1]]
+''',
+
+      'Partition Array': '''
+# Dutch National Flag Problem (Partition Array)
+# Sort an array of 0s, 1s, and 2s
+def sort_colors(nums):
+    # Initialize three pointers
+    low = 0        # for 0s
+    mid = 0        # current element
+    high = len(nums) - 1  # for 2s
+    
+    while mid <= high:
+        if nums[mid] == 0:
+            # Swap with the low pointer and move both pointers
+            nums[low], nums[mid] = nums[mid], nums[low]
+            low += 1
+            mid += 1
+        elif nums[mid] == 1:
+            # Just move the middle pointer
+            mid += 1
+        else:  # nums[mid] == 2
+            # Swap with the high pointer and move only high pointer
+            nums[mid], nums[high] = nums[high], nums[mid]
+            high -= 1
+    
+    return nums
+
+# Example usage
+nums = [2, 0, 1, 1, 0, 2, 1, 0]
+print(sort_colors(nums))  # Output: [0, 0, 0, 1, 1, 1, 2, 2]
+''',
+    };
+  }
+
+  static Map<String, String> getSlidingWindowExamples() {
+    return {
+      'Fixed Size Window': '''
+# Maximum Sum Subarray of Size K (Fixed Size Window)
+def max_sum_subarray(arr, k):
+    n = len(arr)
+    if n < k:
+        return -1
+    
+    # Compute sum of first window of size k
+    window_sum = sum(arr[:k])
+    max_sum = window_sum
+    
+    # Slide the window from left to right
+    for i in range(n - k):
+        # Remove the leftmost element and add the rightmost element
+        window_sum = window_sum - arr[i] + arr[i + k]
+        max_sum = max(max_sum, window_sum)
+    
+    return max_sum
+
+# Example usage
+arr = [1, 4, 2, 10, 2, 3, 1, 0, 20]
+k = 3
+print(max_sum_subarray(arr, k))  # Output: 15 (sum of subarray [10, 2, 3])
+''',
+
+      'Variable Size Window': '''
+# Smallest Subarray with Sum >= Target (Variable Size Window)
+def smallest_subarray_with_sum(arr, target):
+    n = len(arr)
+    window_sum = 0
+    min_length = float('inf')
+    window_start = 0
+    
+    for window_end in range(n):
+        # Add the next element to the window
+        window_sum += arr[window_end]
+        
+        # Shrink the window as small as possible while maintaining the sum >= target
+        while window_sum >= target:
+            # Update the minimum length
+            min_length = min(min_length, window_end - window_start + 1)
+            
+            # Remove the leftmost element
+            window_sum -= arr[window_start]
+            window_start += 1
+    
+    return min_length if min_length != float('inf') else 0
+
+# Example usage
+arr = [2, 1, 5, 2, 3, 2]
+target = 7
+print(smallest_subarray_with_sum(arr, target))  # Output: 2 (subarray [5, 2])
+''',
+
+      'Sliding Window with Distinct Elements': '''
+# Longest Substring Without Repeating Characters
+def length_of_longest_substring(s):
+    char_index_map = {}  # Map to store the current index of a character
+    max_length = 0
+    window_start = 0
+    
+    for window_end in range(len(s)):
+        # If the character is already in the window, update window_start
+        if s[window_end] in char_index_map:
+            # Move window_start to the right of the last occurrence of the character
+            window_start = max(window_start, char_index_map[s[window_end]] + 1)
+        
+        # Update the index of the current character
+        char_index_map[s[window_end]] = window_end
+        
+        # Update the maximum length
+        max_length = max(max_length, window_end - window_start + 1)
+    
+    return max_length
+
+# Example usage
+s = "abcabcbb"
+print(length_of_longest_substring(s))  # Output: 3 (substring "abc")
+''',
+
+      'Sliding Window with Count': '''
+# Find All Anagrams in a String
+def find_anagrams(s, p):
+    if len(s) < len(p):
+        return []
+    
+    p_count = {}  # Frequency counter for pattern
+    s_count = {}  # Frequency counter for current window
+    
+    # Initialize frequency counters
+    for char in p:
+        p_count[char] = p_count.get(char, 0) + 1
+    
+    result = []
+    window_start = 0
+    
+    for window_end in range(len(s)):
+        # Add the current character to s_count
+        s_count[s[window_end]] = s_count.get(s[window_end], 0) + 1
+        
+        # If the window size is equal to pattern length
+        if window_end >= len(p) - 1:
+            # Check if the current window is an anagram
+            if s_count == p_count:
+                result.append(window_start)
+            
+            # Remove the leftmost character from the window
+            s_count[s[window_start]] -= 1
+            if s_count[s[window_start]] == 0:
+                del s_count[s[window_start]]
+            
+            window_start += 1
+    
+    return result
+
+# Example usage
+s = "cbaebabacd"
+p = "abc"
+print(find_anagrams(s, p))  # Output: [0, 6] (anagrams start at indices 0 and 6)
+''',
+
+      'Sliding Window with Two Pointers': '''
+# Longest Substring with At Most K Distinct Characters
+def longest_substring_with_k_distinct(s, k):
+    if not s or k == 0:
+        return 0
+    
+    char_frequency = {}
+    max_length = 0
+    window_start = 0
+    
+    for window_end in range(len(s)):
+        # Add the current character to the frequency map
+        right_char = s[window_end]
+        char_frequency[right_char] = char_frequency.get(right_char, 0) + 1
+        
+        # Shrink the window if we have more than k distinct characters
+        while len(char_frequency) > k:
+            left_char = s[window_start]
+            char_frequency[left_char] -= 1
+            if char_frequency[left_char] == 0:
+                del char_frequency[left_char]
+            window_start += 1
+        
+        # Update the maximum length
+        max_length = max(max_length, window_end - window_start + 1)
+    
+    return max_length
+
+# Example usage
+s = "eceba"
+k = 2
+print(longest_substring_with_k_distinct(s, k))  # Output: 3 (substring "ece")
+''',
+    };
+  }
+}
