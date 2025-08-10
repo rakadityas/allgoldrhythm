@@ -632,4 +632,127 @@ print(f"Total occurrences: {right_bound - left_bound + 1 if left_bound != -1 els
 ''',
     };
   }
+
+  static Map<String, String> getQueueExamples() {
+    return {
+      'Queue Basic Operations': '''
+# Queue Implementation using Python List
+class Queue:
+    def __init__(self):
+        self.items = []
+    
+    def enqueue(self, item):
+        """Add an element to the rear of the queue"""
+        self.items.append(item)
+        print(f"Enqueued: {item}")
+    
+    def dequeue(self):
+        """Remove and return the front element"""
+        if self.is_empty():
+            return None
+        item = self.items.pop(0)
+        print(f"Dequeued: {item}")
+        return item
+    
+    def peek(self):
+        """Return the front element without removing it"""
+        if self.is_empty():
+            return None
+        return self.items[0]
+    
+    def is_empty(self):
+        """Check if the queue is empty"""
+        return len(self.items) == 0
+    
+    def size(self):
+        """Return the number of elements in the queue"""
+        return len(self.items)
+    
+    def display(self):
+        """Display the current queue"""
+        print(f"Queue: {self.items}")
+
+# Example usage
+queue = Queue()
+
+# Enqueue elements
+for i in [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]:
+    queue.enqueue(i)
+    queue.display()
+
+print(f"\\nFront element: {queue.peek()}")
+print(f"Queue size: {queue.size()}")
+
+# Dequeue some elements
+for _ in range(3):
+    queue.dequeue()
+    queue.display()
+
+print(f"\\nFinal front element: {queue.peek()}")
+print(f"Final queue size: {queue.size()}")
+''',
+
+      'Efficient Queue using Deque': '''
+# Efficient Queue Implementation using collections.deque
+from collections import deque
+
+class EfficientQueue:
+    def __init__(self):
+        self.items = deque()
+    
+    def enqueue(self, item):
+        """Add an element to the rear of the queue - O(1)"""
+        self.items.append(item)
+        print(f"Enqueued: {item}")
+    
+    def dequeue(self):
+        """Remove and return the front element - O(1)"""
+        if self.is_empty():
+            return None
+        item = self.items.popleft()
+        print(f"Dequeued: {item}")
+        return item
+    
+    def peek(self):
+        """Return the front element without removing it"""
+        if self.is_empty():
+            return None
+        return self.items[0]
+    
+    def is_empty(self):
+        """Check if the queue is empty"""
+        return len(self.items) == 0
+    
+    def size(self):
+        """Return the number of elements in the queue"""
+        return len(self.items)
+    
+    def display(self):
+        """Display the current queue"""
+        print(f"Queue: {list(self.items)}")
+
+# Example: Processing tasks in FIFO order
+queue = EfficientQueue()
+
+# Add tasks to queue
+tasks = ["Task A", "Task B", "Task C", "Task D", "Task E", 
+         "Task F", "Task G", "Task H", "Task I", "Task J"]
+
+print("Adding tasks to queue:")
+for task in tasks:
+    queue.enqueue(task)
+
+print(f"\\nTotal tasks in queue: {queue.size()}")
+print(f"Next task to process: {queue.peek()}")
+
+print("\\nProcessing tasks in FIFO order:")
+while not queue.is_empty():
+    current_task = queue.dequeue()
+    print(f"Processing: {current_task}")
+    queue.display()
+
+print("\\nAll tasks completed!")
+''',
+    };
+  }
 }

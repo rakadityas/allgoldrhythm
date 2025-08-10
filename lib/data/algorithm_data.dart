@@ -883,6 +883,157 @@ class AlgorithmData {
           ),
         ],
       ),
+      Algorithm(
+        id: 'queue',
+        name: 'Queue',
+        category: 'Data Structures & Algorithm',
+        description: 'A linear data structure that follows the First In First Out (FIFO) principle.',
+        steps: [
+          'Initialize an empty queue',
+          'Enqueue (add) elements to the rear of the queue',
+          'Dequeue (remove) elements from the front of the queue',
+          'Check if the queue is empty before dequeuing',
+          'Peek at the front element without removing it',
+          'Get the size of the queue',
+          'Process elements in FIFO order'
+        ],
+        visualizations: [
+          AlgorithmVisualization(
+            type: 'simulation',
+            title: 'Queue Basic Operations',
+            description: 'Demonstration of basic queue operations: enqueue, dequeue, and peek',
+            steps: [
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Starting with an empty queue. Queue follows FIFO (First In First Out) principle. Array: []',
+              ),
+              VisualizationStep(
+                highlightIndices: [0],
+                previousIndices: [],
+                explanation: 'Enqueue 10: Add element to the rear of the queue. Array: [10]',
+              ),
+              VisualizationStep(
+                highlightIndices: [1],
+                previousIndices: [0],
+                explanation: 'Enqueue 20: Add element to the rear of the queue. Array: [10, 20]',
+              ),
+              VisualizationStep(
+                highlightIndices: [2],
+                previousIndices: [0, 1],
+                explanation: 'Enqueue 30: Add element to the rear of the queue. Array: [10, 20, 30]',
+              ),
+              VisualizationStep(
+                highlightIndices: [3],
+                previousIndices: [0, 1, 2],
+                explanation: 'Enqueue 40: Add element to the rear of the queue. Array: [10, 20, 30, 40]',
+              ),
+              VisualizationStep(
+                highlightIndices: [4],
+                previousIndices: [0, 1, 2, 3],
+                explanation: 'Enqueue 50: Add element to the rear of the queue. Array: [10, 20, 30, 40, 50]',
+              ),
+              VisualizationStep(
+                highlightIndices: [5],
+                previousIndices: [0, 1, 2, 3, 4],
+                explanation: 'Enqueue 60: Add element to the rear of the queue. Array: [10, 20, 30, 40, 50, 60]',
+              ),
+              VisualizationStep(
+                highlightIndices: [6],
+                previousIndices: [0, 1, 2, 3, 4, 5],
+                explanation: 'Enqueue 70: Add element to the rear of the queue. Array: [10, 20, 30, 40, 50, 60, 70]',
+              ),
+              VisualizationStep(
+                highlightIndices: [7],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6],
+                explanation: 'Enqueue 80: Add element to the rear of the queue. Array: [10, 20, 30, 40, 50, 60, 70, 80]',
+              ),
+              VisualizationStep(
+                highlightIndices: [8],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6, 7],
+                explanation: 'Enqueue 90: Add element to the rear of the queue. Array: [10, 20, 30, 40, 50, 60, 70, 80, 90]',
+              ),
+              VisualizationStep(
+                highlightIndices: [9],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                explanation: 'Enqueue 100: Queue now contains 10 elements. Array: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]',
+              ),
+              VisualizationStep(
+                highlightIndices: [0],
+                previousIndices: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                explanation: 'Peek: View the front element (10) without removing it. Array: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                explanation: 'Dequeue: Remove front element (10). Element 20 is now at the front. Array: [20, 30, 40, 50, 60, 70, 80, 90, 100]',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6, 7],
+                explanation: 'Dequeue: Remove front element (20). Element 30 is now at the front. Array: [30, 40, 50, 60, 70, 80, 90, 100]',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6],
+                explanation: 'Dequeue: Remove front element (30). Element 40 is now at the front. Array: [40, 50, 60, 70, 80, 90, 100]',
+              ),
+              VisualizationStep(
+                highlightIndices: [0],
+                previousIndices: [1, 2, 3, 4, 5, 6],
+                explanation: 'Queue operations complete. Front element is 40, rear element is 100. Array: [40, 50, 60, 70, 80, 90, 100]',
+              ),
+            ],
+          ),
+          AlgorithmVisualization(
+            type: 'interactive',
+            title: 'Queue Concepts Quiz',
+            description: 'Interactive review of queue data structure concepts',
+            steps: [
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 1: What does FIFO stand for in queue data structure?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: FIFO stands for First In First Out - the first element added is the first to be removed.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 2: What is the time complexity of enqueue and dequeue operations?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: Both enqueue and dequeue operations have O(1) time complexity.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 3: Where are elements added in a queue?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: Elements are added at the rear (back/tail) of the queue.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 4: Where are elements removed from in a queue?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: Elements are removed from the front (head) of the queue.',
+              ),
+            ],
+          ),
+        ],
+      ),
     ];
   }
 }

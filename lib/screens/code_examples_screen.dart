@@ -33,6 +33,8 @@ class _CodeExamplesScreenState extends State<CodeExamplesScreen> {
       examples = AlgorithmPythonExamples.getLinkedListExamples();
     } else if (widget.algorithm.id == 'binary_search') {
       examples = AlgorithmPythonExamples.getBinarySearchExamples();
+    } else if (widget.algorithm.id == 'queue') {
+      examples = AlgorithmPythonExamples.getQueueExamples();
     }
 
     if (examples.isNotEmpty) {

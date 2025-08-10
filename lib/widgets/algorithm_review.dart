@@ -159,6 +159,34 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
           _patternIdentified = 'Non-sequential Access (Random Access Pattern)';
         }
       }
+    } else if (widget.algorithm.id == 'queue') {
+      // Identify Queue patterns
+      if (_selectedIndices.length == 1) {
+        int selectedIndex = _selectedIndices.first;
+        if (selectedIndex == 0) {
+          _patternIdentified = 'Front Element Access (Dequeue Operation)';
+        } else if (selectedIndex == _arraySize - 1) {
+          _patternIdentified = 'Rear Element Access (Enqueue Operation)';
+        } else {
+          _patternIdentified = 'Middle Element Access (Not Queue Pattern)';
+        }
+      } else if (_selectedIndices.length > 1) {
+        // Check if selection follows FIFO pattern
+        bool isFIFO = true;
+        _selectedIndices.sort();
+        for (int i = 1; i < _selectedIndices.length; i++) {
+          if (_selectedIndices[i] != _selectedIndices[i-1] + 1) {
+            isFIFO = false;
+            break;
+          }
+        }
+        
+        if (isFIFO && _selectedIndices.first == 0) {
+          _patternIdentified = 'FIFO Pattern (First In First Out)';
+        } else {
+          _patternIdentified = 'Non-FIFO Pattern (Not Queue Behavior)';
+        }
+      }
     }
   }
 
