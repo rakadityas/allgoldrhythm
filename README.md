@@ -1,6 +1,8 @@
 # AllGoldRhythm
 
-A comprehensive Data Structures and Algorithms (Data Structures & Algorithm) visualization app built with Flutter. This app provides interactive learning experiences for algorithm concepts through visual simulations, step-by-step explanations, and code examples.
+With the rise of AI (Artificial Intelligence), the need for understanding and implementing algorithms has never been greater. As the matter of fact, this overall code base was built by and AI, scary right? But don't worry, we have got you covered.
+
+AllGoldRhythm will help you learn and visualize algorithms in a fun and interactive way. It is a comprehensive Data Structures and Algorithms (DSA) visualization app that helps users learn and understand complex algorithm concepts through interactive simulations, step-by-step explanations, and code examples. Inspired by @yangshun [Tech Interview Handbook](https://github.com/yangshun/tech-interview-handbook) and Navdeep Singh's [NeetCode](https://neetcode.io/).
 
 ## 🚀 Tech Stack
 
