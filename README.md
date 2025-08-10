@@ -191,24 +191,10 @@ To add a new simulation (e.g., 'Left-Right Two Pointers'):
 
 To add interactive review for 'Left-Right Two Pointers':
 
-1. **Add AlgorithmVisualization with type 'interactive':**
-   ```dart
-   AlgorithmVisualization(
-     type: 'interactive',
-     title: 'Left-Right Two Pointers Practice',
-     description: 'Interactive practice for pointer movements',
-     steps: [
-       VisualizationStep(
-         highlightIndices: [0, 9],
-         previousIndices: [],
-         explanation: 'Click to move the left pointer right or right pointer left',
-       ),
-       // Add interactive steps...
-     ],
-   ),
-   ```
-
-2. **The interactive functionality is handled by `algorithm_review.dart` widget**
+**The interactive functionality is handled by `algorithm_review.dart` widget**
+```
+void _identifyPattern() {
+```
 
 ### Adding Python Code Examples
 

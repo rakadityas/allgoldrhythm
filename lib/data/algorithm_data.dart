@@ -448,6 +448,263 @@ class AlgorithmData {
           ),
         ],
       ),
+      Algorithm(
+        id: 'stack',
+        name: 'Stack',
+        category: 'Data Structures & Algorithm',
+        description: 'A stack is a linear data structure that follows the Last In First Out (LIFO) principle. '
+            'Elements are added and removed from the same end, called the top of the stack. '
+            'Common operations include push (add), pop (remove), peek/top (view top element), and isEmpty.',
+        steps: [
+          'Initialize an empty stack',
+          'Push elements onto the stack (elements go to the top)',
+          'Pop elements from the stack (removes from the top)',
+          'Peek at the top element without removing it',
+          'Check if stack is empty before popping'
+        ],
+        visualizations: [
+          AlgorithmVisualization(
+            type: 'simulation',
+            title: 'Basic Stack Operations',
+            description: 'This simulation shows how elements are pushed and popped from a stack following LIFO principle.',
+            steps: [
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Initialize an empty stack. The stack is currently empty.',
+              ),
+              VisualizationStep(
+                highlightIndices: [0],
+                previousIndices: [],
+                explanation: 'Push element 10 onto the stack. Element 10 is now at the top (index 0).',
+              ),
+              VisualizationStep(
+                highlightIndices: [1],
+                previousIndices: [0],
+                explanation: 'Push element 20 onto the stack. Element 20 is now at the top (index 1), 10 is below.',
+              ),
+              VisualizationStep(
+                highlightIndices: [2],
+                previousIndices: [0, 1],
+                explanation: 'Push element 30 onto the stack. Element 30 is now at the top (index 2).',
+              ),
+              VisualizationStep(
+                highlightIndices: [3],
+                previousIndices: [0, 1, 2],
+                explanation: 'Push element 40 onto the stack. Element 40 is now at the top (index 3).',
+              ),
+              VisualizationStep(
+                highlightIndices: [4],
+                previousIndices: [0, 1, 2, 3],
+                explanation: 'Push element 50 onto the stack. Element 50 is now at the top (index 4).',
+              ),
+              VisualizationStep(
+                highlightIndices: [5],
+                previousIndices: [0, 1, 2, 3, 4],
+                explanation: 'Push element 60 onto the stack. Element 60 is now at the top (index 5).',
+              ),
+              VisualizationStep(
+                highlightIndices: [6],
+                previousIndices: [0, 1, 2, 3, 4, 5],
+                explanation: 'Push element 70 onto the stack. Element 70 is now at the top (index 6).',
+              ),
+              VisualizationStep(
+                highlightIndices: [7],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6],
+                explanation: 'Push element 80 onto the stack. Element 80 is now at the top (index 7).',
+              ),
+              VisualizationStep(
+                highlightIndices: [8],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6, 7],
+                explanation: 'Push element 90 onto the stack. Element 90 is now at the top (index 8).',
+              ),
+              VisualizationStep(
+                highlightIndices: [9],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                explanation: 'Push element 100 onto the stack. Element 100 is now at the top (index 9). Stack is full.',
+              ),
+              VisualizationStep(
+                highlightIndices: [8],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6, 7],
+                explanation: 'Pop element from stack. Element 100 is removed, 90 is now at the top (index 8).',
+              ),
+              VisualizationStep(
+                highlightIndices: [7],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6],
+                explanation: 'Pop element from stack. Element 90 is removed, 80 is now at the top (index 7).',
+              ),
+              VisualizationStep(
+                highlightIndices: [6],
+                previousIndices: [0, 1, 2, 3, 4, 5],
+                explanation: 'Pop element from stack. Element 80 is removed, 70 is now at the top (index 6).',
+              ),
+            ],
+          ),
+          AlgorithmVisualization(
+            type: 'simulation',
+            title: 'Stack Operations Quiz',
+            description: 'Test your understanding of stack operations and LIFO principle.',
+            steps: [
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 1: What does LIFO stand for in the context of stacks?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: Last In First Out - the last element added is the first one to be removed.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 2: Which operation adds an element to the top of the stack?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: Push operation adds an element to the top of the stack.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 3: What happens when you try to pop from an empty stack?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: This causes a stack underflow error. Always check if stack is empty before popping.',
+              ),
+            ],
+          ),
+        ],
+      ),
+      Algorithm(
+        id: 'linked_list',
+        name: 'Linked List',
+        category: 'Data Structures & Algorithm',
+        description: 'A linked list is a linear data structure where elements are stored in nodes, '
+            'and each node contains data and a reference (or link) to the next node. '
+            'Unlike arrays, linked lists do not store elements in contiguous memory locations.',
+        steps: [
+          'Create nodes with data and next pointer',
+          'Link nodes together by setting next pointers',
+          'Maintain a head pointer to the first node',
+          'Traverse the list by following next pointers',
+          'Insert or delete nodes by updating pointers'
+        ],
+        visualizations: [
+          AlgorithmVisualization(
+            type: 'simulation',
+            title: 'Linked List Traversal and Insertion',
+            description: 'This simulation shows how to traverse a linked list and insert new nodes.',
+            steps: [
+              VisualizationStep(
+                highlightIndices: [0],
+                previousIndices: [],
+                explanation: 'Start with head node containing value 10. Head points to the first node (index 0).',
+              ),
+              VisualizationStep(
+                highlightIndices: [1],
+                previousIndices: [0],
+                explanation: 'Add second node with value 20. First node now points to second node (index 1).',
+              ),
+              VisualizationStep(
+                highlightIndices: [2],
+                previousIndices: [0, 1],
+                explanation: 'Add third node with value 30. Second node now points to third node (index 2).',
+              ),
+              VisualizationStep(
+                highlightIndices: [3],
+                previousIndices: [0, 1, 2],
+                explanation: 'Add fourth node with value 40. Third node now points to fourth node (index 3).',
+              ),
+              VisualizationStep(
+                highlightIndices: [4],
+                previousIndices: [0, 1, 2, 3],
+                explanation: 'Add fifth node with value 50. Fourth node now points to fifth node (index 4).',
+              ),
+              VisualizationStep(
+                highlightIndices: [5],
+                previousIndices: [0, 1, 2, 3, 4],
+                explanation: 'Add sixth node with value 60. Fifth node now points to sixth node (index 5).',
+              ),
+              VisualizationStep(
+                highlightIndices: [6],
+                previousIndices: [0, 1, 2, 3, 4, 5],
+                explanation: 'Add seventh node with value 70. Sixth node now points to seventh node (index 6).',
+              ),
+              VisualizationStep(
+                highlightIndices: [7],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6],
+                explanation: 'Add eighth node with value 80. Seventh node now points to eighth node (index 7).',
+              ),
+              VisualizationStep(
+                highlightIndices: [8],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6, 7],
+                explanation: 'Add ninth node with value 90. Eighth node now points to ninth node (index 8).',
+              ),
+              VisualizationStep(
+                highlightIndices: [9],
+                previousIndices: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                explanation: 'Add tenth node with value 100. Ninth node now points to tenth node (index 9).',
+              ),
+              VisualizationStep(
+                highlightIndices: [2, 10],
+                previousIndices: [0, 1, 3, 4, 5, 6, 7, 8, 9],
+                explanation: 'Insert new node with value 25 between nodes 20 and 30. Update pointers accordingly.',
+              ),
+              VisualizationStep(
+                highlightIndices: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                previousIndices: [],
+                explanation: 'Traverse the complete linked list from head to tail. Each node points to the next.',
+              ),
+              VisualizationStep(
+                highlightIndices: [5],
+                previousIndices: [0, 1, 2, 3, 4, 6, 7, 8, 9, 10],
+                explanation: 'Delete node with value 60. Update previous node to point to next node, skipping deleted node.',
+              ),
+            ],
+          ),
+          AlgorithmVisualization(
+            type: 'simulation',
+            title: 'Linked List Concepts Quiz',
+            description: 'Test your understanding of linked list structure and operations.',
+            steps: [
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 1: What is the main advantage of linked lists over arrays?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: Dynamic size - linked lists can grow or shrink during runtime without declaring fixed size.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 2: What does each node in a linked list contain?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: Each node contains data and a pointer/reference to the next node in the sequence.',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Question 3: How do you access the middle element of a linked list?',
+              ),
+              VisualizationStep(
+                highlightIndices: [],
+                previousIndices: [],
+                explanation: 'Answer: You must traverse from the head node, following next pointers until you reach the desired position.',
+              ),
+            ],
+          ),
+        ],
+      ),
     ];
   }
 }

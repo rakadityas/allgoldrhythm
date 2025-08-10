@@ -327,4 +327,224 @@ print(longest_substring_with_k_distinct(s, k))  # Output: 3 (substring "ece")
 ''',
     };
   }
+
+  static Map<String, String> getStackExamples() {
+    return {
+      'Basic Stack Operations': '''
+# Stack Implementation using List
+# Demonstrates push, pop, peek, and isEmpty operations
+class Stack:
+    def __init__(self):
+        self.items = []
+    
+    def push(self, item):
+        """Add an item to the top of the stack"""
+        self.items.append(item)
+        print(f"Pushed {item} onto stack")
+    
+    def pop(self):
+        """Remove and return the top item from the stack"""
+        if self.is_empty():
+            raise IndexError("Stack is empty")
+        item = self.items.pop()
+        print(f"Popped {item} from stack")
+        return item
+    
+    def peek(self):
+        """Return the top item without removing it"""
+        if self.is_empty():
+            raise IndexError("Stack is empty")
+        return self.items[-1]
+    
+    def is_empty(self):
+        """Check if the stack is empty"""
+        return len(self.items) == 0
+    
+    def size(self):
+        """Return the number of items in the stack"""
+        return len(self.items)
+
+# Example usage
+stack = Stack()
+
+# Push elements
+for i in [10, 20, 30, 40, 50]:
+    stack.push(i)
+
+print(f"Top element: {stack.peek()}")
+print(f"Stack size: {stack.size()}")
+
+# Pop elements
+while not stack.is_empty():
+    stack.pop()
+''',
+
+      'Balanced Parentheses': '''
+# Check if parentheses are balanced using stack
+# This is a classic stack application problem
+def is_balanced(expression):
+    """Check if parentheses in expression are balanced"""
+    stack = []
+    opening = "({["
+    closing = ")}]"
+    pairs = {")": "(", "}": "{", "]": "["}
+    
+    for char in expression:
+        if char in opening:
+            stack.append(char)
+        elif char in closing:
+            if not stack or stack[-1] != pairs[char]:
+                return False
+            stack.pop()
+    
+    return len(stack) == 0
+
+# Example usage
+expressions = [
+    "()",           # True
+    "()[]{}",       # True
+    "(])",          # False
+    "([{}])",       # True
+    "(((",          # False
+]
+
+for expr in expressions:
+    result = is_balanced(expr)
+    print(f"'{expr}' is balanced: {result}")
+''',
+    };
+  }
+
+  static Map<String, String> getLinkedListExamples() {
+    return {
+      'Basic Linked List Operations': '''
+# Singly Linked List Implementation
+# Demonstrates node creation, insertion, deletion, and traversal
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+class LinkedList:
+    def __init__(self):
+        self.head = None
+    
+    def append(self, val):
+        """Add a new node at the end of the list"""
+        new_node = ListNode(val)
+        if not self.head:
+            self.head = new_node
+            return
+        
+        current = self.head
+        while current.next:
+            current = current.next
+        current.next = new_node
+    
+    def prepend(self, val):
+        """Add a new node at the beginning of the list"""
+        new_node = ListNode(val)
+        new_node.next = self.head
+        self.head = new_node
+    
+    def delete(self, val):
+        """Delete the first occurrence of val"""
+        if not self.head:
+            return
+        
+        if self.head.val == val:
+            self.head = self.head.next
+            return
+        
+        current = self.head
+        while current.next and current.next.val != val:
+            current = current.next
+        
+        if current.next:
+            current.next = current.next.next
+    
+    def display(self):
+        """Print all elements in the list"""
+        elements = []
+        current = self.head
+        while current:
+            elements.append(str(current.val))
+            current = current.next
+        return " -> ".join(elements) + " -> None"
+    
+    def find(self, val):
+        """Search for a value in the list"""
+        current = self.head
+        position = 0
+        while current:
+            if current.val == val:
+                return position
+            current = current.next
+            position += 1
+        return -1
+
+# Example usage
+ll = LinkedList()
+
+# Add elements
+for i in [10, 20, 30, 40, 50]:
+    ll.append(i)
+
+print(f"List: {ll.display()}")
+print(f"Position of 30: {ll.find(30)}")
+
+# Delete an element
+ll.delete(30)
+print(f"After deleting 30: {ll.display()}")
+
+# Add at beginning
+ll.prepend(5)
+print(f"After prepending 5: {ll.display()}")
+''',
+
+      'Reverse Linked List': '''
+# Reverse a singly linked list
+# This is a fundamental linked list operation
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+def reverse_linked_list(head):
+    """Reverse a linked list iteratively"""
+    prev = None
+    current = head
+    
+    while current:
+        next_temp = current.next  # Store next node
+        current.next = prev       # Reverse the link
+        prev = current           # Move prev forward
+        current = next_temp      # Move current forward
+    
+    return prev  # prev is now the new head
+
+def print_list(head):
+    """Helper function to print the list"""
+    elements = []
+    current = head
+    while current:
+        elements.append(str(current.val))
+        current = current.next
+    return " -> ".join(elements) + " -> None"
+
+# Create a sample linked list: 1 -> 2 -> 3 -> 4 -> 5
+head = ListNode(1)
+head.next = ListNode(2)
+head.next.next = ListNode(3)
+head.next.next.next = ListNode(4)
+head.next.next.next.next = ListNode(5)
+
+print(f"Original list: {print_list(head)}")
+
+# Reverse the list
+reversed_head = reverse_linked_list(head)
+print(f"Reversed list: {print_list(reversed_head)}")
+''',
+    };
+  }
 }
