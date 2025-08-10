@@ -6,7 +6,7 @@ class AlgorithmData {
       Algorithm(
         id: 'two_pointers',
         name: 'Two Pointers',
-        category: 'DSA',
+        category: 'Data Structures & Algorithm',
         description: 'Two pointers is a technique where two pointers iterate through a data structure. '
             'It is often used to search for pairs in a sorted array or linked list, '
             'with O(n) time complexity and O(1) space complexity.',
@@ -322,7 +322,7 @@ class AlgorithmData {
       Algorithm(
         id: 'sliding_window',
         name: 'Sliding Window',
-        category: 'DSA',
+        category: 'Data Structures & Algorithm',
         description: 'Sliding Window is a computational technique that aims to reduce the use of nested loops '
             'and replace it with a single loop, thereby reducing the time complexity.',
         steps: [

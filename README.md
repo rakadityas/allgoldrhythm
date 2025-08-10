@@ -1,6 +1,6 @@
 # AllGoldRhythm
 
-A comprehensive Data Structures and Algorithms (DSA) visualization app built with Flutter. This app provides interactive learning experiences for algorithm concepts through visual simulations, step-by-step explanations, and code examples.
+A comprehensive Data Structures and Algorithms (Data Structures & Algorithm) visualization app built with Flutter. This app provides interactive learning experiences for algorithm concepts through visual simulations, step-by-step explanations, and code examples.
 
 ## 🚀 Tech Stack
 
@@ -133,7 +133,7 @@ flutter build ios --release
 
 ### Adding a New Algorithm Section
 
-To add a new algorithm (e.g., DSA -> Two Pointers or DSA -> Sliding Window):
+To add a new algorithm (e.g., Data Structures & Algorithm -> Two Pointers or Data Structures & Algorithm -> Sliding Window):
 
 1. **Open `lib/data/algorithm_data.dart`**
 
@@ -142,7 +142,7 @@ To add a new algorithm (e.g., DSA -> Two Pointers or DSA -> Sliding Window):
    Algorithm(
      id: 'sliding_window',
      name: 'Sliding Window',
-     category: 'DSA',
+     category: 'Data Structures & Algorithm',
      description: 'Sliding Window technique description...',
      steps: [
        'Step 1: Initialize window boundaries',
