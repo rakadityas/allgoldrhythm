@@ -1,4 +1,4 @@
-package com.allgoldrythm.allgoldrythm
+package com.allgoldrhythm.allgoldrhythm
 
 import io.flutter.embedding.android.FlutterActivity
 
