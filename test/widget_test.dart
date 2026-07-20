@@ -155,6 +155,22 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final concept in FundamentalsData.getConcepts()) {
+    testWidgets('${concept.title}: Theory and Quiz tabs render without error', (WidgetTester tester) async {
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.light(),
+        home: FundamentalDetailScreen(concept: concept),
+      ));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.text('Quiz'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('Question 1 of 5'), findsOneWidget);
+    });
+  }
+
   for (final problem in SystemDesignData.getProblems()) {
     testWidgets('${problem.title}: requirements render and design canvas is usable', (
       WidgetTester tester,

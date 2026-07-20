@@ -43,14 +43,15 @@ allgoldrythm/
 │   └── images/             # Image assets
 ├── lib/
 │   ├── data/               # Data layer
-│   │   ├── algorithm_data.dart            # DSA algorithm definitions and visualizations (20 topics)
+│   │   ├── algorithm_data.dart            # DSA algorithm definitions and visualizations (21 topics)
 │   │   ├── algorithm_python_examples.dart # Python code examples per algorithm
 │   │   ├── quiz_data.dart                 # 15-question quiz bank per algorithm
-│   │   ├── fundamentals_data.dart         # System Design theory concepts, grouped by category
+│   │   ├── fundamentals_data.dart         # System Design theory concepts, grouped by category (28 concepts)
+│   │   ├── fundamentals_quiz_data.dart    # 5-question quiz bank per fundamentals concept
 │   │   └── system_design_data.dart        # System Design practice problems (case studies)
 │   ├── models/             # Data models
 │   │   ├── algorithm.dart            # Algorithm, AlgorithmVisualization, VisualizationStep
-│   │   ├── quiz_question.dart        # QuizQuestion model
+│   │   ├── quiz_question.dart        # QuizQuestion model (shared by DSA and Fundamentals quizzes)
 │   │   ├── fundamental_concept.dart  # FundamentalConcept (theory topic + optional diagram)
 │   │   └── system_design.dart        # ComponentType, PlacedComponent, Connection, ReferenceArchitecture, SystemDesignProblem
 │   ├── screens/            # UI screens
@@ -59,21 +60,23 @@ allgoldrythm/
 │   │   ├── algorithm_detail_screen.dart     # DSA: Simulation / Review / Quiz tabs for one algorithm
 │   │   ├── code_examples_screen.dart        # Python code examples display
 │   │   ├── fundamentals_list_screen.dart    # System Design: categorized theory concept list
-│   │   ├── fundamental_detail_screen.dart   # System Design: theory summary + diagram + key points
+│   │   ├── fundamental_detail_screen.dart   # System Design: Theory / Quiz tabs for one concept
 │   │   ├── system_design_list_screen.dart   # System Design: Fundamentals / Practice Problems tabs
 │   │   └── system_design_detail_screen.dart # System Design: Requirements / Design Canvas tabs for one problem
 │   ├── widgets/            # Reusable UI components
 │   │   ├── algorithm_definition.dart # Algorithm definition display
-│   │   ├── algorithm_review.dart     # Interactive tap-to-validate review component
-│   │   ├── algorithm_simulation.dart # Visual step-by-step simulation component
-│   │   ├── algorithm_quiz.dart       # Multiple-choice quiz component with scoring
+│   │   ├── algorithm_review.dart     # Interactive tap-to-validate review component (fixed footer controls)
+│   │   ├── algorithm_simulation.dart # Visual step-by-step simulation component (fixed footer controls)
+│   │   ├── algorithm_quiz.dart       # Thin wrapper: DSA quiz data + QuizView
+│   │   ├── quiz_view.dart            # Shared multiple-choice quiz UI with scoring, used by both DSA and Fundamentals quizzes
 │   │   ├── design_canvas.dart        # Drag-and-drop system design canvas (place/connect/check/undo)
 │   │   └── architecture_diagram.dart # Static, pre-drawn diagram (fundamentals) using the same visual language as the canvas
 │   ├── theme/
 │   │   └── app_theme.dart  # Material 3 theme, design tokens (AppSpacing/AppRadius), light/dark, semantic colors
 │   ├── utils/              # Utility functions
 │   │   ├── pointer_labels.dart # Pointer/cursor labels (L/R, Slow/Fast, Mid, ...) shared by Simulation and Review
-│   │   └── graph_layout.dart   # Shared fixed graph layout used by graph visualizations
+│   │   ├── graph_layout.dart   # Shared fixed graph layout used by graph visualizations
+│   │   └── matrix_layout.dart  # Shared fixed 3x4 grid shape used by the Matrix Traversal visualization
 │   └── main.dart           # App entry point
 ├── test/                   # Unit and widget tests
 ├── pubspec.yaml           # Dependencies and project configuration
@@ -372,7 +375,7 @@ To add a new theory topic (e.g. a new networking or consistency concept):
    ),
    ```
 3. **Diagrams are optional** — plenty of existing concepts (CAP Theorem, ACID vs BASE, SQL vs NoSQL) are text-only. Only add one when there's a clear component/connection flow to illustrate; `ArchitectureDiagram` positions components by first index of each `ComponentType`, so a diagram can't use the same type twice.
-4. Fundamentals concepts don't need quiz questions or a Simulation/Review — they're theory-only, rendered by `fundamental_detail_screen.dart`.
+4. **Add a quiz bank** in `lib/data/fundamentals_quiz_data.dart` — a `static const` list of `QuizQuestion`s (5 per concept is the established depth) registered in `_bank` keyed by the concept's `id`. `fundamental_detail_screen.dart` renders a Theory tab (summary, diagram, key points) and a Quiz tab (via the shared `QuizView` widget, also used by DSA's `AlgorithmQuiz`) — no other structural work is needed. Fundamentals concepts don't need a Simulation/Review, since they're theory-only rather than a procedural algorithm.
 
 ### Adding a New System Design Practice Problem
 
@@ -424,7 +427,7 @@ Theming lives in `lib/theme/app_theme.dart`, not inline in `main.dart`: `AppThem
 
 - **Visual Simulations**: Step-by-step algorithm visualizations with real data values and pointer/cursor labels (L/R, Slow/Fast, Mid, ...)
 - **Interactive Learning**: Tap-to-validate Review mode that steps through the same trace as Simulation, plus a 15-question quiz per algorithm
-- **System Design Fundamentals**: Theory concepts across networking, APIs, load balancing, caching, databases, scaling, consistency, async processing, rate limiting, storage, security, search, notifications, and geospatial indexing — each with an optional pre-drawn architecture diagram
+- **System Design Fundamentals**: Theory concepts across networking, APIs, load balancing, caching, databases, scaling, consistency, async processing, rate limiting, storage, security, search, notifications, and geospatial indexing — each with an optional pre-drawn architecture diagram and a 5-question quiz
 - **Drag-and-Drop Design Canvas**: Sketch a system architecture yourself (place components, connect them, pan/zoom) and check it against a reference solution for full interview-style practice problems
 - **Code Examples**: Python implementations with explanations
 - **Cross-Platform**: Runs on web, mobile, and desktop
