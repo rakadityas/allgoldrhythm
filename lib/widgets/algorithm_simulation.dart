@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/algorithm.dart';
 import '../theme/app_theme.dart';
 import '../utils/graph_layout.dart';
+import '../utils/matrix_layout.dart';
 import '../utils/pointer_labels.dart';
 
 class AlgorithmSimulation extends StatefulWidget {
@@ -140,6 +141,37 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
         ),
         size: Size.infinite,
       ),
+    );
+  }
+
+  Widget _buildMatrixVisualization(AlgorithmVisualization viz, VisualizationStep currentStep, Map<int, String> labels) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int row = 0; row < MatrixLayout.rows; row++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (int col = 0; col < MatrixLayout.cols; col++)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                    child: _buildArrayCell(
+                      theme: theme,
+                      index: row * MatrixLayout.cols + col,
+                      value: viz.valueAtStep(row * MatrixLayout.cols + col, currentStep),
+                      isHighlighted: currentStep.highlightIndices.contains(row * MatrixLayout.cols + col),
+                      wasHighlighted: currentStep.previousIndices.contains(row * MatrixLayout.cols + col),
+                      isRemoved: currentStep.removedIndices.contains(row * MatrixLayout.cols + col),
+                      label: labels[row * MatrixLayout.cols + col],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -354,6 +386,8 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
                       _buildTreeVisualization(currentStep, pointerLabels)
                     else if (widget.algorithm.id == 'graph')
                       _buildGraphVisualization(currentVisualization, currentStep, pointerLabels)
+                    else if (widget.algorithm.id == 'matrix_traversal')
+                      _buildMatrixVisualization(currentVisualization, currentStep, pointerLabels)
                     else if (hasMultiplePointers)
                       _buildPointerArrayRows(theme, currentVisualization, currentStep, pointerLabels)
                     else

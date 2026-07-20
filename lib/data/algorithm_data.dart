@@ -1978,6 +1978,95 @@ class AlgorithmData {
           ),
         ],
       ),
+      Algorithm(
+        id: 'matrix_traversal',
+        name: 'Matrix Traversal',
+        category: 'Data Structures & Algorithm',
+        description: 'A matrix (2D grid) generalizes an array to two dimensions — common in problems involving '
+            'images, boards, or maps. Spiral traversal visits every cell in a clockwise spiral by shrinking four '
+            'boundaries (top, bottom, left, right) inward after each side is fully walked.',
+        steps: [
+          'Track four boundaries: top, bottom, left, right',
+          'Walk the top row left-to-right, then move the top boundary down',
+          'Walk the right column top-to-bottom, then move the right boundary left',
+          'If boundaries remain, walk the bottom row right-to-left, then move it up',
+          'If boundaries remain, walk the left column bottom-to-top, then move it right',
+          'Repeat until the boundaries cross',
+        ],
+        visualizations: [
+          AlgorithmVisualization(
+            type: 'simulation',
+            title: 'Spiral Matrix Traversal',
+            description: 'Visit every cell of a grid in clockwise spiral order by shrinking four boundaries inward.',
+            mockQuestion: 'Given the 3×4 grid [[1,2,3,4],[5,6,7,8],[9,10,11,12]], read every cell in clockwise '
+                'spiral order starting from the top-left. Why does tracking four shrinking boundaries (top, '
+                'bottom, left, right) avoid re-visiting a cell?',
+            values: const [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            steps: [
+              VisualizationStep(
+                highlightIndices: [0],
+                previousIndices: [],
+                explanation: 'Boundaries start at top=0, bottom=2, left=0, right=3. Walk the top row left to right, starting at value 1.',
+              ),
+              VisualizationStep(
+                highlightIndices: [1],
+                previousIndices: [0],
+                explanation: 'Continue along the top row: value 2.',
+              ),
+              VisualizationStep(
+                highlightIndices: [2],
+                previousIndices: [0, 1],
+                explanation: 'Continue along the top row: value 3.',
+              ),
+              VisualizationStep(
+                highlightIndices: [3],
+                previousIndices: [0, 1, 2],
+                explanation: 'Value 4 — the top-right corner. The top row is fully visited, so move the top boundary down (top=1) and switch to walking the right column.',
+              ),
+              VisualizationStep(
+                highlightIndices: [7],
+                previousIndices: [0, 1, 2, 3],
+                explanation: 'Walk the right column top to bottom, within the new top boundary: value 8.',
+              ),
+              VisualizationStep(
+                highlightIndices: [11],
+                previousIndices: [0, 1, 2, 3, 7],
+                explanation: 'Value 12 — the bottom-right corner. The right column is fully visited, so move the right boundary left (right=2) and switch to walking the bottom row.',
+              ),
+              VisualizationStep(
+                highlightIndices: [10],
+                previousIndices: [0, 1, 2, 3, 7, 11],
+                explanation: 'Walk the bottom row right to left, within the new right boundary: value 11.',
+              ),
+              VisualizationStep(
+                highlightIndices: [9],
+                previousIndices: [0, 1, 2, 3, 7, 11, 10],
+                explanation: 'Continue along the bottom row: value 10.',
+              ),
+              VisualizationStep(
+                highlightIndices: [8],
+                previousIndices: [0, 1, 2, 3, 7, 11, 10, 9],
+                explanation: 'Value 9 — the bottom-left corner. The bottom row is fully visited, so move the bottom boundary up (bottom=1) and switch to walking the left column.',
+              ),
+              VisualizationStep(
+                highlightIndices: [4],
+                previousIndices: [0, 1, 2, 3, 7, 11, 10, 9, 8],
+                explanation: 'Walk the left column bottom to top, within the new bottom boundary: value 5. The left column is now fully visited (row 0 was already covered by the top row) — move the left boundary right (left=1).',
+              ),
+              VisualizationStep(
+                highlightIndices: [5],
+                previousIndices: [0, 1, 2, 3, 7, 11, 10, 9, 8, 4],
+                explanation: 'All four boundaries have shrunk to a single inner row (row 1, columns 1–2). Walk it left to right: value 6.',
+              ),
+              VisualizationStep(
+                highlightIndices: [6],
+                previousIndices: [0, 1, 2, 3, 7, 11, 10, 9, 8, 4, 5],
+                explanation: 'Value 7. The boundaries have now fully crossed (top exceeds bottom), so traversal stops. Spiral order complete: 1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7.',
+              ),
+            ],
+          ),
+        ],
+      ),
     ];
   }
 }

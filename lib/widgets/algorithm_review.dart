@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/algorithm.dart';
 import '../theme/app_theme.dart';
 import '../utils/graph_layout.dart';
+import '../utils/matrix_layout.dart';
 import '../utils/pointer_labels.dart';
 
 class GraphReviewPainter extends CustomPainter {
@@ -106,6 +107,7 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
 
   bool get _isTree => widget.algorithm.id == 'trees';
   bool get _isGraph => widget.algorithm.id == 'graph';
+  bool get _isMatrix => widget.algorithm.id == 'matrix_traversal';
   bool get _hasMultiplePointers =>
       PointerLabels.multiRowAlgorithms.contains(widget.algorithm.id) && _expected.length > 1;
 
@@ -425,9 +427,11 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
               ? _buildTreeVisualization(theme.colorScheme, theme.textTheme)
               : _isGraph
                   ? _buildGraphVisualization(theme.colorScheme, theme.textTheme, viz)
-                  : _stepComplete && _hasMultiplePointers
-                      ? _buildPointerArrayRows(theme.colorScheme, theme.textTheme, viz)
-                      : _buildArrayVisualization(theme.colorScheme, theme.textTheme, viz),
+                  : _isMatrix
+                      ? _buildMatrixTapVisualization(theme.colorScheme, theme.textTheme, viz)
+                      : _stepComplete && _hasMultiplePointers
+                          ? _buildPointerArrayRows(theme.colorScheme, theme.textTheme, viz)
+                          : _buildArrayVisualization(theme.colorScheme, theme.textTheme, viz),
           const SizedBox(height: AppSpacing.md),
           _buildFeedback(theme, expected),
         ] else
@@ -575,77 +579,131 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
         alignment: WrapAlignment.center,
         spacing: AppSpacing.sm,
         runSpacing: AppSpacing.sm,
-        children: List.generate(viz.arrayLength, (index) {
-          final isSelected = _tapped.contains(index);
-          final wasPrevious = previousIndices.contains(index) && !isSelected;
-          final isWrongFlash = _wrong && !isSelected;
-          final isRemoved = step.removedIndices.contains(index);
-          final label = labels[index];
+        children: List.generate(
+          viz.arrayLength,
+          (index) => _buildTapCell(scheme, textTheme, viz, step, previousIndices, labels, index),
+        ),
+      ),
+    );
+  }
 
-          return GestureDetector(
-            onTap: () => _handleTap(index),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+  /// Same tappable cells as [_buildArrayVisualization], arranged in a fixed
+  /// grid instead of a wrapping row — for algorithms whose data is
+  /// genuinely 2D (e.g. Matrix Traversal) rather than a flat array.
+  Widget _buildMatrixTapVisualization(ColorScheme scheme, TextTheme textTheme, AlgorithmVisualization viz) {
+    final step = viz.steps[_stepIndex];
+    final previousIndices = step.previousIndices.toSet();
+    final labels = PointerLabels.forStep(
+      algorithmId: widget.algorithm.id,
+      visualizationTitle: viz.title,
+      highlightIndices: _tapped.toList(),
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int row = 0; row < MatrixLayout.rows; row++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(
-                  height: 20,
-                  child: label == null
-                      ? null
-                      : Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _stepComplete ? context.appColors.success : scheme.primary,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            label,
-                            style: textTheme.labelMedium?.copyWith(color: scheme.onPrimary, fontSize: 10),
-                          ),
-                        ),
-                ),
-                const SizedBox(height: 2),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: isRemoved
-                        ? scheme.errorContainer
-                        : isSelected
-                            ? (_stepComplete ? context.appColors.success : scheme.primary)
-                            : wasPrevious
-                                ? scheme.primaryContainer
-                                : scheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    border: isWrongFlash ? Border.all(color: scheme.error, width: 2) : null,
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${viz.valueAtStep(index, step)}',
-                      style: textTheme.titleMedium?.copyWith(
-                        color: isRemoved
-                            ? scheme.onErrorContainer
-                            : isSelected
-                                ? scheme.onPrimary
-                                : scheme.onSurface,
-                        decoration: isRemoved ? TextDecoration.lineThrough : null,
-                      ),
+                for (int col = 0; col < MatrixLayout.cols; col++)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                    child: _buildTapCell(
+                      scheme,
+                      textTheme,
+                      viz,
+                      step,
+                      previousIndices,
+                      labels,
+                      row * MatrixLayout.cols + col,
                     ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                SizedBox(
-                  height: 14,
-                  child: isRemoved
-                      ? Text('removed', style: textTheme.labelMedium?.copyWith(fontSize: 10, color: scheme.error))
-                      : wasPrevious
-                          ? Text('prev', style: textTheme.labelMedium?.copyWith(fontSize: 10))
-                          : null,
-                ),
               ],
             ),
-          );
-        }),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTapCell(
+    ColorScheme scheme,
+    TextTheme textTheme,
+    AlgorithmVisualization viz,
+    VisualizationStep step,
+    Set<int> previousIndices,
+    Map<int, String> labels,
+    int index,
+  ) {
+    final isSelected = _tapped.contains(index);
+    final wasPrevious = previousIndices.contains(index) && !isSelected;
+    final isWrongFlash = _wrong && !isSelected;
+    final isRemoved = step.removedIndices.contains(index);
+    final label = labels[index];
+
+    return GestureDetector(
+      onTap: () => _handleTap(index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: 20,
+            child: label == null
+                ? null
+                : Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: _stepComplete ? context.appColors.success : scheme.primary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      label,
+                      style: textTheme.labelMedium?.copyWith(color: scheme.onPrimary, fontSize: 10),
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 2),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: isRemoved
+                  ? scheme.errorContainer
+                  : isSelected
+                      ? (_stepComplete ? context.appColors.success : scheme.primary)
+                      : wasPrevious
+                          ? scheme.primaryContainer
+                          : scheme.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: isWrongFlash ? Border.all(color: scheme.error, width: 2) : null,
+            ),
+            child: Center(
+              child: Text(
+                '${viz.valueAtStep(index, step)}',
+                style: textTheme.titleMedium?.copyWith(
+                  color: isRemoved
+                      ? scheme.onErrorContainer
+                      : isSelected
+                          ? scheme.onPrimary
+                          : scheme.onSurface,
+                  decoration: isRemoved ? TextDecoration.lineThrough : null,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          SizedBox(
+            height: 14,
+            child: isRemoved
+                ? Text('removed', style: textTheme.labelMedium?.copyWith(fontSize: 10, color: scheme.error))
+                : wasPrevious
+                    ? Text('prev', style: textTheme.labelMedium?.copyWith(fontSize: 10))
+                    : null,
+          ),
+        ],
       ),
     );
   }

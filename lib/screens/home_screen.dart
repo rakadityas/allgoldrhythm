@@ -53,7 +53,7 @@ class HomeScreen extends StatelessWidget {
           _FocusCard(
             icon: Icons.code,
             title: 'Data Structures & Algorithms',
-            description: 'Simulate, review, and quiz yourself on 20 core patterns.',
+            description: 'Simulate, review, and quiz yourself on 21 core patterns.',
             color: theme.colorScheme.primaryContainer,
             onColor: theme.colorScheme.onPrimaryContainer,
             onTap: () => Navigator.push(

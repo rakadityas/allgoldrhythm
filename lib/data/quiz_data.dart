@@ -27,6 +27,7 @@ class QuizData {
     'intervals': _intervals,
     'trie': _trie,
     'bit_manipulation': _bitManipulation,
+    'matrix_traversal': _matrixTraversal,
   };
 
   static const _twoPointers = [
@@ -1891,6 +1892,99 @@ class QuizData {
       options: ['x', '0', 'y', 'x XOR y'],
       correctIndex: 2,
       explanation: 'x XOR x cancels to 0, leaving 0 XOR y = y.',
+    ),
+  ];
+
+  static const _matrixTraversal = [
+    QuizQuestion(
+      question: 'In spiral matrix traversal, how many boundary variables are typically tracked?',
+      options: ['Two (start and end)', 'Four (top, bottom, left, right)', 'One (a single cursor)', 'Six'],
+      correctIndex: 1,
+      explanation: 'Four shrinking boundaries mark the still-unvisited rectangle of the grid at any point.',
+    ),
+    QuizQuestion(
+      question: 'After fully walking the top row of a spiral traversal, what happens to the boundaries?',
+      options: ['Nothing changes', 'The top boundary moves down by one, and traversal switches to the right column', 'The bottom boundary moves up', 'Traversal restarts from the top-left'],
+      correctIndex: 1,
+      explanation: 'Moving the top boundary down excludes the row just visited, preventing it from being visited again.',
+    ),
+    QuizQuestion(
+      question: 'Why does spiral traversal check `if (top <= bottom)` before walking the bottom row (and `if (left <= right)` before the left column)?',
+      options: ['These checks are unnecessary and can be removed', 'To avoid re-visiting or double-counting a row/column that the top-row or right-column pass already fully covered once the grid has shrunk to a single row or column', 'To make the code run faster', 'To handle only square matrices'],
+      correctIndex: 1,
+      explanation: 'Without the guard, a grid that has shrunk to one remaining row or column would have that row/column visited twice.',
+    ),
+    QuizQuestion(
+      question: 'For an m×n matrix, what is the time complexity of a full spiral (or row-by-row) traversal?',
+      options: ['O(m + n)', 'O(m × n)', 'O(m × n log(m × n))', 'O((m × n)²)'],
+      correctIndex: 1,
+      explanation: 'Every one of the m × n cells is visited exactly once.',
+    ),
+    QuizQuestion(
+      question: 'Given the row-major index formula index = row * cols + col, what row and column does index 7 correspond to in a matrix with 4 columns?',
+      options: ['Row 0, Col 7', 'Row 1, Col 3', 'Row 2, Col 1', 'Row 7, Col 0'],
+      correctIndex: 1,
+      explanation: '7 = 1 * 4 + 3, so row = 7 // 4 = 1 and col = 7 % 4 = 3.',
+    ),
+    QuizQuestion(
+      question: 'What does "row-major order" mean when flattening a 2D matrix into a 1D array?',
+      options: ['Columns are stored one after another', 'Each row is stored contiguously, one full row after the next', 'Elements are stored in a random but fixed order', 'Only the diagonal elements are stored'],
+      correctIndex: 1,
+      explanation: 'Row-major order lays out row 0 in full, then row 1, and so on — the layout most languages (including this app) use by default.',
+    ),
+    QuizQuestion(
+      question: 'In a 3×4 grid [[1,2,3,4],[5,6,7,8],[9,10,11,12]], what is the very first cell visited by a clockwise spiral traversal starting top-left, and what is the last?',
+      options: ['First: 1, Last: 12', 'First: 1, Last: 7', 'First: 12, Last: 1', 'First: 4, Last: 9'],
+      correctIndex: 1,
+      explanation: 'The spiral ends at the innermost cell once the boundaries cross, which is value 7 here, not the numerically largest value.',
+    ),
+    QuizQuestion(
+      question: 'When does the spiral traversal loop terminate?',
+      options: ['After exactly 4 iterations, always', 'When the top boundary exceeds the bottom boundary, or the left boundary exceeds the right boundary', 'When the matrix contains only even numbers', 'It never terminates for non-square matrices'],
+      correctIndex: 1,
+      explanation: 'Once top > bottom or left > right, there is no rectangle of unvisited cells left.',
+    ),
+    QuizQuestion(
+      question: 'What is the space complexity of spiral matrix traversal, not counting the output array?',
+      options: ['O(m × n)', 'O(log(m × n))', 'O(1) — just the four boundary variables', 'O(m + n)'],
+      correctIndex: 2,
+      explanation: 'Only a constant number of boundary variables are needed regardless of matrix size.',
+    ),
+    QuizQuestion(
+      question: 'Besides spiral order, which other traversal is extremely common for 2D grid interview problems (e.g. counting islands, flood fill)?',
+      options: ['Binary search', 'BFS or DFS from each unvisited cell, treating grid neighbors (up/down/left/right) as graph edges', 'Merge sort', 'A single linear pass ignoring rows'],
+      correctIndex: 1,
+      explanation: 'A grid can be treated as an implicit graph, letting BFS/DFS explore connected regions of cells.',
+    ),
+    QuizQuestion(
+      question: 'If a matrix has more columns than rows (e.g. 3 rows × 8 columns), what happens to the top and bottom boundaries during spiral traversal relative to the left and right boundaries?',
+      options: ['They behave identically regardless of matrix shape — the algorithm doesn\'t care about row/column counts, it just shrinks whichever boundaries still have unvisited cells', 'The algorithm fails on non-square matrices', 'Only square matrices can be spiral-traversed', 'The top and bottom boundaries never move'],
+      correctIndex: 0,
+      explanation: 'The same four-boundary logic works for any rectangular matrix, not just square ones.',
+    ),
+    QuizQuestion(
+      question: 'What real-world problem domains commonly use 2D matrix/grid representations?',
+      options: ['Only mathematical linear algebra', 'Images (pixel grids), game boards, maps, and spreadsheets', 'Only sorting algorithms', 'Matrices have no practical applications'],
+      correctIndex: 1,
+      explanation: 'Grids are a natural fit for anything laid out in rows and columns — images, boards, and geographic maps included.',
+    ),
+    QuizQuestion(
+      question: 'Why is spiral traversal a poor fit for a plain `for` loop over `matrix[row][col]` in row order?',
+      options: ['It isn\'t — spiral order specifically requires changing direction (right, down, left, up) as boundaries shrink, which a simple nested row/column loop does not do', 'Spiral order is identical to row-major order', 'Nested loops cannot access 2D arrays at all', 'Spiral traversal is always slower'],
+      correctIndex: 0,
+      explanation: 'A plain nested loop visits cells in row-major order; spiral order requires explicitly tracking and changing direction.',
+    ),
+    QuizQuestion(
+      question: 'In the app\'s Matrix Traversal simulation, after visiting the top-right corner of the grid, which boundary is updated next?',
+      options: ['The left boundary moves right', 'The bottom boundary moves up', 'The top boundary moves down, then traversal switches to walking the right column', 'No boundary changes — traversal continues along the same row'],
+      correctIndex: 2,
+      explanation: 'Reaching the top-right corner means the top row is fully visited, so the top boundary shrinks inward before switching direction.',
+    ),
+    QuizQuestion(
+      question: 'For a matrix with only 1 row, what does spiral traversal reduce to?',
+      options: ['An infinite loop', 'A simple left-to-right walk across that single row (the right-column, bottom-row, and left-column passes each cover zero cells)', 'Traversal in reverse order', 'An error, since spiral traversal requires at least 2 rows'],
+      correctIndex: 1,
+      explanation: 'With only one row, top and bottom start equal; after the first pass top exceeds bottom, so every other direction contributes nothing.',
     ),
   ];
 }

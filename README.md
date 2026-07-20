@@ -4,7 +4,7 @@ With the rise of AI (Artificial Intelligence), the need for understanding and im
 
 AllGoldRhythm will help you learn and visualize algorithms in a fun and interactive way. It is a comprehensive interview-prep app covering two tracks:
 
-- **Data Structures & Algorithms** — 20 core patterns (two pointers, sliding window, trees, graphs, dynamic programming, and more) with interactive step-by-step simulations, a tap-to-validate review mode, and a 15-question quiz per topic.
+- **Data Structures & Algorithms** — 21 core patterns (two pointers, sliding window, trees, graphs, matrix traversal, dynamic programming, and more) with interactive step-by-step simulations, a tap-to-validate review mode, and a 15-question quiz per topic.
 - **System Design** — a hellointerview-style curriculum: fundamentals/theory concepts (networking, caching, databases, scaling, consistency, search, notifications, geospatial indexing, and more) each illustrated with a pre-drawn architecture diagram, plus practice problems where you sketch the architecture yourself on a drag-and-drop design canvas and check it against a reference solution.
 
 Inspired by @yangshun [Tech Interview Handbook](https://github.com/yangshun/tech-interview-handbook), Navdeep Singh's [NeetCode](https://neetcode.io/), and [hellointerview](https://www.hellointerview.com/).

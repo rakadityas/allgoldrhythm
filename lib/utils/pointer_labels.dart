@@ -76,6 +76,7 @@ class PointerLabels {
 
       case 'trees':
       case 'graph':
+      case 'matrix_traversal':
         return indices.length == 1 ? {indices[0]: 'Visiting'} : const {};
 
       case 'heap':

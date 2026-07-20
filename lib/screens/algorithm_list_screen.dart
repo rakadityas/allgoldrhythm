@@ -42,6 +42,7 @@ class _AlgorithmListScreenState extends State<AlgorithmListScreen> {
     'intervals': Icons.timeline_outlined,
     'trie': Icons.text_fields,
     'bit_manipulation': Icons.memory,
+    'matrix_traversal': Icons.grid_on_outlined,
   };
 
   IconData _iconFor(Algorithm algorithm) =>
