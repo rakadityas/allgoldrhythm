@@ -93,8 +93,10 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.ensureVisible(find.text('Next Step'));
-    await tester.pumpAndSettle();
+    // 'Next Step' lives in the transport controls' fixed footer (outside any
+    // Scrollable), so it's always on screen — no ensureVisible needed, and
+    // calling it here would walk up to the TabBarView's own PageView and
+    // swipe tabs instead of scrolling the (non-existent) nearer ancestor.
     await tester.tap(find.text('Next Step'));
     await tester.pump();
 
@@ -218,10 +220,12 @@ void main() {
         // aren't guaranteed to exist in the tree yet. Every visualization's
         // step data is still exercised below via the Review picker, which
         // renders as a plain (non-lazy) column.
+        // The transport controls live in a fixed footer outside any
+        // Scrollable, so they're always on screen — ensureVisible would walk
+        // up to the TabBarView's own PageView and swipe tabs instead.
         final firstViz = algorithm.visualizations.first;
         for (int i = 0; i < firstViz.steps.length - 1; i++) {
           final nextButton = find.byIcon(Icons.skip_next);
-          await tester.ensureVisible(nextButton);
           await tester.tap(nextButton);
           await tester.pump();
         }

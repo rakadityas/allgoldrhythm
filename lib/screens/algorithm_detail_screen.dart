@@ -50,11 +50,11 @@ class AlgorithmDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(AppSpacing.md),
               child: AlgorithmDefinition(algorithm: algorithm),
             ),
-            SingleChildScrollView(
+            Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
               child: AlgorithmSimulation(algorithm: algorithm),
             ),
-            SingleChildScrollView(
+            Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
               child: AlgorithmReview(algorithm: algorithm),
             ),

@@ -102,6 +102,7 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
   bool _wrong = false;
   bool _finished = false;
   final ScrollController _historyScroll = ScrollController();
+  final ScrollController _stageScroll = ScrollController();
 
   bool get _isTree => widget.algorithm.id == 'trees';
   bool get _isGraph => widget.algorithm.id == 'graph';
@@ -122,7 +123,19 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
   @override
   void dispose() {
     _historyScroll.dispose();
+    _stageScroll.dispose();
     super.dispose();
+  }
+
+  /// The picker and challenge views share one scrollable stage region. Since
+  /// they're wildly different heights, carrying over a scroll offset from
+  /// one into the other (e.g. after scrolling down a long pattern picker)
+  /// would leave the next view rendered mid-scroll instead of at the top.
+  void _resetStageScroll() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_stageScroll.hasClients) return;
+      _stageScroll.jumpTo(0);
+    });
   }
 
   void _scrollHistoryToEnd() {
@@ -145,6 +158,7 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
       _finished = false;
       _stepComplete = _expected.isEmpty;
     });
+    _resetStageScroll();
   }
 
   void _changePattern() {
@@ -156,6 +170,7 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
       _finished = false;
       _stepComplete = false;
     });
+    _resetStageScroll();
   }
 
   void _restart() {
@@ -226,12 +241,60 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
       );
     }
 
+    // The stage below varies in height per step (feedback text, history
+    // trail, legend), so it scrolls in its own region and the primary
+    // Restart/Next-Step actions are pinned in a fixed footer instead of
+    // trailing the variable content, so they never shift on screen.
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            controller: _stageScroll,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: _selected == null
+                    ? _buildPicker(theme, visualizations)
+                    : _buildChallenge(theme, _selected!),
+              ),
+            ),
+          ),
+        ),
+        if (_selected != null) ...[
+          const SizedBox(height: AppSpacing.sm),
+          _buildFooter(theme),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildFooter(ThemeData theme) {
+    final showNextAction = !_finished;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: _selected == null
-            ? _buildPicker(theme, visualizations)
-            : _buildChallenge(theme, _selected!),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        child: Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: _restart,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Restart'),
+            ),
+            const Spacer(),
+            if (showNextAction)
+              FilledButton.icon(
+                onPressed: _stepComplete ? _nextStep : null,
+                icon: Icon(_stepIndex < _selected!.steps.length - 1 ? Icons.arrow_forward : Icons.flag),
+                label: Text(_stepIndex < _selected!.steps.length - 1 ? 'Next Step' : 'Finish'),
+              )
+            else
+              FilledButton.icon(
+                onPressed: _changePattern,
+                icon: const Icon(Icons.swap_horiz),
+                label: const Text('Choose Another'),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -369,15 +432,6 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
           _buildFeedback(theme, expected),
         ] else
           _buildCompletion(theme, viz),
-
-        const SizedBox(height: AppSpacing.md),
-        Center(
-          child: OutlinedButton.icon(
-            onPressed: _restart,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Restart'),
-          ),
-        ),
       ],
     );
   }
@@ -429,17 +483,6 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
             ],
           ),
         ),
-        if (_stepComplete) ...[
-          const SizedBox(height: AppSpacing.md),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.icon(
-              onPressed: _nextStep,
-              icon: Icon(_stepIndex < _selected!.steps.length - 1 ? Icons.arrow_forward : Icons.flag),
-              label: Text(_stepIndex < _selected!.steps.length - 1 ? 'Next Step' : 'Finish'),
-            ),
-          ),
-        ],
       ],
     );
   }

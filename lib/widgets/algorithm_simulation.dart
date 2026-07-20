@@ -18,9 +18,16 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
   int _currentStepIndex = 0;
   bool _isPlaying = false;
 
+  /// Bumped on every reset/manual-navigation/visualization-change so a
+  /// pending `Future.delayed` from an old `_playAnimation` chain can tell
+  /// it's stale and stop, instead of resuming playback on whatever step the
+  /// user has since navigated to.
+  int _playToken = 0;
+
   @override
   void dispose() {
     _isPlaying = false;
+    _playToken++;
     super.dispose();
   }
 
@@ -35,18 +42,32 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
     });
   }
 
-  void _previousStep() {
+  /// User-initiated navigation (tapping Previous/Next/Restart directly)
+  /// pauses any running auto-play, so a manual tap can't be raced by the
+  /// pending auto-advance timer into an extra, unexpected step change.
+  void _previousStepManual() {
     setState(() {
+      _isPlaying = false;
+      _playToken++;
       if (_currentStepIndex > 0) {
         _currentStepIndex--;
       }
     });
   }
 
+  void _nextStepManual() {
+    setState(() {
+      _isPlaying = false;
+      _playToken++;
+    });
+    _nextStep();
+  }
+
   void _resetSimulation() {
     setState(() {
       _currentStepIndex = 0;
       _isPlaying = false;
+      _playToken++;
     });
   }
 
@@ -54,20 +75,22 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
     setState(() {
       _isPlaying = !_isPlaying;
       if (_isPlaying) {
-        _playAnimation();
+        _playAnimation(_playToken);
+      } else {
+        _playToken++;
       }
     });
   }
 
-  void _playAnimation() async {
-    if (!_isPlaying) return;
+  void _playAnimation(int token) async {
+    if (!_isPlaying || token != _playToken) return;
 
     if (_currentStepIndex <
         widget.algorithm.visualizations[_currentVisualizationIndex].steps.length - 1) {
       await Future.delayed(const Duration(seconds: 3));
-      if (!mounted || !_isPlaying) return;
+      if (!mounted || !_isPlaying || token != _playToken) return;
       _nextStep();
-      _playAnimation();
+      _playAnimation(token);
     } else {
       if (!mounted) return;
       setState(() {
@@ -81,6 +104,7 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
       _currentVisualizationIndex = index;
       _currentStepIndex = 0;
       _isPlaying = false;
+      _playToken++;
     });
   }
 
@@ -267,108 +291,139 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
     final hasMultiplePointers = PointerLabels.multiRowAlgorithms.contains(widget.algorithm.id) &&
         currentStep.highlightIndices.toSet().length > 1;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (visualizations.length > 1)
-              SizedBox(
-                height: 36,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: visualizations.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
-                  itemBuilder: (context, index) {
-                    return ChoiceChip(
-                      label: Text(visualizations[index].title),
-                      selected: _currentVisualizationIndex == index,
-                      onSelected: (selected) {
-                        if (selected) _changeVisualization(index);
-                      },
-                    );
-                  },
-                ),
-              ),
-            if (visualizations.length > 1) const SizedBox(height: AppSpacing.md),
-
-            Text(currentVisualization.title, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(currentVisualization.description, style: theme.textTheme.bodyMedium),
-            const SizedBox(height: AppSpacing.md),
-            _ScenarioCallout(question: currentVisualization.mockQuestion),
-            const SizedBox(height: AppSpacing.md),
-
-            if (widget.algorithm.id != 'trees' && widget.algorithm.id != 'graph' && !hasMultiplePointers && currentStep.previousIndices.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+    // The stage (title, scenario, visualization, explanation) varies in
+    // height from step to step — different explanation lengths, a
+    // conditional current/previous legend, a different number of pointer
+    // rows. It scrolls in its own region so that never shifts the transport
+    // controls below, which stay pinned at a fixed position on screen.
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(width: 10, height: 10, decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle)),
-                    const SizedBox(width: 4),
-                    Text('current', style: theme.textTheme.labelMedium),
-                    const SizedBox(width: AppSpacing.md),
-                    Container(width: 10, height: 10, decoration: BoxDecoration(color: theme.colorScheme.primaryContainer, shape: BoxShape.circle)),
-                    const SizedBox(width: 4),
-                    Text('previous', style: theme.textTheme.labelMedium),
+                    if (visualizations.length > 1)
+                      SizedBox(
+                        height: 36,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: visualizations.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
+                          itemBuilder: (context, index) {
+                            return ChoiceChip(
+                              label: Text(visualizations[index].title),
+                              selected: _currentVisualizationIndex == index,
+                              onSelected: (selected) {
+                                if (selected) _changeVisualization(index);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    if (visualizations.length > 1) const SizedBox(height: AppSpacing.md),
+
+                    Text(currentVisualization.title, style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 4),
+                    Text(currentVisualization.description, style: theme.textTheme.bodyMedium),
+                    const SizedBox(height: AppSpacing.md),
+                    _ScenarioCallout(question: currentVisualization.mockQuestion),
+                    const SizedBox(height: AppSpacing.md),
+
+                    if (widget.algorithm.id != 'trees' && widget.algorithm.id != 'graph' && !hasMultiplePointers && currentStep.previousIndices.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(width: 10, height: 10, decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle)),
+                            const SizedBox(width: 4),
+                            Text('current', style: theme.textTheme.labelMedium),
+                            const SizedBox(width: AppSpacing.md),
+                            Container(width: 10, height: 10, decoration: BoxDecoration(color: theme.colorScheme.primaryContainer, shape: BoxShape.circle)),
+                            const SizedBox(width: 4),
+                            Text('previous', style: theme.textTheme.labelMedium),
+                          ],
+                        ),
+                      ),
+
+                    if (widget.algorithm.id == 'trees')
+                      _buildTreeVisualization(currentStep, pointerLabels)
+                    else if (widget.algorithm.id == 'graph')
+                      _buildGraphVisualization(currentVisualization, currentStep, pointerLabels)
+                    else if (hasMultiplePointers)
+                      _buildPointerArrayRows(theme, currentVisualization, currentStep, pointerLabels)
+                    else
+                      Center(
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: AppSpacing.sm,
+                          runSpacing: AppSpacing.sm,
+                          children: List.generate(currentVisualization.arrayLength, (index) {
+                            return _buildArrayCell(
+                              theme: theme,
+                              index: index,
+                              value: currentVisualization.valueAtStep(index, currentStep),
+                              isHighlighted: currentStep.highlightIndices.contains(index),
+                              wasHighlighted: currentStep.previousIndices.contains(index),
+                              isRemoved: currentStep.removedIndices.contains(index),
+                              label: pointerLabels[index],
+                            );
+                          }),
+                        ),
+                      ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(AppSpacing.sm + 4),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Text(currentStep.explanation, style: theme.textTheme.bodyLarge),
+                    ),
                   ],
                 ),
               ),
-
-            if (widget.algorithm.id == 'trees')
-              _buildTreeVisualization(currentStep, pointerLabels)
-            else if (widget.algorithm.id == 'graph')
-              _buildGraphVisualization(currentVisualization, currentStep, pointerLabels)
-            else if (hasMultiplePointers)
-              _buildPointerArrayRows(theme, currentVisualization, currentStep, pointerLabels)
-            else
-              Center(
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
-                  children: List.generate(currentVisualization.arrayLength, (index) {
-                    return _buildArrayCell(
-                      theme: theme,
-                      index: index,
-                      value: currentVisualization.valueAtStep(index, currentStep),
-                      isHighlighted: currentStep.highlightIndices.contains(index),
-                      wasHighlighted: currentStep.previousIndices.contains(index),
-                      isRemoved: currentStep.removedIndices.contains(index),
-                      label: pointerLabels[index],
-                    );
-                  }),
-                ),
-              ),
-            const SizedBox(height: AppSpacing.md),
-
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.sm + 4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: Text(currentStep.explanation, style: theme.textTheme.bodyLarge),
             ),
-            const SizedBox(height: AppSpacing.sm),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        _buildControls(theme, currentVisualization, isLastStep),
+      ],
+    );
+  }
 
+  /// Transport controls pinned outside the scrollable stage above, so their
+  /// on-screen position never shifts as step content changes height.
+  Widget _buildControls(ThemeData theme, AlgorithmVisualization currentVisualization, bool isLastStep) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
                   icon: const Icon(Icons.skip_previous),
-                  onPressed: _currentStepIndex > 0 ? _previousStep : null,
+                  tooltip: 'Previous step',
+                  onPressed: _currentStepIndex > 0 ? _previousStepManual : null,
                 ),
                 IconButton.filled(
                   icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+                  tooltip: _isPlaying ? 'Pause' : 'Play',
                   onPressed: isLastStep && !_isPlaying ? null : _togglePlayPause,
                 ),
                 IconButton(
                   icon: const Icon(Icons.skip_next),
-                  onPressed: !isLastStep ? _nextStep : null,
+                  tooltip: 'Next step',
+                  onPressed: !isLastStep ? _nextStepManual : null,
                 ),
                 IconButton(
                   icon: const Icon(Icons.replay),
@@ -377,23 +432,20 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
                 ),
               ],
             ),
-
-            Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(
-                  currentVisualization.steps.length,
-                  (index) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: index == _currentStepIndex ? 20 : 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      color: index == _currentStepIndex
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.outlineVariant,
-                    ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                currentVisualization.steps.length,
+                (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: index == _currentStepIndex ? 20 : 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    color: index == _currentStepIndex
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.outlineVariant,
                   ),
                 ),
               ),
