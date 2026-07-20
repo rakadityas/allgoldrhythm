@@ -2,18 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:allgoldrhythm/data/algorithm_data.dart';
+import 'package:allgoldrhythm/data/fundamentals_data.dart';
+import 'package:allgoldrhythm/data/system_design_data.dart';
 import 'package:allgoldrhythm/main.dart';
+import 'package:allgoldrhythm/models/system_design.dart';
 import 'package:allgoldrhythm/screens/algorithm_detail_screen.dart';
+import 'package:allgoldrhythm/screens/fundamental_detail_screen.dart';
+import 'package:allgoldrhythm/screens/system_design_detail_screen.dart';
 import 'package:allgoldrhythm/theme/app_theme.dart';
 
 void main() {
-  testWidgets('Home screen lists algorithms and navigates to detail', (WidgetTester tester) async {
+  testWidgets('Home screen has two focus cards and navigates to the DSA list', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
     await tester.pumpAndSettle();
 
     expect(find.text('AllGoldRhythm'), findsWidgets);
-    expect(find.text('Two Pointers'), findsOneWidget);
+    expect(find.text('Data Structures & Algorithms'), findsOneWidget);
+    expect(find.text('System Design'), findsOneWidget);
+    expect(find.text('Two Pointers'), findsNothing);
 
+    await tester.tap(find.text('Data Structures & Algorithms'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Two Pointers'), findsOneWidget);
     await tester.tap(find.text('Two Pointers'));
     await tester.pumpAndSettle();
 
@@ -22,8 +33,32 @@ void main() {
     expect(find.text('Quiz'), findsOneWidget);
   });
 
+  testWidgets('Hamburger drawer links directly to both sections', (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+
+    // Both the drawer's ListTile and the home card behind it now share the
+    // same label text, so scope the finders to the drawer's ListTiles.
+    final dsaTile = find.widgetWithText(ListTile, 'Data Structures & Algorithms');
+    final systemDesignTile = find.widgetWithText(ListTile, 'System Design');
+    expect(dsaTile, findsOneWidget);
+    expect(systemDesignTile, findsOneWidget);
+
+    await tester.tap(systemDesignTile);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Fundamentals'), findsOneWidget);
+    expect(find.text('Practice Problems'), findsOneWidget);
+  });
+
   testWidgets('Review tab walks through real algorithm steps with tap validation', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Data Structures & Algorithms'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Two Pointers'));
@@ -65,6 +100,104 @@ void main() {
 
     expect(find.text('Step 2 of 5'), findsOneWidget);
   });
+
+  testWidgets('Home screen has a System Design entry that opens fundamentals and practice problems', (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('System Design'), findsOneWidget);
+    await tester.tap(find.text('System Design'));
+    await tester.pumpAndSettle();
+
+    // Fundamentals tab is the default.
+    expect(find.text('Fundamentals'), findsOneWidget);
+    expect(find.text('DNS & Request Routing'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('CAP Theorem'),
+      300,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('fundamentals_list')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.text('CAP Theorem'), findsOneWidget);
+
+    await tester.tap(find.text('Practice Problems'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Design a URL Shortener'), findsOneWidget);
+    expect(find.text('Design a Rate Limiter'), findsOneWidget);
+  });
+
+  testWidgets('Fundamentals detail screen renders theory, diagram, and key points', (WidgetTester tester) async {
+    final concept = FundamentalsData.getConcepts().firstWhere((c) => c.diagram != null);
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light(),
+      home: FundamentalDetailScreen(concept: concept),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text(concept.title), findsWidgets);
+    expect(find.text(concept.summary), findsOneWidget);
+    for (final point in concept.keyPoints) {
+      await tester.scrollUntilVisible(
+        find.text(point),
+        300,
+        scrollable: find.descendant(
+          of: find.byKey(const Key('fundamental_detail_list')),
+          matching: find.byType(Scrollable),
+        ).first,
+      );
+      expect(find.text(point), findsOneWidget);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final problem in SystemDesignData.getProblems()) {
+    testWidgets('${problem.title}: requirements render and design canvas is usable', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.light(),
+        home: SystemDesignDetailScreen(problem: problem),
+      ));
+      await tester.pumpAndSettle();
+
+      // Requirements tab (default) should show every section.
+      expect(find.text(problem.prompt), findsOneWidget);
+      for (final req in problem.functionalRequirements) {
+        expect(find.text(req), findsOneWidget);
+      }
+      expect(find.text(problem.highLevelDesign), findsOneWidget);
+
+      await tester.tap(find.text('Design Canvas'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // The palette is a lazily-built horizontal ListView in test
+      // environments, so only chips within the initial viewport are
+      // guaranteed to exist; just confirm the first one renders.
+      expect(find.text(ComponentType.client.label), findsWidgets);
+
+      // Nothing placed yet — "Check Design" should be disabled, so tapping
+      // it is a no-op and no result panel should appear.
+      await tester.tap(find.text('Check Design'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Missing components'), findsNothing);
+
+      // "Show Solution" reveals the reference architecture, listing every
+      // component and connection defined for this problem.
+      await tester.tap(find.text('Show Solution'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      for (final component in problem.reference.components.toSet()) {
+        expect(find.text(component.label), findsWidgets);
+      }
+      for (final pair in problem.reference.connections) {
+        expect(find.text('${pair.$1.label} → ${pair.$2.label}'), findsOneWidget);
+      }
+    });
+  }
 
   for (final algorithm in AlgorithmData.getAlgorithms()) {
     testWidgets(

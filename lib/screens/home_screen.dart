@@ -1,158 +1,10 @@
 import 'package:flutter/material.dart';
-import '../data/algorithm_data.dart';
-import '../models/algorithm.dart';
 import '../theme/app_theme.dart';
-import 'algorithm_detail_screen.dart';
+import 'algorithm_list_screen.dart';
+import 'system_design_list_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  String _query = '';
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  static const Map<String, IconData> _icons = {
-    'two_pointers': Icons.compare_arrows,
-    'sliding_window': Icons.view_carousel_outlined,
-    'stack': Icons.layers_outlined,
-    'queue': Icons.linear_scale,
-    'linked_list': Icons.link,
-    'doubly_linked_list': Icons.sync_alt,
-    'circular_linked_list': Icons.all_inclusive,
-    'binary_search': Icons.search,
-    'trees': Icons.account_tree_outlined,
-    'sorting': Icons.sort,
-    'heap': Icons.filter_list,
-    'backtracking': Icons.call_split,
-    'graph': Icons.hub_outlined,
-    'greedy': Icons.trending_up,
-    'hashing': Icons.tag,
-    'dynamic_programming': Icons.grid_view_outlined,
-    'union_find': Icons.group_work_outlined,
-    'intervals': Icons.timeline_outlined,
-    'trie': Icons.text_fields,
-    'bit_manipulation': Icons.memory,
-  };
-
-  IconData _iconFor(Algorithm algorithm) =>
-      _icons[algorithm.id] ?? Icons.auto_awesome_outlined;
-
-  @override
-  Widget build(BuildContext context) {
-    final algorithms = AlgorithmData.getAlgorithms();
-    final Map<String, List<Algorithm>> categorized = {};
-    for (final algorithm in algorithms) {
-      categorized.putIfAbsent(algorithm.category, () => []).add(algorithm);
-    }
-
-    final query = _query.trim().toLowerCase();
-    bool matches(Algorithm a) =>
-        query.isEmpty ||
-        a.name.toLowerCase().contains(query) ||
-        a.description.toLowerCase().contains(query);
-
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      drawer: _AppDrawer(),
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar.large(
-            title: const Text('AllGoldRhythm'),
-            floating: true,
-            snap: true,
-            actions: [
-              Builder(
-                builder: (ctx) => IconButton(
-                  icon: const Icon(Icons.info_outline),
-                  tooltip: 'About',
-                  onPressed: () => _showAbout(ctx),
-                ),
-              ),
-            ],
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              0,
-              AppSpacing.md,
-              AppSpacing.sm,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: TextField(
-                controller: _searchController,
-                onChanged: (v) => setState(() => _query = v),
-                decoration: InputDecoration(
-                  hintText: 'Search algorithms',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _query.isEmpty
-                      ? null
-                      : IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () => setState(() {
-                            _searchController.clear();
-                            _query = '';
-                          }),
-                        ),
-                ),
-              ),
-            ),
-          ),
-          for (final entry in categorized.entries)
-            if (entry.value.where(matches).toList() case final filtered when filtered.isNotEmpty) ...[
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.md,
-                  AppSpacing.md,
-                  AppSpacing.md,
-                  AppSpacing.sm,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: Text(
-                    entry.key,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                sliver: SliverList.separated(
-                  itemCount: filtered.length,
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(height: AppSpacing.sm),
-                  itemBuilder: (context, index) {
-                    final algorithm = filtered[index];
-                    return _AlgorithmCard(
-                      algorithm: algorithm,
-                      icon: _iconFor(algorithm),
-                    );
-                  },
-                ),
-              ),
-            ],
-          if (categorized.values.every((list) => !list.any(matches)))
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: _EmptySearchState(query: _query),
-            ),
-          const SliverPadding(padding: EdgeInsets.only(bottom: AppSpacing.xl)),
-        ],
-      ),
-    );
-  }
 
   void _showAbout(BuildContext context) {
     showAboutDialog(
@@ -166,56 +18,122 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       children: const [
         Text(
-          'A Data Structures & Algorithm visualization app for learning algorithms.',
+          'A Data Structures & Algorithms and System Design interview-prep app.',
         ),
       ],
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      drawer: const _AppDrawer(),
+      appBar: AppBar(
+        title: const Text('AllGoldRhythm'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'About',
+            onPressed: () => _showAbout(context),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        children: [
+          Text('What do you want to practice?', style: theme.textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Pick a track to get started.',
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          _FocusCard(
+            icon: Icons.code,
+            title: 'Data Structures & Algorithms',
+            description: 'Simulate, review, and quiz yourself on 20 core patterns.',
+            color: theme.colorScheme.primaryContainer,
+            onColor: theme.colorScheme.onPrimaryContainer,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AlgorithmListScreen()),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _FocusCard(
+            icon: Icons.architecture_outlined,
+            title: 'System Design',
+            description: 'Learn the fundamentals, then practice on an interactive design canvas.',
+            color: theme.colorScheme.tertiaryContainer,
+            onColor: theme.colorScheme.onTertiaryContainer,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SystemDesignListScreen()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _AlgorithmCard extends StatelessWidget {
-  final Algorithm algorithm;
+class _FocusCard extends StatelessWidget {
   final IconData icon;
+  final String title;
+  final String description;
+  final Color color;
+  final Color onColor;
+  final VoidCallback onTap;
 
-  const _AlgorithmCard({required this.algorithm, required this.icon});
+  const _FocusCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.color,
+    required this.onColor,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
       clipBehavior: Clip.antiAlias,
+      color: color,
+      elevation: 0,
       child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AlgorithmDetailScreen(algorithm: algorithm),
-            ),
-          );
-        },
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
+                  color: onColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: Icon(icon, color: theme.colorScheme.onPrimaryContainer, size: 24),
+                child: Icon(icon, size: 26, color: onColor),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(algorithm.name, style: theme.textTheme.titleMedium),
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: onColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 2),
                     Text(
-                      algorithm.description,
-                      style: theme.textTheme.bodyMedium,
+                      description,
+                      style: theme.textTheme.bodySmall?.copyWith(color: onColor.withValues(alpha: 0.85)),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -223,7 +141,7 @@ class _AlgorithmCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Icon(Icons.chevron_right, color: theme.colorScheme.outline),
+              Icon(Icons.arrow_forward_ios, size: 16, color: onColor.withValues(alpha: 0.7)),
             ],
           ),
         ),
@@ -232,34 +150,9 @@ class _AlgorithmCard extends StatelessWidget {
   }
 }
 
-class _EmptySearchState extends StatelessWidget {
-  final String query;
-  const _EmptySearchState({required this.query});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.search_off, size: 48, color: theme.colorScheme.outline),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'No algorithms match "$query"',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _AppDrawer extends StatelessWidget {
+  const _AppDrawer();
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -284,6 +177,29 @@ class _AppDrawer extends StatelessWidget {
             title: const Text('Home'),
             onTap: () => Navigator.pop(context),
           ),
+          ListTile(
+            leading: const Icon(Icons.code),
+            title: const Text('Data Structures & Algorithms'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AlgorithmListScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.architecture_outlined),
+            title: const Text('System Design'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SystemDesignListScreen()),
+              );
+            },
+          ),
+          const Divider(),
           ListTile(
             leading: const Icon(Icons.article_outlined),
             title: const Text('Licenses'),
