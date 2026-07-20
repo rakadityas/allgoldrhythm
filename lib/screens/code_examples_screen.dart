@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/algorithm.dart';
 import '../data/algorithm_python_examples.dart';
+import '../theme/app_theme.dart';
 
 class CodeExamplesScreen extends StatefulWidget {
   final Algorithm algorithm;
@@ -14,35 +15,35 @@ class CodeExamplesScreen extends StatefulWidget {
 
 class _CodeExamplesScreenState extends State<CodeExamplesScreen> {
   String? selectedVariant;
-  Map<String, String> examples = {};
+  late final Map<String, String> examples;
 
   @override
   void initState() {
     super.initState();
-    _loadExamples();
+    examples = _loadExamples();
+    if (examples.isNotEmpty) {
+      selectedVariant = examples.keys.first;
+    }
   }
 
-  void _loadExamples() {
-    if (widget.algorithm.id == 'two_pointers') {
-      examples = AlgorithmPythonExamples.getTwoPointersExamples();
-    } else if (widget.algorithm.id == 'sliding_window') {
-      examples = AlgorithmPythonExamples.getSlidingWindowExamples();
-    } else if (widget.algorithm.id == 'stack') {
-      examples = AlgorithmPythonExamples.getStackExamples();
-    } else if (widget.algorithm.id == 'linked_list') {
-      examples = AlgorithmPythonExamples.getLinkedListExamples();
-    } else if (widget.algorithm.id == 'binary_search') {
-      examples = AlgorithmPythonExamples.getBinarySearchExamples();
-    } else if (widget.algorithm.id == 'queue') {
-      examples = AlgorithmPythonExamples.getQueueExamples();
-    } else if (widget.algorithm.id == 'trees') {
-      examples = AlgorithmPythonExamples.getTreesExamples();
-    }
-
-    if (examples.isNotEmpty) {
-      setState(() {
-        selectedVariant = examples.keys.first;
-      });
+  Map<String, String> _loadExamples() {
+    switch (widget.algorithm.id) {
+      case 'two_pointers':
+        return AlgorithmPythonExamples.getTwoPointersExamples();
+      case 'sliding_window':
+        return AlgorithmPythonExamples.getSlidingWindowExamples();
+      case 'stack':
+        return AlgorithmPythonExamples.getStackExamples();
+      case 'linked_list':
+        return AlgorithmPythonExamples.getLinkedListExamples();
+      case 'binary_search':
+        return AlgorithmPythonExamples.getBinarySearchExamples();
+      case 'queue':
+        return AlgorithmPythonExamples.getQueueExamples();
+      case 'trees':
+        return AlgorithmPythonExamples.getTreesExamples();
+      default:
+        return {};
     }
   }
 
@@ -55,21 +56,19 @@ class _CodeExamplesScreenState extends State<CodeExamplesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.algorithm.name} Code Examples'),
+        title: Text('${widget.algorithm.name} Code'),
       ),
       body: examples.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? _EmptyExamplesState(algorithmName: widget.algorithm.name)
           : Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   child: DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      labelText: 'Select Variant',
-                      border: OutlineInputBorder(),
-                    ),
+                    decoration: const InputDecoration(labelText: 'Variant'),
                     value: selectedVariant,
                     items: examples.keys.map((String variant) {
                       return DropdownMenuItem<String>(
@@ -86,51 +85,84 @@ class _CodeExamplesScreenState extends State<CodeExamplesScreen> {
                 ),
                 Expanded(
                   child: selectedVariant == null
-                      ? const Center(child: Text('Select a variant'))
+                      ? const SizedBox.shrink()
                       : SingleChildScrollView(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.md,
+                            0,
+                            AppSpacing.md,
+                            AppSpacing.md,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
                                       selectedVariant!,
-                                      style: Theme.of(context).textTheme.titleLarge,
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.copy),
-                                      onPressed: () => _copyToClipboard(examples[selectedVariant]!),
-                                      tooltip: 'Copy code',
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[900],
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(16),
-                                  child: SelectableText(
-                                    examples[selectedVariant] ?? '',
-                                    style: const TextStyle(
-                                      fontFamily: 'monospace',
-                                      color: Colors.white,
-                                      fontSize: 14,
+                                      style: theme.textTheme.titleLarge,
                                     ),
                                   ),
+                                  IconButton(
+                                    icon: const Icon(Icons.copy_outlined),
+                                    onPressed: () => _copyToClipboard(examples[selectedVariant]!),
+                                    tooltip: 'Copy code',
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: context.appColors.codeBackground,
+                                  borderRadius: BorderRadius.circular(AppRadius.md),
                                 ),
-                              ],
-                            ),
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(AppSpacing.md),
+                                child: SelectableText(
+                                  examples[selectedVariant] ?? '',
+                                  style: TextStyle(
+                                    fontFamily: 'monospace',
+                                    color: context.appColors.codeForeground,
+                                    fontSize: 13.5,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                 ),
               ],
             ),
+    );
+  }
+}
+
+class _EmptyExamplesState extends StatelessWidget {
+  final String algorithmName;
+  const _EmptyExamplesState({required this.algorithmName});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.code_off, size: 48, color: theme.colorScheme.outline),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'No code examples yet for $algorithmName',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

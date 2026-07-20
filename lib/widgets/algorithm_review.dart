@@ -1,63 +1,88 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
 import '../models/algorithm.dart';
+import '../theme/app_theme.dart';
+import '../utils/graph_layout.dart';
+import '../utils/pointer_labels.dart';
 
-class TreeReviewPainter extends CustomPainter {
-  final Set<int> selectedIndices;
+class GraphReviewPainter extends CustomPainter {
+  final Color lineColor;
 
-  TreeReviewPainter(this.selectedIndices);
+  GraphReviewPainter({required this.lineColor});
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.grey[400]!
+      ..color = lineColor
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
-    // Draw connections between nodes
-    final connections = [
-      [0, 1], // Root to left child
-      [0, 2], // Root to right child
-      [1, 3], // Left child to left-left
-      [1, 4], // Left child to left-right
-      [2, 5], // Right child to right-left
-      [2, 6], // Right child to right-right
-    ];
+    for (final edge in GraphLayout.edges) {
+      final from = GraphLayout.positionFor(edge[0], size.width, size.height);
+      final to = GraphLayout.positionFor(edge[1], size.width, size.height);
+      canvas.drawLine(from, to, paint);
+    }
+  }
 
-    for (final connection in connections) {
-      final fromIndex = connection[0];
-      final toIndex = connection[1];
-      
-      if (fromIndex < 7 && toIndex < 7) { // Ensure indices are valid
-        final fromPos = _getNodePosition(fromIndex);
-        final toPos = _getNodePosition(toIndex);
-        
-        canvas.drawLine(fromPos, toPos, paint);
-      }
+  @override
+  bool shouldRepaint(covariant GraphReviewPainter oldDelegate) => oldDelegate.lineColor != lineColor;
+}
+
+class TreeReviewPainter extends CustomPainter {
+  final Set<int> selectedIndices;
+  final Color lineColor;
+
+  TreeReviewPainter(this.selectedIndices, {required this.lineColor});
+
+  static const _connections = [
+    [0, 1],
+    [0, 2],
+    [1, 3],
+    [1, 4],
+    [2, 5],
+    [2, 6],
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    for (final connection in _connections) {
+      final fromPos = _getNodePosition(connection[0]);
+      final toPos = _getNodePosition(connection[1]);
+      canvas.drawLine(fromPos, toPos, paint);
     }
   }
 
   Offset _getNodePosition(int index) {
     const double centerX = 150;
-    const double startY = 40;
-    const double levelHeight = 70;
-    
+    const double startY = 52;
+    const double levelHeight = 88;
+
     switch (index) {
-      case 0: return const Offset(centerX, startY); // Root
-      case 1: return const Offset(centerX - 60, startY + levelHeight); // Left child
-      case 2: return const Offset(centerX + 60, startY + levelHeight); // Right child
-      case 3: return const Offset(centerX - 90, startY + 2 * levelHeight); // Left-left
-      case 4: return const Offset(centerX - 30, startY + 2 * levelHeight); // Left-right
-      case 5: return const Offset(centerX + 30, startY + 2 * levelHeight); // Right-left
-      case 6: return const Offset(centerX + 90, startY + 2 * levelHeight); // Right-right
+      case 0: return const Offset(centerX, startY);
+      case 1: return const Offset(centerX - 70, startY + levelHeight);
+      case 2: return const Offset(centerX + 70, startY + levelHeight);
+      case 3: return const Offset(centerX - 105, startY + 2 * levelHeight);
+      case 4: return const Offset(centerX - 35, startY + 2 * levelHeight);
+      case 5: return const Offset(centerX + 35, startY + 2 * levelHeight);
+      case 6: return const Offset(centerX + 105, startY + 2 * levelHeight);
       default: return const Offset(centerX, startY);
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant TreeReviewPainter oldDelegate) =>
+      oldDelegate.selectedIndices != selectedIndices || oldDelegate.lineColor != lineColor;
 }
 
+/// Interactive review: the user picks one of the algorithm's real
+/// visualizations, then reproduces it step by step by tapping the same
+/// indices [AlgorithmSimulation] would highlight at each step. Every tap is
+/// validated against that exact step only, and on success we surface the
+/// same [VisualizationStep.explanation] text the Simulation tab shows.
 class AlgorithmReview extends StatefulWidget {
   final Algorithm algorithm;
 
@@ -68,241 +93,513 @@ class AlgorithmReview extends StatefulWidget {
 }
 
 class _AlgorithmReviewState extends State<AlgorithmReview> {
-  final int _arraySize = 8;
-  List<int> _selectedIndices = [];
-  String _patternIdentified = '';
-  
-  // Tree-specific properties
-  final List<int> _treeValues = [50, 30, 70, 20, 40, 60, 80];
+  static const List<int> _treeValues = [50, 30, 70, 20, 40, 60, 80];
 
-  void _toggleIndex(int index) {
+  AlgorithmVisualization? _selected;
+  int _stepIndex = 0;
+  final Set<int> _tapped = {};
+  bool _stepComplete = false;
+  bool _wrong = false;
+  bool _finished = false;
+  final ScrollController _historyScroll = ScrollController();
+
+  bool get _isTree => widget.algorithm.id == 'trees';
+  bool get _isGraph => widget.algorithm.id == 'graph';
+  bool get _hasMultiplePointers =>
+      PointerLabels.multiRowAlgorithms.contains(widget.algorithm.id) && _expected.length > 1;
+
+  Set<int> get _expected =>
+      _selected!.steps[_stepIndex].highlightIndices.toSet();
+
+  /// Number of steps whose explanation has already been confirmed correct,
+  /// i.e. how many entries belong in the history trail.
+  int get _completedCount {
+    if (_selected == null) return 0;
+    if (_finished) return _selected!.steps.length;
+    return _stepIndex + (_stepComplete ? 1 : 0);
+  }
+
+  @override
+  void dispose() {
+    _historyScroll.dispose();
+    super.dispose();
+  }
+
+  void _scrollHistoryToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_historyScroll.hasClients) return;
+      _historyScroll.animateTo(
+        _historyScroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  void _choosePattern(AlgorithmVisualization viz) {
     setState(() {
-      if (_selectedIndices.contains(index)) {
-        _selectedIndices.remove(index);
-      } else {
-        _selectedIndices.add(index);
+      _selected = viz;
+      _stepIndex = 0;
+      _tapped.clear();
+      _wrong = false;
+      _finished = false;
+      _stepComplete = _expected.isEmpty;
+    });
+  }
+
+  void _changePattern() {
+    setState(() {
+      _selected = null;
+      _stepIndex = 0;
+      _tapped.clear();
+      _wrong = false;
+      _finished = false;
+      _stepComplete = false;
+    });
+  }
+
+  void _restart() {
+    setState(() {
+      _stepIndex = 0;
+      _tapped.clear();
+      _wrong = false;
+      _finished = false;
+      _stepComplete = _expected.isEmpty;
+    });
+  }
+
+  void _nextStep() {
+    setState(() {
+      if (_stepIndex == _selected!.steps.length - 1) {
+        _finished = true;
+        return;
       }
-      _identifyPattern();
+      _stepIndex++;
+      _tapped.clear();
+      _stepComplete = _expected.isEmpty;
     });
   }
 
-  void _resetSelection() {
-    setState(() {
-      _selectedIndices = [];
-      _patternIdentified = '';
-    });
-  }
+  void _handleTap(int index) {
+    if (_selected == null || _wrong || _stepComplete || _finished) return;
 
-  void _identifyPattern() {
-    // Sort indices to analyze the pattern
-    _selectedIndices.sort();
-    
-    if (_selectedIndices.isEmpty) {
-      _patternIdentified = '';
+    final expected = _expected;
+    if (_tapped.contains(index)) {
+      setState(() => _tapped.remove(index));
       return;
     }
-
-    if (widget.algorithm.id == 'trees') {
-      // Identify Tree patterns
-      if (_selectedIndices.length == 1) {
-        int selectedIndex = _selectedIndices.first;
-        if (selectedIndex == 0) {
-          _patternIdentified = 'Root Node Selection';
-        } else if (selectedIndex == 1 || selectedIndex == 2) {
-          _patternIdentified = 'Level 1 Node Selection';
-        } else if (selectedIndex >= 3 && selectedIndex <= 6) {
-          _patternIdentified = 'Leaf Node Selection';
-        }
-      } else if (_selectedIndices.length == 3) {
-        if (_selectedIndices.contains(3) && _selectedIndices.contains(1) && _selectedIndices.contains(4)) {
-          _patternIdentified = 'In-Order Traversal Pattern (Left-Root-Right)';
-        } else if (_selectedIndices.contains(0) && _selectedIndices.contains(1) && _selectedIndices.contains(3)) {
-          _patternIdentified = 'Pre-Order Traversal Pattern (Root-Left-Right)';
-        } else if (_selectedIndices.contains(3) && _selectedIndices.contains(4) && _selectedIndices.contains(1)) {
-          _patternIdentified = 'Post-Order Traversal Pattern (Left-Right-Root)';
-        } else {
-          _patternIdentified = 'Custom Tree Pattern';
-        }
-      } else if (_selectedIndices.length == 7) {
-        _patternIdentified = 'Complete Tree Selection';
-      } else {
-        _patternIdentified = 'Partial Tree Selection';
-      }
-    } else if (widget.algorithm.id == 'two_pointers') {
-      // Identify Two Pointers patterns
-      if (_selectedIndices.length == 2) {
-        if (_selectedIndices[0] == 0 && _selectedIndices[1] == _arraySize - 1) {
-          _patternIdentified = 'Left-Right Two Pointers Pattern';
-        } else if (_selectedIndices[0] == 0 && _selectedIndices[1] == 1) {
-          _patternIdentified = 'Fast-Slow Two Pointers Pattern';
-        } else if (_selectedIndices[0] == 0 && _selectedIndices[1] == 2 || 
-                  _selectedIndices[0] == 1 && _selectedIndices[1] == 3 ||
-                  _selectedIndices[0] == 2 && _selectedIndices[1] == 5) {
-          _patternIdentified = 'Same Direction Two Pointers Pattern';
-        } else {
-          _patternIdentified = 'Custom Two Pointers Pattern';
-        }
-      } else if (_selectedIndices.length == 3) {
-        if (_selectedIndices.contains(0) && _selectedIndices.contains(5) && _selectedIndices.contains(9)) {
-          _patternIdentified = 'Three Pointers Pattern';
-        } else if (_selectedIndices.contains(0) && _selectedIndices.contains(4) && _selectedIndices.contains(8)) {
-          _patternIdentified = 'Partition Array Pattern';
-        } else {
-          _patternIdentified = 'Custom Three Pointers Pattern';
-        }
-      } else if (_selectedIndices.length > 3) {
-        _patternIdentified = 'Multiple Pointers Pattern';
-      } else {
-        _patternIdentified = 'Single Pointer (Not a Two Pointers Pattern)';
-      }
-    } else if (widget.algorithm.id == 'sliding_window') {
-      // Identify Sliding Window patterns
-      if (_selectedIndices.length >= 2) {
-        bool isConsecutive = true;
-        for (int i = 1; i < _selectedIndices.length; i++) {
-          if (_selectedIndices[i] != _selectedIndices[i - 1] + 1) {
-            isConsecutive = false;
-            break;
-          }
-        }
-        
-        if (isConsecutive) {
-          if (_selectedIndices.length == 3) {
-            _patternIdentified = 'Fixed Size Sliding Window Pattern (Size 3)';
-          } else {
-            _patternIdentified = 'Variable Size Sliding Window Pattern';
-          }
-        } else {
-          _patternIdentified = 'Non-consecutive Selection (Not a Sliding Window)';
-        }
-      } else {
-        _patternIdentified = 'Incomplete Window (Select more elements)';
-      }
-    } else if (widget.algorithm.id == 'binary_search') {
-      // Identify Binary Search patterns
-      if (_selectedIndices.length == 1) {
-        int selectedIndex = _selectedIndices.first;
-        int arrayLength = 8; // Assuming 10 elements as per simulation
-        int middle = arrayLength ~/ 2;
-        
-        if (selectedIndex == middle) {
-          _patternIdentified = 'Middle Element Selection (Binary Search Start)';
-        } else if (selectedIndex < middle) {
-          _patternIdentified = 'Left Half Selection (Search Left)';
-        } else {
-          _patternIdentified = 'Right Half Selection (Search Right)';
-        }
-      } else if (_selectedIndices.length == 2) {
-        _selectedIndices.sort();
-        int left = _selectedIndices[0];
-        int right = _selectedIndices[1];
-        int middle = (left + right) ~/ 2;
-        
-        _patternIdentified = 'Binary Search Range: Left=$left, Right=$right, Middle=$middle';
-      } else if (_selectedIndices.length > 2) {
-        _patternIdentified = 'Binary Search Sequence (Multiple Steps)';
-      } else {
-        _patternIdentified = 'Select elements to demonstrate binary search';
-      }
-    } else if (widget.algorithm.id == 'stack') {
-      // Identify Stack patterns
-      if (_selectedIndices.length == 1) {
-        _patternIdentified = 'Single Element (Stack Top)';
-      } else if (_selectedIndices.length > 1) {
-        // Check if selection follows LIFO pattern
-        bool isLIFO = true;
-        for (int i = 1; i < _selectedIndices.length; i++) {
-          if (_selectedIndices[i] < _selectedIndices[i-1]) {
-            isLIFO = false;
-            break;
-          }
-        }
-        
-        if (isLIFO) {
-          _patternIdentified = 'LIFO Pattern (Last In First Out)';
-        } else {
-          _patternIdentified = 'Non-LIFO Pattern (Not Stack Behavior)';
-        }
-      }
-    } else if (widget.algorithm.id == 'linked_list') {
-      // Identify Linked List patterns
-      if (_selectedIndices.length == 1) {
-        _patternIdentified = 'Single Node Selection';
-      } else if (_selectedIndices.length > 1) {
-        // Check if selection follows sequential pattern
-        bool isSequential = true;
-        _selectedIndices.sort();
-        for (int i = 1; i < _selectedIndices.length; i++) {
-          if (_selectedIndices[i] != _selectedIndices[i-1] + 1) {
-            isSequential = false;
-            break;
-          }
-        }
-        
-        if (isSequential) {
-          _patternIdentified = 'Sequential Traversal (Linked List Pattern)';
-        } else {
-          _patternIdentified = 'Non-sequential Access (Random Access Pattern)';
-        }
-      }
-    } else if (widget.algorithm.id == 'queue') {
-      // Identify Queue patterns
-      if (_selectedIndices.length == 1) {
-        int selectedIndex = _selectedIndices.first;
-        if (selectedIndex == 0) {
-          _patternIdentified = 'Front Element Access (Dequeue Operation)';
-        } else if (selectedIndex == _arraySize - 1) {
-          _patternIdentified = 'Rear Element Access (Enqueue Operation)';
-        } else {
-          _patternIdentified = 'Middle Element Access (Not Queue Pattern)';
-        }
-      } else if (_selectedIndices.length > 1) {
-        // Check if selection follows FIFO pattern
-        bool isFIFO = true;
-        _selectedIndices.sort();
-        for (int i = 1; i < _selectedIndices.length; i++) {
-          if (_selectedIndices[i] != _selectedIndices[i-1] + 1) {
-            isFIFO = false;
-            break;
-          }
-        }
-        
-        if (isFIFO && _selectedIndices.first == 0) {
-          _patternIdentified = 'FIFO Pattern (First In First Out)';
-        } else {
-          _patternIdentified = 'Non-FIFO Pattern (Not Queue Behavior)';
-        }
-      }
+    if (!expected.contains(index)) {
+      _flagWrong();
+      return;
     }
+    setState(() {
+      _tapped.add(index);
+      if (_tapped.length == expected.length) _stepComplete = true;
+    });
   }
 
-  Widget _buildArrayVisualization() {
-    return SizedBox(
-      height: 80,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(_arraySize, (index) {
-          final isSelected = _selectedIndices.contains(index);
-          return GestureDetector(
-            onTap: () => _toggleIndex(index),
-            child: Container(
-              width: 30,
-              height: 50,
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.amber : Colors.grey[200],
-                border: Border.all(color: Colors.grey[400]!),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Text(
-                  '${index + 1}',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
+  void _flagWrong() {
+    setState(() => _wrong = true);
+    Future.delayed(const Duration(milliseconds: 700), () {
+      if (!mounted) return;
+      setState(() {
+        _wrong = false;
+        _tapped.clear();
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final visualizations = widget.algorithm.visualizations;
+
+    if (visualizations.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Text(
+            'No review patterns available yet for ${widget.algorithm.name}.',
+            style: theme.textTheme.bodyLarge,
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: _selected == null
+            ? _buildPicker(theme, visualizations)
+            : _buildChallenge(theme, _selected!),
+      ),
+    );
+  }
+
+  Widget _buildPicker(ThemeData theme, List<AlgorithmVisualization> visualizations) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Test Your Understanding', style: theme.textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Choose a pattern to reproduce, step by step. We\'ll only check your taps against that pattern\'s real steps.',
+          style: theme.textTheme.bodyMedium,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        ...visualizations.map(
+          (viz) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              onTap: () => _choosePattern(viz),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSpacing.sm + 4),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(viz.title, style: theme.textTheme.titleSmall),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${viz.steps.length} steps',
+                            style: theme.textTheme.labelMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: theme.colorScheme.outline),
+                  ],
                 ),
               ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChallenge(ThemeData theme, AlgorithmVisualization viz) {
+    final totalSteps = viz.steps.length;
+    final expected = _finished ? const <int>{} : _expected;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text(viz.title, style: theme.textTheme.titleMedium)),
+            TextButton.icon(
+              onPressed: _changePattern,
+              icon: const Icon(Icons.swap_horiz, size: 18),
+              label: const Text('Change'),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.sm + 4),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(color: theme.colorScheme.tertiary.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.lightbulb_outline, size: 18, color: theme.colorScheme.tertiary),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: Text(viz.mockQuestion, style: theme.textTheme.bodyMedium)),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        if (!_finished) ...[
+          Row(
+            children: [
+              Text('Step ${_stepIndex + 1} of $totalSteps', style: theme.textTheme.labelMedium),
+              const Spacer(),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: (_stepIndex + (_stepComplete ? 1 : 0)) / totalSteps,
+              minHeight: 6,
+              backgroundColor: theme.colorScheme.surfaceContainerHigh,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _buildHistory(theme, viz),
+          if (_completedCount > 0) const SizedBox(height: AppSpacing.md),
+          if (_selected!.steps[_stepIndex].previousIndices.isNotEmpty && !(_stepComplete && _hasMultiplePointers))
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(width: 10, height: 10, decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle)),
+                  const SizedBox(width: 4),
+                  Text('selected', style: theme.textTheme.labelMedium),
+                  const SizedBox(width: AppSpacing.md),
+                  Container(width: 10, height: 10, decoration: BoxDecoration(color: theme.colorScheme.primaryContainer, shape: BoxShape.circle)),
+                  const SizedBox(width: 4),
+                  Text('previous step', style: theme.textTheme.labelMedium),
+                ],
+              ),
+            ),
+          _isTree
+              ? _buildTreeVisualization(theme.colorScheme, theme.textTheme)
+              : _isGraph
+                  ? _buildGraphVisualization(theme.colorScheme, theme.textTheme, viz)
+                  : _stepComplete && _hasMultiplePointers
+                      ? _buildPointerArrayRows(theme.colorScheme, theme.textTheme, viz)
+                      : _buildArrayVisualization(theme.colorScheme, theme.textTheme, viz),
+          const SizedBox(height: AppSpacing.md),
+          _buildFeedback(theme, expected),
+        ] else
+          _buildCompletion(theme, viz),
+
+        const SizedBox(height: AppSpacing.md),
+        Center(
+          child: OutlinedButton.icon(
+            onPressed: _restart,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Restart'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeedback(ThemeData theme, Set<int> expected) {
+    final remaining = expected.length - _tapped.length;
+    final step = _selected!.steps[_stepIndex];
+
+    return Column(
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.sm + 4),
+          decoration: BoxDecoration(
+            color: _stepComplete
+                ? context.appColors.success.withValues(alpha: 0.15)
+                : _wrong
+                    ? theme.colorScheme.error.withValues(alpha: 0.15)
+                    : theme.colorScheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (_stepComplete) Icon(Icons.check_circle, color: context.appColors.success, size: 20),
+              if (_wrong) Icon(Icons.cancel, color: theme.colorScheme.error, size: 20),
+              if (_stepComplete || _wrong) const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  _stepComplete
+                      ? step.explanation
+                      : _wrong
+                          ? "You're wrong! Try again."
+                          : expected.isEmpty
+                              ? step.explanation
+                              : 'Tap $remaining more ${_isTree || _isGraph ? "node" : "element"}${remaining == 1 ? "" : "s"} for this step.',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: _stepComplete
+                        ? context.appColors.success
+                        : _wrong
+                            ? theme.colorScheme.error
+                            : null,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_stepComplete) ...[
+          const SizedBox(height: AppSpacing.md),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.icon(
+              onPressed: _nextStep,
+              icon: Icon(_stepIndex < _selected!.steps.length - 1 ? Icons.arrow_forward : Icons.flag),
+              label: Text(_stepIndex < _selected!.steps.length - 1 ? 'Next Step' : 'Finish'),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// A scrollable trail of every completed step's explanation, so the user
+  /// can look back at what already happened instead of relying on memory.
+  Widget _buildHistory(ThemeData theme, AlgorithmVisualization viz) {
+    final completed = _completedCount;
+    if (completed == 0) return const SizedBox.shrink();
+
+    _scrollHistoryToEnd();
+
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxHeight: 160),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm + 4, vertical: AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+      ),
+      child: Scrollbar(
+        controller: _historyScroll,
+        child: ListView.separated(
+          controller: _historyScroll,
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          itemCount: completed,
+          separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+          itemBuilder: (context, i) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.check_circle, size: 16, color: context.appColors.success),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      style: theme.textTheme.bodyMedium,
+                      children: [
+                        TextSpan(
+                          text: 'Step ${i + 1}: ',
+                          style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        TextSpan(text: viz.steps[i].explanation),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompletion(ThemeData theme, AlgorithmVisualization viz) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.emoji_events, size: 48, color: context.appColors.success),
+        const SizedBox(height: AppSpacing.sm),
+        Text('Great job!', style: theme.textTheme.titleLarge),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'You walked through all ${viz.steps.length} steps of "${viz.title}".',
+          style: theme.textTheme.bodyLarge,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Align(alignment: Alignment.centerLeft, child: Text('Full journey', style: theme.textTheme.titleSmall)),
+        const SizedBox(height: AppSpacing.sm),
+        _buildHistory(theme, viz),
+      ],
+    );
+  }
+
+  Widget _buildArrayVisualization(ColorScheme scheme, TextTheme textTheme, AlgorithmVisualization viz) {
+    final step = viz.steps[_stepIndex];
+    final previousIndices = step.previousIndices.toSet();
+    final labels = PointerLabels.forStep(
+      algorithmId: widget.algorithm.id,
+      visualizationTitle: viz.title,
+      highlightIndices: _tapped.toList(),
+    );
+
+    return Center(
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.sm,
+        children: List.generate(viz.arrayLength, (index) {
+          final isSelected = _tapped.contains(index);
+          final wasPrevious = previousIndices.contains(index) && !isSelected;
+          final isWrongFlash = _wrong && !isSelected;
+          final isRemoved = step.removedIndices.contains(index);
+          final label = labels[index];
+
+          return GestureDetector(
+            onTap: () => _handleTap(index),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  height: 20,
+                  child: label == null
+                      ? null
+                      : Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: _stepComplete ? context.appColors.success : scheme.primary,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            label,
+                            style: textTheme.labelMedium?.copyWith(color: scheme.onPrimary, fontSize: 10),
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 2),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: isRemoved
+                        ? scheme.errorContainer
+                        : isSelected
+                            ? (_stepComplete ? context.appColors.success : scheme.primary)
+                            : wasPrevious
+                                ? scheme.primaryContainer
+                                : scheme.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: isWrongFlash ? Border.all(color: scheme.error, width: 2) : null,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${viz.valueAtStep(index, step)}',
+                      style: textTheme.titleMedium?.copyWith(
+                        color: isRemoved
+                            ? scheme.onErrorContainer
+                            : isSelected
+                                ? scheme.onPrimary
+                                : scheme.onSurface,
+                        decoration: isRemoved ? TextDecoration.lineThrough : null,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                SizedBox(
+                  height: 14,
+                  child: isRemoved
+                      ? Text('removed', style: textTheme.labelMedium?.copyWith(fontSize: 10, color: scheme.error))
+                      : wasPrevious
+                          ? Text('prev', style: textTheme.labelMedium?.copyWith(fontSize: 10))
+                          : null,
+                ),
+              ],
             ),
           );
         }),
@@ -310,40 +607,138 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
     );
   }
 
-  Widget _buildTreeVisualization() {
+  /// Once a step is fully solved, show one row per pointer instead of both
+  /// highlights crammed into a shared row — safe to reveal now since the
+  /// user has already found every index correctly.
+  Widget _buildPointerArrayRows(ColorScheme scheme, TextTheme textTheme, AlgorithmVisualization viz) {
+    final step = viz.steps[_stepIndex];
+    final indices = _tapped.toList()..sort();
+    final labels = PointerLabels.forStep(
+      algorithmId: widget.algorithm.id,
+      visualizationTitle: viz.title,
+      highlightIndices: indices,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (int i = 0; i < indices.length; i++) ...[
+          if (i > 0) const SizedBox(height: AppSpacing.md),
+          Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: context.appColors.success,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  labels[indices[i]] ?? 'Pointer ${i + 1}',
+                  style: textTheme.labelMedium?.copyWith(color: scheme.onPrimary),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: List.generate(viz.arrayLength, (index) {
+                  final isThisPointer = index == indices[i];
+                  return Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: isThisPointer ? context.appColors.success : scheme.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${viz.valueAtStep(index, step)}',
+                        style: textTheme.titleMedium?.copyWith(
+                          color: isThisPointer ? scheme.onPrimary : scheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTreeVisualization(ColorScheme scheme, TextTheme textTheme) {
     return SizedBox(
-      height: 250,
+      height: 280,
       child: Stack(
         children: [
           CustomPaint(
-             size: const Size(300, 250),
-             painter: TreeReviewPainter(_selectedIndices.toSet()),
-           ),
-          ..._buildTreeNodes(),
+            size: const Size(300, 280),
+            painter: TreeReviewPainter(
+              _tapped.toSet(),
+              lineColor: scheme.outlineVariant,
+            ),
+          ),
+          ..._buildTreeNodes(scheme, textTheme),
         ],
       ),
     );
   }
 
-  List<Widget> _buildTreeNodes() {
+  List<Widget> _buildTreeNodes(ColorScheme scheme, TextTheme textTheme) {
+    final previousIndices = _selected!.steps[_stepIndex].previousIndices.toSet();
+    final labels = PointerLabels.forStep(
+      algorithmId: widget.algorithm.id,
+      visualizationTitle: _selected!.title,
+      highlightIndices: _tapped.toList(),
+    );
     final List<Widget> nodes = [];
     for (int i = 0; i < _treeValues.length; i++) {
       final position = _getNodePosition(i);
-      final isSelected = _selectedIndices.contains(i);
-      
+      final isSelected = _tapped.contains(i);
+      final wasPrevious = previousIndices.contains(i) && !isSelected;
+      final label = labels[i];
+
+      if (label != null) {
+        nodes.add(
+          Positioned(
+            left: position.dx - 20,
+            top: position.dy - 28 - 20,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: _stepComplete ? context.appColors.success : scheme.primary,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                label,
+                style: textTheme.labelMedium?.copyWith(color: scheme.onPrimary, fontSize: 10),
+              ),
+            ),
+          ),
+        );
+      }
+
       nodes.add(
         Positioned(
-          left: position.dx - 20,
-          top: position.dy - 20,
+          left: position.dx - 28,
+          top: position.dy - 28,
           child: GestureDetector(
-            onTap: () => _toggleIndex(i),
-            child: Container(
-              width: 40,
-              height: 40,
+            onTap: () => _handleTap(i),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
-                color: isSelected ? Colors.amber : Colors.blue[100],
+                color: isSelected
+                    ? (_stepComplete ? context.appColors.success : scheme.primary)
+                    : wasPrevious
+                        ? scheme.primaryContainer
+                        : scheme.surfaceContainerHigh,
                 border: Border.all(
-                  color: isSelected ? Colors.orange : Colors.blue,
+                  color: isSelected ? Colors.transparent : scheme.outlineVariant,
                   width: 2,
                 ),
                 shape: BoxShape.circle,
@@ -351,10 +746,8 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
               child: Center(
                 child: Text(
                   '${_treeValues[i]}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? Colors.black : Colors.blue[800],
+                  style: textTheme.labelLarge?.copyWith(
+                    color: isSelected ? scheme.onPrimary : scheme.onSurface,
                   ),
                 ),
               ),
@@ -362,86 +755,131 @@ class _AlgorithmReviewState extends State<AlgorithmReview> {
           ),
         ),
       );
+
+      if (wasPrevious) {
+        nodes.add(
+          Positioned(
+            left: position.dx - 12,
+            top: position.dy + 28 + 2,
+            child: Text('prev', style: textTheme.labelMedium?.copyWith(fontSize: 10)),
+          ),
+        );
+      }
     }
     return nodes;
   }
 
   Offset _getNodePosition(int index) {
     const double centerX = 150;
-    const double startY = 40;
-    const double levelHeight = 70;
-    
+    const double startY = 52;
+    const double levelHeight = 88;
+
     switch (index) {
-      case 0: return Offset(centerX, startY); // Root
-      case 1: return Offset(centerX - 60, startY + levelHeight); // Left child
-      case 2: return Offset(centerX + 60, startY + levelHeight); // Right child
-      case 3: return Offset(centerX - 90, startY + 2 * levelHeight); // Left-left
-      case 4: return Offset(centerX - 30, startY + 2 * levelHeight); // Left-right
-      case 5: return Offset(centerX + 30, startY + 2 * levelHeight); // Right-left
-      case 6: return Offset(centerX + 90, startY + 2 * levelHeight); // Right-right
-      default: return Offset(centerX, startY);
+      case 0: return const Offset(centerX, startY);
+      case 1: return const Offset(centerX - 70, startY + levelHeight);
+      case 2: return const Offset(centerX + 70, startY + levelHeight);
+      case 3: return const Offset(centerX - 105, startY + 2 * levelHeight);
+      case 4: return const Offset(centerX - 35, startY + 2 * levelHeight);
+      case 5: return const Offset(centerX + 35, startY + 2 * levelHeight);
+      case 6: return const Offset(centerX + 105, startY + 2 * levelHeight);
+      default: return const Offset(centerX, startY);
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Test Your Understanding',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Click on the array elements to create a pattern. The system will identify which algorithm pattern you are demonstrating.',
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            
-            // Interactive visualization (array or tree)
-            widget.algorithm.id == 'trees' ? _buildTreeVisualization() : _buildArrayVisualization(),
-            const SizedBox(height: 16),
-            
-            // Pattern identification result
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                _patternIdentified.isEmpty ? 'Select elements to identify a pattern' : _patternIdentified,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: _patternIdentified.isEmpty ? FontWeight.normal : FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Reset button
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: _resetSelection,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reset'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.amber,
-                  foregroundColor: Colors.black,
-                ),
-              ),
-            ),
-          ],
-        ),
+  Widget _buildGraphVisualization(ColorScheme scheme, TextTheme textTheme, AlgorithmVisualization viz) {
+    return SizedBox(
+      height: 220,
+      child: Stack(
+        children: [
+          CustomPaint(
+            size: const Size(300, 220),
+            painter: GraphReviewPainter(lineColor: scheme.outlineVariant),
+          ),
+          ..._buildGraphNodes(scheme, textTheme, viz),
+        ],
       ),
     );
+  }
+
+  List<Widget> _buildGraphNodes(ColorScheme scheme, TextTheme textTheme, AlgorithmVisualization viz) {
+    final previousIndices = _selected!.steps[_stepIndex].previousIndices.toSet();
+    final labels = PointerLabels.forStep(
+      algorithmId: widget.algorithm.id,
+      visualizationTitle: viz.title,
+      highlightIndices: _tapped.toList(),
+    );
+    final List<Widget> nodes = [];
+    for (int i = 0; i < GraphLayout.nodeCount; i++) {
+      final position = GraphLayout.positionFor(i, 300, 220);
+      final isSelected = _tapped.contains(i);
+      final wasPrevious = previousIndices.contains(i) && !isSelected;
+      final label = labels[i];
+
+      if (label != null) {
+        nodes.add(
+          Positioned(
+            left: position.dx - 20,
+            top: position.dy - 26 - 20,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: _stepComplete ? context.appColors.success : scheme.primary,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                label,
+                style: textTheme.labelMedium?.copyWith(color: scheme.onPrimary, fontSize: 10),
+              ),
+            ),
+          ),
+        );
+      }
+
+      nodes.add(
+        Positioned(
+          left: position.dx - 26,
+          top: position.dy - 26,
+          child: GestureDetector(
+            onTap: () => _handleTap(i),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? (_stepComplete ? context.appColors.success : scheme.primary)
+                    : wasPrevious
+                        ? scheme.primaryContainer
+                        : scheme.surfaceContainerHigh,
+                border: Border.all(
+                  color: isSelected ? Colors.transparent : scheme.outlineVariant,
+                  width: 2,
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  '${viz.valueAt(i)}',
+                  style: textTheme.labelLarge?.copyWith(
+                    color: isSelected ? scheme.onPrimary : scheme.onSurface,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      if (wasPrevious) {
+        nodes.add(
+          Positioned(
+            left: position.dx - 12,
+            top: position.dy + 26 + 2,
+            child: Text('prev', style: textTheme.labelMedium?.copyWith(fontSize: 10)),
+          ),
+        );
+      }
+    }
+    return nodes;
   }
 }

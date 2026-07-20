@@ -170,7 +170,7 @@ flutter build web --base-href "/allgoldrhythm/"
 
 #### Android
 - Custom app icon configured via `flutter_launcher_icons`
-- Icon source: `icon/IMG_7416.jpeg`
+- Icon source: `icon/screenshot.jpg`
 - Supports Android 5.0+ (API level 21+)
 
 #### Web

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 import '../models/algorithm.dart';
+import '../theme/app_theme.dart';
+import '../utils/graph_layout.dart';
+import '../utils/pointer_labels.dart';
 
 class AlgorithmSimulation extends StatefulWidget {
   final Algorithm algorithm;
@@ -15,11 +17,17 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
   int _currentVisualizationIndex = 0;
   int _currentStepIndex = 0;
   bool _isPlaying = false;
-  final int _arraySize = 8;
+
+  @override
+  void dispose() {
+    _isPlaying = false;
+    super.dispose();
+  }
 
   void _nextStep() {
     setState(() {
-      if (_currentStepIndex < widget.algorithm.visualizations[_currentVisualizationIndex].steps.length - 1) {
+      if (_currentStepIndex <
+          widget.algorithm.visualizations[_currentVisualizationIndex].steps.length - 1) {
         _currentStepIndex++;
       } else {
         _isPlaying = false;
@@ -53,14 +61,15 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
 
   void _playAnimation() async {
     if (!_isPlaying) return;
-    
-    if (_currentStepIndex < widget.algorithm.visualizations[_currentVisualizationIndex].steps.length - 1) {
+
+    if (_currentStepIndex <
+        widget.algorithm.visualizations[_currentVisualizationIndex].steps.length - 1) {
       await Future.delayed(const Duration(seconds: 3));
-      if (_isPlaying) {
-        _nextStep();
-        _playAnimation();
-      }
+      if (!mounted || !_isPlaying) return;
+      _nextStep();
+      _playAnimation();
     } else {
+      if (!mounted) return;
       setState(() {
         _isPlaying = false;
       });
@@ -75,173 +84,277 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
     });
   }
 
-  Widget _buildTreeVisualization(VisualizationStep currentStep) {
-    // Tree node values for 3-level binary tree (7 nodes total)
+  Widget _buildTreeVisualization(VisualizationStep currentStep, Map<int, String> labels) {
     final treeValues = [50, 30, 70, 20, 40, 60, 80];
-    
-    return Container(
-      height: 250,
-      child: Stack(
-        children: [
-          CustomPaint(
-            painter: TreePainter(
-              highlightedIndices: currentStep.highlightIndices,
-              previousIndices: currentStep.previousIndices,
-              treeValues: treeValues,
-            ),
-            size: Size.infinite,
-          ),
-          // Interactive overlay for tap detection
-          ...List.generate(treeValues.length, (index) {
-            final position = _getNodePosition(index, 250, 400);
-            return Positioned(
-              left: position.dx - 20,
-              top: position.dy - 20,
-              child: GestureDetector(
-                onTap: () {
-                  // Handle node tap - could trigger step navigation
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Tapped node ${treeValues[index]} at index $index'),
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
-                },
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.transparent,
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
+    return SizedBox(
+      height: 260,
+      width: double.infinity,
+      child: CustomPaint(
+        painter: TreePainter(
+          highlightedIndices: currentStep.highlightIndices,
+          previousIndices: currentStep.previousIndices,
+          treeValues: treeValues,
+          scheme: Theme.of(context).colorScheme,
+          labels: labels,
+        ),
+        size: Size.infinite,
       ),
     );
   }
 
-  Offset _getNodePosition(int index, double height, double width) {
-    // Calculate position for 3-level binary tree
-    final levels = [
-      [0], // Root: 50 (index 0)
-      [1, 2], // Level 1: 30, 70 (indices 1, 2)
-      [3, 4, 5, 6], // Level 2: 20, 40, 60, 80 (indices 3, 4, 5, 6)
-    ];
-    
-    for (int level = 0; level < levels.length; level++) {
-      if (levels[level].contains(index)) {
-        final positionInLevel = levels[level].indexOf(index);
-        final nodesInLevel = levels[level].length;
-        final y = 40.0 + level * 70.0;
-        final x = width / (nodesInLevel + 1) * (positionInLevel + 1);
-        return Offset(x, y);
-      }
-    }
-    return Offset(width / 2, height / 2);
+  Widget _buildGraphVisualization(AlgorithmVisualization viz, VisualizationStep currentStep, Map<int, String> labels) {
+    return SizedBox(
+      height: 220,
+      width: double.infinity,
+      child: CustomPaint(
+        painter: GraphPainter(
+          highlightedIndices: currentStep.highlightIndices,
+          previousIndices: currentStep.previousIndices,
+          nodeValues: List.generate(GraphLayout.nodeCount, (i) => viz.valueAt(i)),
+          scheme: Theme.of(context).colorScheme,
+          labels: labels,
+        ),
+        size: Size.infinite,
+      ),
+    );
+  }
+
+  Widget _buildArrayCell({
+    required ThemeData theme,
+    required int index,
+    required int value,
+    required bool isHighlighted,
+    required bool wasHighlighted,
+    required bool isRemoved,
+    required String? label,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 20,
+          child: label == null
+              ? null
+              : Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    label,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+        ),
+        const SizedBox(height: 2),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: isRemoved
+                ? theme.colorScheme.errorContainer
+                : isHighlighted
+                    ? theme.colorScheme.primary
+                    : wasHighlighted
+                        ? theme.colorScheme.primaryContainer
+                        : theme.colorScheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          child: Center(
+            child: Text(
+              '$value',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: isRemoved
+                    ? theme.colorScheme.onErrorContainer
+                    : isHighlighted
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.onSurface,
+                decoration: isRemoved ? TextDecoration.lineThrough : null,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        SizedBox(
+          height: 14,
+          child: isRemoved
+              ? Text('removed', style: theme.textTheme.labelMedium?.copyWith(fontSize: 10, color: theme.colorScheme.error))
+              : wasHighlighted && !isHighlighted
+                  ? Text('prev', style: theme.textTheme.labelMedium?.copyWith(fontSize: 10))
+                  : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPointerRow(
+    ThemeData theme,
+    AlgorithmVisualization viz,
+    VisualizationStep step,
+    int highlightIdx,
+    String label,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onPrimary),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: List.generate(viz.arrayLength, (index) {
+            return _buildArrayCell(
+              theme: theme,
+              index: index,
+              value: viz.valueAtStep(index, step),
+              isHighlighted: index == highlightIdx,
+              wasHighlighted: false,
+              isRemoved: step.removedIndices.contains(index),
+              label: null,
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPointerArrayRows(
+    ThemeData theme,
+    AlgorithmVisualization viz,
+    VisualizationStep step,
+    Map<int, String> labels,
+  ) {
+    final indices = step.highlightIndices.toSet().toList()..sort();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (int i = 0; i < indices.length; i++) ...[
+          if (i > 0) const SizedBox(height: AppSpacing.md),
+          _buildPointerRow(theme, viz, step, indices[i], labels[indices[i]] ?? 'Pointer ${i + 1}'),
+        ],
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final visualizations = widget.algorithm.visualizations;
     final currentVisualization = visualizations[_currentVisualizationIndex];
     final currentStep = currentVisualization.steps[_currentStepIndex];
+    final isLastStep = _currentStepIndex == currentVisualization.steps.length - 1;
+    final pointerLabels = PointerLabels.forStep(
+      algorithmId: widget.algorithm.id,
+      visualizationTitle: currentVisualization.title,
+      highlightIndices: currentStep.highlightIndices,
+    );
+    final hasMultiplePointers = PointerLabels.multiRowAlgorithms.contains(widget.algorithm.id) &&
+        currentStep.highlightIndices.toSet().length > 1;
 
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Visualization selector
             if (visualizations.length > 1)
               SizedBox(
-                height: 40,
-                child: ListView.builder(
+                height: 36,
+                child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: visualizations.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
                   itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: ChoiceChip(
-                        label: Text(visualizations[index].title),
-                        selected: _currentVisualizationIndex == index,
-                        onSelected: (selected) {
-                          if (selected) {
-                            _changeVisualization(index);
-                          }
-                        },
-                      ),
+                    return ChoiceChip(
+                      label: Text(visualizations[index].title),
+                      selected: _currentVisualizationIndex == index,
+                      onSelected: (selected) {
+                        if (selected) _changeVisualization(index);
+                      },
                     );
                   },
                 ),
               ),
-            const SizedBox(height: 16),
-            
-            // Visualization title and description
-            Text(
-              currentVisualization.title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              currentVisualization.description,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            
-            // Visualization (Array or Tree)
-            widget.algorithm.name == 'Trees' 
-                ? _buildTreeVisualization(currentStep)
-                : SizedBox(
-                    height: 80,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(_arraySize, (index) {
-                        final isHighlighted = currentStep.highlightIndices.contains(index);
-                        return Container(
-                          width: 30,
-                          height: 50,
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          decoration: BoxDecoration(
-                            color: isHighlighted ? Colors.amber : Colors.grey[200],
-                            border: Border.all(color: Colors.grey[400]!),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${index + 1}',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-            const SizedBox(height: 16),
-            
-            // Step explanation
+            if (visualizations.length > 1) const SizedBox(height: AppSpacing.md),
+
+            Text(currentVisualization.title, style: theme.textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(currentVisualization.description, style: theme.textTheme.bodyMedium),
+            const SizedBox(height: AppSpacing.md),
+            _ScenarioCallout(question: currentVisualization.mockQuestion),
+            const SizedBox(height: AppSpacing.md),
+
+            if (widget.algorithm.id != 'trees' && widget.algorithm.id != 'graph' && !hasMultiplePointers && currentStep.previousIndices.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(width: 10, height: 10, decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle)),
+                    const SizedBox(width: 4),
+                    Text('current', style: theme.textTheme.labelMedium),
+                    const SizedBox(width: AppSpacing.md),
+                    Container(width: 10, height: 10, decoration: BoxDecoration(color: theme.colorScheme.primaryContainer, shape: BoxShape.circle)),
+                    const SizedBox(width: 4),
+                    Text('previous', style: theme.textTheme.labelMedium),
+                  ],
+                ),
+              ),
+
+            if (widget.algorithm.id == 'trees')
+              _buildTreeVisualization(currentStep, pointerLabels)
+            else if (widget.algorithm.id == 'graph')
+              _buildGraphVisualization(currentVisualization, currentStep, pointerLabels)
+            else if (hasMultiplePointers)
+              _buildPointerArrayRows(theme, currentVisualization, currentStep, pointerLabels)
+            else
+              Center(
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: List.generate(currentVisualization.arrayLength, (index) {
+                    return _buildArrayCell(
+                      theme: theme,
+                      index: index,
+                      value: currentVisualization.valueAtStep(index, currentStep),
+                      isHighlighted: currentStep.highlightIndices.contains(index),
+                      wasHighlighted: currentStep.previousIndices.contains(index),
+                      isRemoved: currentStep.removedIndices.contains(index),
+                      label: pointerLabels[index],
+                    );
+                  }),
+                ),
+              ),
+            const SizedBox(height: AppSpacing.md),
+
             Container(
-              padding: const EdgeInsets.all(12),
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.sm + 4),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
+                color: theme.colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: Text(
-                currentStep.explanation,
-                style: const TextStyle(fontSize: 16),
-              ),
+              child: Text(currentStep.explanation, style: theme.textTheme.bodyLarge),
             ),
-            const SizedBox(height: 16),
-            
-            // Controls
+            const SizedBox(height: AppSpacing.sm),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -249,35 +362,37 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
                   icon: const Icon(Icons.skip_previous),
                   onPressed: _currentStepIndex > 0 ? _previousStep : null,
                 ),
-                IconButton(
+                IconButton.filled(
                   icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-                  onPressed: _togglePlayPause,
+                  onPressed: isLastStep && !_isPlaying ? null : _togglePlayPause,
                 ),
                 IconButton(
                   icon: const Icon(Icons.skip_next),
-                  onPressed: _currentStepIndex < currentVisualization.steps.length - 1 ? _nextStep : null,
+                  onPressed: !isLastStep ? _nextStep : null,
                 ),
                 IconButton(
                   icon: const Icon(Icons.replay),
+                  tooltip: 'Restart',
                   onPressed: _resetSimulation,
                 ),
               ],
             ),
-            
-            // Step indicator
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+
+            Center(
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: List.generate(
                   currentVisualization.steps.length,
-                  (index) => Container(
-                    width: 10,
-                    height: 10,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: index == _currentStepIndex ? 20 : 8,
+                    height: 8,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: index == _currentStepIndex ? Colors.amber : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(4),
+                      color: index == _currentStepIndex
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.outlineVariant,
                     ),
                   ),
                 ),
@@ -290,109 +405,151 @@ class _AlgorithmSimulationState extends State<AlgorithmSimulation> {
   }
 }
 
+class _ScenarioCallout extends StatelessWidget {
+  final String question;
+
+  const _ScenarioCallout({required this.question});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.sm + 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: theme.colorScheme.tertiary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.lightbulb_outline, size: 18, color: theme.colorScheme.tertiary),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(child: Text(question, style: theme.textTheme.bodyMedium)),
+        ],
+      ),
+    );
+  }
+}
+
 class TreePainter extends CustomPainter {
   final List<int> highlightedIndices;
   final List<int>? previousIndices;
   final List<int> treeValues;
+  final ColorScheme scheme;
+  final Map<int, String> labels;
 
   TreePainter({
     required this.highlightedIndices,
     this.previousIndices,
     required this.treeValues,
+    required this.scheme,
+    this.labels = const {},
   });
+
+  static const _treeStructure = <int, List<int?>>{
+    0: [1, 2],
+    1: [3, 4],
+    2: [5, 6],
+    3: [null, null],
+    4: [null, null],
+    5: [null, null],
+    6: [null, null],
+  };
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    final linePaint = Paint()
       ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..color = scheme.outlineVariant;
 
-    final fillPaint = Paint()
-      ..style = PaintingStyle.fill;
+    final fillPaint = Paint()..style = PaintingStyle.fill;
+    final borderPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
 
-    final textPainter = TextPainter(
-      textDirection: TextDirection.ltr,
-    );
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
 
-    // Tree structure mapping for 3-level binary tree (index -> [left_child_index, right_child_index])
-    final treeStructure = {
-      0: [1, 2],   // 50 -> 30, 70
-      1: [3, 4],   // 30 -> 20, 40
-      2: [5, 6],   // 70 -> 60, 80
-      3: [null, null], // 20 (leaf)
-      4: [null, null], // 40 (leaf)
-      5: [null, null], // 60 (leaf)
-      6: [null, null], // 80 (leaf)
-    };
-
-    // Draw connections first
-    paint.color = Colors.grey[600]!;
-    treeStructure.forEach((parentIndex, children) {
+    _treeStructure.forEach((parentIndex, children) {
       final parentPos = _getNodePosition(parentIndex, size.height, size.width);
-      
-      for (int i = 0; i < children.length; i++) {
-        final childIndex = children[i];
+      for (final childIndex in children) {
         if (childIndex != null) {
           final childPos = _getNodePosition(childIndex, size.height, size.width);
-          canvas.drawLine(parentPos, childPos, paint);
+          canvas.drawLine(parentPos, childPos, linePaint);
         }
       }
     });
 
-    // Draw nodes
     for (int i = 0; i < treeValues.length; i++) {
       final position = _getNodePosition(i, size.height, size.width);
-      
-      // Determine node color based on highlight status
+
       Color nodeColor;
+      Color borderColor;
       if (highlightedIndices.contains(i)) {
-        nodeColor = Colors.red[300]!;
+        nodeColor = scheme.primary;
+        borderColor = scheme.primary;
       } else if (previousIndices?.contains(i) ?? false) {
-        nodeColor = Colors.green[300]!;
+        nodeColor = scheme.primaryContainer;
+        borderColor = scheme.primary.withValues(alpha: 0.5);
       } else {
-        nodeColor = Colors.blue[100]!;
+        nodeColor = scheme.surfaceContainerHigh;
+        borderColor = scheme.outlineVariant;
       }
-      
-      // Draw node circle
+
       fillPaint.color = nodeColor;
-      canvas.drawCircle(position, 20, fillPaint);
-      
-      // Draw node border
-      paint.color = Colors.black;
-      canvas.drawCircle(position, 20, paint);
-      
-      // Draw node value text
+      canvas.drawCircle(position, 28, fillPaint);
+      borderPaint.color = borderColor;
+      canvas.drawCircle(position, 28, borderPaint);
+
+      final isHighlighted = highlightedIndices.contains(i);
       textPainter.text = TextSpan(
         text: treeValues[i].toString(),
         style: TextStyle(
-          color: Colors.black,
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
+          color: isHighlighted ? scheme.onPrimary : scheme.onSurface,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
         ),
       );
       textPainter.layout();
-      
-      final textOffset = Offset(
-        position.dx - textPainter.width / 2,
-        position.dy - textPainter.height / 2,
+      textPainter.paint(
+        canvas,
+        Offset(position.dx - textPainter.width / 2, position.dy - textPainter.height / 2),
       );
-      textPainter.paint(canvas, textOffset);
+
+      final label = labels[i];
+      if (label != null) {
+        final labelPainter = TextPainter(textDirection: TextDirection.ltr)
+          ..text = TextSpan(
+            text: label,
+            style: TextStyle(
+              color: scheme.primary,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          )
+          ..layout();
+        labelPainter.paint(
+          canvas,
+          Offset(position.dx - labelPainter.width / 2, position.dy - 28 - labelPainter.height - 2),
+        );
+      }
     }
   }
 
   Offset _getNodePosition(int index, double height, double width) {
-    // Tree level mapping for 3-level binary tree
     final levels = [
-      [0], // Root: 50 (index 0)
-      [1, 2], // Level 1: 30, 70 (indices 1, 2)
-      [3, 4, 5, 6], // Level 2: 20, 40, 60, 80 (indices 3, 4, 5, 6)
+      [0],
+      [1, 2],
+      [3, 4, 5, 6],
     ];
-    
+
     for (int level = 0; level < levels.length; level++) {
       if (levels[level].contains(index)) {
         final positionInLevel = levels[level].indexOf(index);
         final nodesInLevel = levels[level].length;
-        final y = 40.0 + level * 70.0;
+        final y = 52.0 + level * 88.0;
         final x = width / (nodesInLevel + 1) * (positionInLevel + 1);
         return Offset(x, y);
       }
@@ -403,6 +560,106 @@ class TreePainter extends CustomPainter {
   @override
   bool shouldRepaint(TreePainter oldDelegate) {
     return oldDelegate.highlightedIndices != highlightedIndices ||
-           oldDelegate.previousIndices != previousIndices;
+        oldDelegate.previousIndices != previousIndices ||
+        oldDelegate.scheme != scheme ||
+        oldDelegate.labels != labels;
+  }
+}
+
+class GraphPainter extends CustomPainter {
+  final List<int> highlightedIndices;
+  final List<int> previousIndices;
+  final List<int> nodeValues;
+  final ColorScheme scheme;
+  final Map<int, String> labels;
+
+  GraphPainter({
+    required this.highlightedIndices,
+    required this.previousIndices,
+    required this.nodeValues,
+    required this.scheme,
+    this.labels = const {},
+  });
+
+  static const double _radius = 26;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final linePaint = Paint()
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke
+      ..color = scheme.outlineVariant;
+
+    final fillPaint = Paint()..style = PaintingStyle.fill;
+    final borderPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+
+    for (final edge in GraphLayout.edges) {
+      final from = GraphLayout.positionFor(edge[0], size.width, size.height);
+      final to = GraphLayout.positionFor(edge[1], size.width, size.height);
+      canvas.drawLine(from, to, linePaint);
+    }
+
+    for (int i = 0; i < nodeValues.length; i++) {
+      final position = GraphLayout.positionFor(i, size.width, size.height);
+      final isHighlighted = highlightedIndices.contains(i);
+      final wasVisited = previousIndices.contains(i);
+
+      Color nodeColor;
+      Color borderColor;
+      if (isHighlighted) {
+        nodeColor = scheme.primary;
+        borderColor = scheme.primary;
+      } else if (wasVisited) {
+        nodeColor = scheme.primaryContainer;
+        borderColor = scheme.primary.withValues(alpha: 0.5);
+      } else {
+        nodeColor = scheme.surfaceContainerHigh;
+        borderColor = scheme.outlineVariant;
+      }
+
+      fillPaint.color = nodeColor;
+      canvas.drawCircle(position, _radius, fillPaint);
+      borderPaint.color = borderColor;
+      canvas.drawCircle(position, _radius, borderPaint);
+
+      textPainter.text = TextSpan(
+        text: nodeValues[i].toString(),
+        style: TextStyle(
+          color: isHighlighted ? scheme.onPrimary : scheme.onSurface,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(position.dx - textPainter.width / 2, position.dy - textPainter.height / 2),
+      );
+
+      final label = labels[i];
+      if (label != null) {
+        final labelPainter = TextPainter(textDirection: TextDirection.ltr)
+          ..text = TextSpan(
+            text: label,
+            style: TextStyle(color: scheme.primary, fontSize: 11, fontWeight: FontWeight.w700),
+          )
+          ..layout();
+        labelPainter.paint(
+          canvas,
+          Offset(position.dx - labelPainter.width / 2, position.dy - _radius - labelPainter.height - 2),
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(GraphPainter oldDelegate) {
+    return oldDelegate.highlightedIndices != highlightedIndices ||
+        oldDelegate.previousIndices != previousIndices ||
+        oldDelegate.scheme != scheme ||
+        oldDelegate.labels != labels;
   }
 }

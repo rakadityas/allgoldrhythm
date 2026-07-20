@@ -1,5 +1,3 @@
-import '../models/algorithm.dart';
-
 class AlgorithmPythonExamples {
   static Map<String, String> getTwoPointersExamples() {
     return {

@@ -1,123 +1,307 @@
 import 'package:flutter/material.dart';
 import '../data/algorithm_data.dart';
 import '../models/algorithm.dart';
+import '../theme/app_theme.dart';
 import 'algorithm_detail_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  static const Map<String, IconData> _icons = {
+    'two_pointers': Icons.compare_arrows,
+    'sliding_window': Icons.view_carousel_outlined,
+    'stack': Icons.layers_outlined,
+    'queue': Icons.linear_scale,
+    'linked_list': Icons.link,
+    'doubly_linked_list': Icons.sync_alt,
+    'circular_linked_list': Icons.all_inclusive,
+    'binary_search': Icons.search,
+    'trees': Icons.account_tree_outlined,
+    'sorting': Icons.sort,
+    'heap': Icons.filter_list,
+    'backtracking': Icons.call_split,
+    'graph': Icons.hub_outlined,
+    'greedy': Icons.trending_up,
+    'hashing': Icons.tag,
+    'dynamic_programming': Icons.grid_view_outlined,
+    'union_find': Icons.group_work_outlined,
+    'intervals': Icons.timeline_outlined,
+    'trie': Icons.text_fields,
+    'bit_manipulation': Icons.memory,
+  };
+
+  IconData _iconFor(Algorithm algorithm) =>
+      _icons[algorithm.id] ?? Icons.auto_awesome_outlined;
+
+  @override
   Widget build(BuildContext context) {
-    // Group algorithms by category
     final algorithms = AlgorithmData.getAlgorithms();
-    final Map<String, List<Algorithm>> categorizedAlgorithms = {};
-    
-    for (var algorithm in algorithms) {
-      if (!categorizedAlgorithms.containsKey(algorithm.category)) {
-        categorizedAlgorithms[algorithm.category] = [];
-      }
-      categorizedAlgorithms[algorithm.category]!.add(algorithm);
+    final Map<String, List<Algorithm>> categorized = {};
+    for (final algorithm in algorithms) {
+      categorized.putIfAbsent(algorithm.category, () => []).add(algorithm);
     }
 
+    final query = _query.trim().toLowerCase();
+    bool matches(Algorithm a) =>
+        query.isEmpty ||
+        a.name.toLowerCase().contains(query) ||
+        a.description.toLowerCase().contains(query);
+
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('AllGoldRhythm'),
-        backgroundColor: Colors.amber[700],
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.amber,
+      drawer: _AppDrawer(),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar.large(
+            title: const Text('AllGoldRhythm'),
+            floating: true,
+            snap: true,
+            actions: [
+              Builder(
+                builder: (ctx) => IconButton(
+                  icon: const Icon(Icons.info_outline),
+                  tooltip: 'About',
+                  onPressed: () => _showAbout(ctx),
+                ),
               ),
-              child: Text(
-                'AllGoldRhythm',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+            ],
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              0,
+              AppSpacing.md,
+              AppSpacing.sm,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: TextField(
+                controller: _searchController,
+                onChanged: (v) => setState(() => _query = v),
+                decoration: InputDecoration(
+                  hintText: 'Search algorithms',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _query.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () => setState(() {
+                            _searchController.clear();
+                            _query = '';
+                          }),
+                        ),
                 ),
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Home'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: const Text('About'),
-              onTap: () {
-                Navigator.pop(context);
-                showAboutDialog(
-                  context: context,
-                  applicationName: 'AllGoldRhythm',
-                  applicationVersion: '1.0.0',
-                  applicationIcon: const Icon(
-                    Icons.school,
-                    size: 48,
-                    color: Colors.amber,
+          ),
+          for (final entry in categorized.entries)
+            if (entry.value.where(matches).toList() case final filtered when filtered.isNotEmpty) ...[
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: Text(
+                    entry.key,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      letterSpacing: 0.4,
+                    ),
                   ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                sliver: SliverList.separated(
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: AppSpacing.sm),
+                  itemBuilder: (context, index) {
+                    final algorithm = filtered[index];
+                    return _AlgorithmCard(
+                      algorithm: algorithm,
+                      icon: _iconFor(algorithm),
+                    );
+                  },
+                ),
+              ),
+            ],
+          if (categorized.values.every((list) => !list.any(matches)))
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: _EmptySearchState(query: _query),
+            ),
+          const SliverPadding(padding: EdgeInsets.only(bottom: AppSpacing.xl)),
+        ],
+      ),
+    );
+  }
+
+  void _showAbout(BuildContext context) {
+    showAboutDialog(
+      context: context,
+      applicationName: 'AllGoldRhythm',
+      applicationVersion: '1.0.0',
+      applicationIcon: Icon(
+        Icons.school,
+        size: 48,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      children: const [
+        Text(
+          'A Data Structures & Algorithm visualization app for learning algorithms.',
+        ),
+      ],
+    );
+  }
+}
+
+class _AlgorithmCard extends StatelessWidget {
+  final Algorithm algorithm;
+  final IconData icon;
+
+  const _AlgorithmCard({required this.algorithm, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AlgorithmDetailScreen(algorithm: algorithm),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Icon(icon, color: theme.colorScheme.onPrimaryContainer, size: 24),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'A Data Structures & Algorithm visualization app for learning algorithms.',
+                    Text(algorithm.name, style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 2),
+                    Text(
+                      algorithm.description,
+                      style: theme.textTheme.bodyMedium,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.article_outlined),
-              title: const Text('Licenses'),
-              onTap: () {
-                Navigator.pop(context);
-                showLicensePage(
-                  context: context,
-                  applicationName: 'AllGoldRhythm',
-                  applicationVersion: '1.0.0',
-                  applicationIcon: const Icon(
-                    Icons.school,
-                    size: 48,
-                    color: Colors.amber,
-                  ),
-                );
-              },
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Icon(Icons.chevron_right, color: theme.colorScheme.outline),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptySearchState extends StatelessWidget {
+  final String query;
+  const _EmptySearchState({required this.query});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search_off, size: 48, color: theme.colorScheme.outline),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'No algorithms match "$query"',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge,
             ),
           ],
         ),
       ),
-      body: ListView.builder(
-        itemCount: categorizedAlgorithms.length,
-        itemBuilder: (context, index) {
-          final category = categorizedAlgorithms.keys.elementAt(index);
-          final categoryAlgorithms = categorizedAlgorithms[category]!;
-          
-          return ExpansionTile(
-            title: Text(
-              category,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+    );
+  }
+}
+
+class _AppDrawer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(color: theme.colorScheme.primary),
+            child: Align(
+              alignment: Alignment.bottomLeft,
+              child: Text(
+                'AllGoldRhythm',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                ),
+              ),
             ),
-            initiallyExpanded: category == 'Data Structures & Algorithm',
-            children: categoryAlgorithms.map((algorithm) {
-              return ListTile(
-                title: Text(algorithm.name),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AlgorithmDetailScreen(algorithm: algorithm),
-                    ),
-                  );
-                },
+          ),
+          ListTile(
+            leading: const Icon(Icons.home_outlined),
+            title: const Text('Home'),
+            onTap: () => Navigator.pop(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.article_outlined),
+            title: const Text('Licenses'),
+            onTap: () {
+              Navigator.pop(context);
+              showLicensePage(
+                context: context,
+                applicationName: 'AllGoldRhythm',
+                applicationVersion: '1.0.0',
+                applicationIcon: Icon(
+                  Icons.school,
+                  size: 48,
+                  color: theme.colorScheme.primary,
+                ),
               );
-            }).toList(),
-          );
-        },
+            },
+          ),
+        ],
       ),
     );
   }

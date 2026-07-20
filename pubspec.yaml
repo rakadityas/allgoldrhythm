@@ -98,14 +98,14 @@ flutter_launcher_icons:
   ios: true
   web:
     generate: true
-    image_path: "icon/IMG_7416.jpeg"
-    background_color: "#hexcode"
-    theme_color: "#hexcode"
+    image_path: "icon/screenshot.jpg"
+    background_color: "#EAF3F0"
+    theme_color: "#E8A33D"
   windows:
     generate: true
-    image_path: "icon/IMG_7416.jpeg"
+    image_path: "icon/screenshot.jpg"
     icon_size: 48
   macos:
     generate: true
-    image_path: "icon/IMG_7416.jpeg"
-  image_path: "icon/IMG_7416.jpeg"
+    image_path: "icon/screenshot.jpg"
+  image_path: "icon/screenshot.jpg"

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/algorithm.dart';
+import '../theme/app_theme.dart';
 import '../widgets/algorithm_definition.dart';
 import '../widgets/algorithm_simulation.dart';
 import '../widgets/algorithm_review.dart';
+import '../widgets/algorithm_quiz.dart';
 import 'code_examples_screen.dart';
 
 class AlgorithmDetailScreen extends StatelessWidget {
@@ -12,53 +14,55 @@ class AlgorithmDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(algorithm.name),
-        backgroundColor: Colors.amber[700],
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.code),
-            tooltip: 'Python Code Examples',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CodeExamplesScreen(algorithm: algorithm),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Definition Section
-              AlgorithmDefinition(algorithm: algorithm),
-              const SizedBox(height: 24),
-              
-              // Simulation Section
-              const Text(
-                'Simulation',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              AlgorithmSimulation(algorithm: algorithm),
-              const SizedBox(height: 24),
-              
-              // Interactive Review Section
-              const Text(
-                'Interactive Review',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              AlgorithmReview(algorithm: algorithm),
+    return DefaultTabController(
+      length: 4,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(algorithm.name),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.code),
+              tooltip: 'Python Code Examples',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CodeExamplesScreen(algorithm: algorithm),
+                  ),
+                );
+              },
+            ),
+          ],
+          bottom: const TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            tabs: [
+              Tab(text: 'Overview', icon: Icon(Icons.menu_book_outlined)),
+              Tab(text: 'Simulation', icon: Icon(Icons.play_circle_outline)),
+              Tab(text: 'Review', icon: Icon(Icons.psychology_outlined)),
+              Tab(text: 'Quiz', icon: Icon(Icons.quiz_outlined)),
             ],
           ),
+        ),
+        body: TabBarView(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: AlgorithmDefinition(algorithm: algorithm),
+            ),
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: AlgorithmSimulation(algorithm: algorithm),
+            ),
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: AlgorithmReview(algorithm: algorithm),
+            ),
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: AlgorithmQuiz(algorithm: algorithm),
+            ),
+          ],
         ),
       ),
     );
