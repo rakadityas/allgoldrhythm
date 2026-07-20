@@ -96,18 +96,19 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   adaptive_icon_background: "#EAF3F0"
-  adaptive_icon_foreground: "icon/screenshot.jpg"
+  adaptive_icon_foreground: "icon/allgoldrythm-iOS-Default-1024x1024@1x.png"
   ios: true
+  remove_alpha_ios: true
   web:
     generate: true
-    image_path: "icon/screenshot.jpg"
+    image_path: "icon/allgoldrythm-iOS-Default-1024x1024@1x.png"
     background_color: "#EAF3F0"
     theme_color: "#E8A33D"
   windows:
     generate: true
-    image_path: "icon/screenshot.jpg"
+    image_path: "icon/allgoldrythm-iOS-Default-1024x1024@1x.png"
     icon_size: 48
   macos:
     generate: true
-    image_path: "icon/screenshot.jpg"
-  image_path: "icon/screenshot.jpg"
+    image_path: "icon/allgoldrythm-iOS-Default-1024x1024@1x.png"
+  image_path: "icon/allgoldrythm-iOS-Default-1024x1024@1x.png"
