@@ -95,6 +95,8 @@ flutter:
 # Flutter Launcher Icons configuration
 flutter_launcher_icons:
   android: "launcher_icon"
+  adaptive_icon_background: "#EAF3F0"
+  adaptive_icon_foreground: "icon/screenshot.jpg"
   ios: true
   web:
     generate: true
