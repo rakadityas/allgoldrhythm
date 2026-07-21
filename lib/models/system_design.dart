@@ -13,7 +13,8 @@ enum ComponentType {
   messageQueue('Message Queue', Icons.swap_horiz),
   objectStorage('Object Storage', Icons.folder_outlined),
   idGenerator('ID Generator', Icons.tag),
-  webSocketServer('WebSocket Server', Icons.cable_outlined);
+  webSocketServer('WebSocket Server', Icons.cable_outlined),
+  worker('Worker', Icons.precision_manufacturing_outlined);
 
   final String label;
   final IconData icon;
@@ -55,10 +56,21 @@ class ReferenceArchitecture {
   });
 }
 
+/// Problem difficulty, carried as an enum (not a raw string) so a typo can't
+/// silently fall through UI switch statements.
+enum Difficulty {
+  easy('Easy'),
+  medium('Medium'),
+  hard('Hard');
+
+  final String label;
+  const Difficulty(this.label);
+}
+
 class SystemDesignProblem {
   final String id;
   final String title;
-  final String difficulty; // 'Easy', 'Medium', 'Hard'
+  final Difficulty difficulty;
   final String prompt;
   final List<String> functionalRequirements;
   final List<String> nonFunctionalRequirements;

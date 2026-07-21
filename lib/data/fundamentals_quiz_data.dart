@@ -84,6 +84,23 @@ class FundamentalsQuizData {
     'requirements_gathering_tradeoffs': _requirementsGatheringTradeoffs,
     'erasure_coding_vs_replication': _erasureCodingVsReplication,
     'semantic_vector_search': _semanticVectorSearch,
+    'failure_modes_gray_failure': _failureModesGrayFailure,
+    'tail_latency_hedged_requests': _tailLatencyHedgedRequests,
+    'load_shedding_backpressure': _loadSheddingBackpressure,
+    'isolation_levels_anomalies': _isolationLevelsAnomalies,
+    'serialization_schema_evolution': _serializationSchemaEvolution,
+    'locks_sync_primitives': _locksSyncPrimitives,
+    'optimistic_vs_pessimistic_locking': _optimisticVsPessimisticLocking,
+    'process_thread_coroutine': _processThreadCoroutine,
+    'connection_pooling': _connectionPooling,
+    'three_pillars_observability': _threePillarsObservability,
+    'metrics_prometheus': _metricsPrometheus,
+    'structured_logging_pipeline': _structuredLoggingPipeline,
+    'distributed_tracing_otel': _distributedTracingOtel,
+    'slo_sli_error_budgets': _sloSliErrorBudgets,
+    'golden_signals_red_use': _goldenSignalsRedUse,
+    'alerting_oncall_runbooks': _alertingOncallRunbooks,
+    'business_metrics_reconciliation': _businessMetricsReconciliation,
   };
 
   static const _dnsRequestRouting = [
@@ -2492,6 +2509,567 @@ class FundamentalsQuizData {
       options: ['Always build for the largest possible scale from day one', 'Build so today\'s decisions don\'t force an unnecessary teardown later, without over-engineering for scale that may never arrive', 'Never consider future scale at all', 'Rewrite the system from scratch every year'],
       correctIndex: 1,
       explanation: 'The goal is avoiding painful rework later without wasting effort solving problems that do not yet exist.',
+    ),
+  ];
+
+  static const _failureModesGrayFailure = [
+    QuizQuestion(
+      question: 'Which failure mode is generally the EASIEST to detect and handle?',
+      options: ['Gray failure', 'Timing failure', 'Crash / fail-stop, where the node dies cleanly and stops responding', 'Byzantine failure'],
+      correctIndex: 2,
+      explanation: 'A cleanly dead node is unambiguous: health checks fail, failover kicks in. The messier modes are the ones that "look alive".',
+    ),
+    QuizQuestion(
+      question: 'Why are timing failures (a node that is alive but very slow) considered especially dangerous?',
+      options: ['They corrupt data on disk', 'The node still looks alive to health checks while holding connections and dragging down everything waiting on it', 'They only occur in Byzantine systems', 'They always crash the whole cluster immediately'],
+      correctIndex: 1,
+      explanation: 'A slow node keeps accepting work and passing liveness checks, so callers keep waiting on it instead of failing over.',
+    ),
+    QuizQuestion(
+      question: 'What defines a "gray failure"?',
+      options: ['A node that has completely crashed', 'A network partition between two datacenters', 'Partial degradation where the node passes its health checks but users are actually suffering', 'A disk that is 50% full'],
+      correctIndex: 2,
+      explanation: 'Gray failures slip past binary up/down monitoring — detection requires user-experience-level signals.',
+    ),
+    QuizQuestion(
+      question: 'A node in a cluster starts returning plausible but incorrect responses due to a bug. Which failure mode is this?',
+      options: ['Omission failure', 'Crash failure', 'Timing failure', 'Byzantine failure — the node lies or behaves arbitrarily'],
+      correctIndex: 3,
+      explanation: 'Byzantine failures are nodes that misbehave arbitrarily rather than simply stopping — the hardest class to defend against.',
+    ),
+    QuizQuestion(
+      question: 'What does the "senior framing" of enumerating failure units (disk → host → rack → AZ → region) accomplish?',
+      options: ['It makes capacity estimation more accurate', 'It pairs each blast-radius level with a deliberate mitigation, showing you\'ve designed for failure at every scale', 'It eliminates the need for monitoring', 'It guarantees five nines of availability'],
+      correctIndex: 1,
+      explanation: 'Replication handles disk loss, multi-host handles host loss, multi-AZ handles AZ loss — each failure unit needs its own answer.',
+    ),
+  ];
+
+  static const _tailLatencyHedgedRequests = [
+    QuizQuestion(
+      question: 'A request fans out to 100 servers, each with p99 latency of 10ms. Why is the overall request likely slow?',
+      options: ['Because averages add up linearly', 'Because it very likely hits at least one p99-slow server, and the whole request waits for the slowest component', 'Because fan-out always doubles latency', 'Because the network becomes saturated at 100 connections'],
+      correctIndex: 1,
+      explanation: 'With 100-way fan-out, the chance of hitting at least one slow server is 1 − 0.99¹⁰⁰ ≈ 63% — the tail defines the experience.',
+    ),
+    QuizQuestion(
+      question: 'What is a hedged request?',
+      options: ['A request wrapped in a database transaction', 'A duplicate request sent to a second replica after a delay (e.g. the p95 mark), taking whichever response arrives first', 'A request that is rejected during overload', 'A request retried after a timeout error'],
+      correctIndex: 1,
+      explanation: 'Hedging bounds tail latency cheaply: only the slowest ~5% of requests ever trigger the duplicate.',
+    ),
+    QuizQuestion(
+      question: 'Which latency anchor set is correct (order of magnitude)?',
+      options: ['RAM ~100ms, SSD ~1s, cross-continent ~10s', 'RAM ~100ns, SSD ~100µs, same-DC round trip ~0.5ms, cross-continent ~150ms', 'RAM ~1µs, SSD ~1ns, cross-continent ~1ms', 'RAM and SSD are roughly the same speed'],
+      correctIndex: 1,
+      explanation: 'Memory beats disk by ~1000×; these anchors underpin every back-of-envelope estimate.',
+    ),
+    QuizQuestion(
+      question: 'Why optimize p99 latency rather than average latency at scale?',
+      options: ['p99 is easier to measure', 'Averages are mathematically meaningless', 'The tail defines the worst-served users\' experience — often the heaviest users — and fan-out means many requests touch the tail', 'p99 optimization is cheaper to implement'],
+      correctIndex: 2,
+      explanation: 'At scale the tail, not the mean, is what users actually feel — especially once requests fan out internally.',
+    ),
+    QuizQuestion(
+      question: 'What distinguishes tied requests from plain hedged requests?',
+      options: ['Tied requests are only used for writes', 'The two servers are linked so that when one starts processing, the duplicate on the other is cancelled', 'Tied requests use UDP instead of TCP', 'There is no difference'],
+      correctIndex: 1,
+      explanation: 'Tying cancels the losing duplicate, capping the extra load that naive duplication would create.',
+    ),
+  ];
+
+  static const _loadSheddingBackpressure = [
+    QuizQuestion(
+      question: 'What is load shedding?',
+      options: ['Moving load to a bigger server', 'Deliberately rejecting lower-priority work quickly so high-priority work keeps its latency during overload', 'Compressing requests to reduce bandwidth', 'Restarting overloaded services automatically'],
+      correctIndex: 1,
+      explanation: 'When demand exceeds capacity, you either choose what to drop or the system collapses and drops everything.',
+    ),
+    QuizQuestion(
+      question: 'Why is a fast, cheap rejection (e.g. an immediate 503 at the edge) better than letting an overloaded request time out?',
+      options: ['Clients prefer error codes', 'A slow timeout still consumes backend resources the whole time, making the overload worse; a fast no costs almost nothing', 'Timeouts are not allowed by HTTP', 'It reduces logging volume'],
+      correctIndex: 1,
+      explanation: 'Requests that will fail anyway should fail before consuming the scarce resource they can\'t get.',
+    ),
+    QuizQuestion(
+      question: 'What is the danger of unbounded queues in a processing pipeline?',
+      options: ['They deliver messages out of order', 'They hide overload until memory is exhausted and the process crashes — turning a latency problem into an outage later', 'They cannot be replicated', 'They require too much CPU'],
+      correctIndex: 1,
+      explanation: 'Bounded queues plus backpressure surface the problem immediately at the edge, where it can be handled deliberately.',
+    ),
+    QuizQuestion(
+      question: 'What does backpressure mean in a distributed pipeline?',
+      options: ['Compressing responses before sending', 'Propagating the "slow down" signal upstream — via bounded queues, blocking producers, or flow control — so pressure surfaces at the source', 'Retrying failed requests with exponential backoff', 'Scaling down idle instances'],
+      correctIndex: 1,
+      explanation: 'Instead of silently absorbing more work than it can do, each stage pushes the signal back toward the producer.',
+    ),
+    QuizQuestion(
+      question: 'How does load shedding differ from rate limiting?',
+      options: ['They are identical', 'Rate limiting enforces per-client fairness contracts; load shedding protects aggregate system survival by dropping by priority during overload', 'Load shedding applies only to databases', 'Rate limiting only applies during outages'],
+      correctIndex: 1,
+      explanation: 'Rate limits are policy applied per client at all times; shedding is a survival mechanism keyed to current system health.',
+    ),
+  ];
+
+  static const _isolationLevelsAnomalies = [
+    QuizQuestion(
+      question: 'Which anomaly does Read Committed still allow?',
+      options: ['Dirty reads', 'Non-repeatable reads — the same row can change between two reads within one transaction', 'Reading data that was never committed', 'Lost writes to different tables'],
+      correctIndex: 1,
+      explanation: 'Read Committed only guarantees you never see uncommitted data; two SELECTs in one transaction can still disagree.',
+    ),
+    QuizQuestion(
+      question: 'What is a phantom read?',
+      options: ['Reading a row that was deleted years ago', 'New rows appearing that match a query a transaction ran earlier, when the query is re-run', 'Reading from a failed replica', 'A read that returns corrupted bytes'],
+      correctIndex: 1,
+      explanation: 'Repeatable Read pins the rows you\'ve read, but new matching rows can still appear — the phantom.',
+    ),
+    QuizQuestion(
+      question: 'Two transactions each read an overlapping condition ("at least one doctor on call") and each write based on it, producing a state neither would have allowed. What is this anomaly?',
+      options: ['Dirty read', 'Phantom read', 'Write skew — prevented only by Serializable isolation', 'Non-repeatable read'],
+      correctIndex: 2,
+      explanation: 'Write skew is the classic anomaly weaker levels miss: each write is individually fine but jointly violates the invariant.',
+    ),
+    QuizQuestion(
+      question: 'How does MVCC let readers and writers avoid blocking each other?',
+      options: ['By locking every row read', 'Readers see a consistent snapshot of old row versions while writers create new versions — at the cost of vacuuming old versions later', 'By running all transactions serially', 'By caching all reads in memory'],
+      correctIndex: 1,
+      explanation: 'Multi-version concurrency control gives each transaction a snapshot; garbage-collecting dead versions is the price.',
+    ),
+    QuizQuestion(
+      question: 'What is the standard fix for lost updates when running below Serializable?',
+      options: ['Retry the whole transaction randomly', 'Optimistic locking with a version column, or pessimistic SELECT ... FOR UPDATE', 'Switching to Read Uncommitted', 'Adding an index on the updated column'],
+      correctIndex: 1,
+      explanation: 'Either detect the conflict at write time (version check) or claim the row up front (FOR UPDATE).',
+    ),
+  ];
+
+  static const _serializationSchemaEvolution = [
+    QuizQuestion(
+      question: 'What does backward compatibility mean for a serialized data schema?',
+      options: ['Old code can read new data', 'New code can read data written by old code', 'Data can be converted to XML', 'Schemas never change'],
+      correctIndex: 1,
+      explanation: 'Backward = new reader, old data. Forward = old reader, new data. Rolling deploys and queues require both.',
+    ),
+    QuizQuestion(
+      question: 'Why must a Protobuf field tag number never be reused after the field is deleted?',
+      options: ['Tag numbers are expensive to allocate', 'Old serialized data still carries that tag — a reused tag would be decoded as the wrong field with garbage semantics', 'Protobuf compilers forbid deletion entirely', 'It breaks JSON conversion'],
+      correctIndex: 1,
+      explanation: 'Bytes already written (in queues, logs, storage) outlive code; reserving deleted tags keeps them decodable safely.',
+    ),
+    QuizQuestion(
+      question: 'During a rolling deploy, why do you need BOTH backward and forward compatibility for messages on a queue?',
+      options: ['Queues corrupt messages otherwise', 'Old and new producer/consumer versions run simultaneously, so each version must read what the other writes', 'Compatibility improves throughput', 'Brokers require schema headers'],
+      correctIndex: 1,
+      explanation: 'Mid-deploy, an old consumer may read a new producer\'s message and vice versa — both directions must work.',
+    ),
+    QuizQuestion(
+      question: 'What does a schema registry (e.g. with Avro + Kafka) provide?',
+      options: ['Faster serialization', 'Rejecting incompatible schema changes at publish time, instead of discovering them as consumer crash-loops in production', 'Automatic data encryption', 'Message ordering guarantees'],
+      correctIndex: 1,
+      explanation: 'The registry enforces compatibility rules centrally, moving the failure to CI/publish time.',
+    ),
+    QuizQuestion(
+      question: 'When is JSON the better serialization choice over Protobuf?',
+      options: ['For high-volume internal service-to-service calls', 'For public-facing APIs where human readability, debuggability, and ubiquity matter more than size and speed', 'When type safety is critical', 'When messages exceed 1MB'],
+      correctIndex: 1,
+      explanation: 'JSON for the edge (everyone can read and debug it), compact typed binary formats for hot internal paths.',
+    ),
+  ];
+
+  static const _locksSyncPrimitives = [
+    QuizQuestion(
+      question: 'What is a race condition?',
+      options: ['Two servers competing for network bandwidth', 'A bug where correctness depends on thread interleaving — e.g. two threads both read-increment-write and one increment is lost', 'A CPU running too fast for its memory', 'A benchmark between two algorithms'],
+      correctIndex: 1,
+      explanation: 'Unsynchronized access to shared state means outcomes depend on scheduling order — the definition of a race.',
+    ),
+    QuizQuestion(
+      question: 'Using the bathroom-key analogy, what distinguishes a mutex from a semaphore?',
+      options: ['They are identical', 'Mutex = one key (one holder at a time); semaphore = N keys (up to N concurrent holders, a resource pool)', 'A semaphore is a faster mutex', 'A mutex works across machines, a semaphore does not'],
+      correctIndex: 1,
+      explanation: 'A semaphore generalizes a mutex to N permits — useful for bounding access to a pool of resources.',
+    ),
+    QuizQuestion(
+      question: 'When does a read-write lock outperform a plain mutex?',
+      options: ['When writes vastly outnumber reads', 'When many threads mostly read shared state — they can all hold the read lock concurrently, serializing only writers', 'Never; RW locks are always slower', 'Only on single-core machines'],
+      correctIndex: 1,
+      explanation: 'Many readers OR one writer: read-heavy workloads regain parallelism a mutex would forbid.',
+    ),
+    QuizQuestion(
+      question: 'When is a spinlock (busy-waiting) an appropriate choice?',
+      options: ['For any critical section', 'For critical sections shorter than the cost of a context switch — otherwise the spinning burns CPU for nothing', 'When holding a lock across a network call', 'When the OS provides no other primitive'],
+      correctIndex: 1,
+      explanation: 'Spinning avoids sleep/wake overhead only if the wait is briefer than that overhead itself.',
+    ),
+    QuizQuestion(
+      question: 'How does consistent lock ordering prevent deadlock?',
+      options: ['It makes locks reentrant', 'If every thread acquires locks in the same global order, a circular wait — required for deadlock — can never form', 'It shortens critical sections', 'It converts mutexes into semaphores'],
+      correctIndex: 1,
+      explanation: 'Deadlock needs a cycle of threads each holding what another wants; a global order makes cycles impossible.',
+    ),
+  ];
+
+  static const _optimisticVsPessimisticLocking = [
+    QuizQuestion(
+      question: 'How does optimistic locking detect a conflicting concurrent write?',
+      options: ['It locks the row before reading', 'The UPDATE includes "AND version = N"; zero rows affected means another writer got there first, so you retry', 'The database emails the developer', 'It compares timestamps on the client'],
+      correctIndex: 1,
+      explanation: 'No lock is taken; the version check at write time reveals whether the row changed since you read it.',
+    ),
+    QuizQuestion(
+      question: 'Why is optimistic locking preferred at high TPS with low contention?',
+      options: ['It is easier to code', 'No lock overhead and no blocking on the common path — the rare conflict just costs a retry', 'It guarantees zero conflicts', 'It works without transactions'],
+      correctIndex: 1,
+      explanation: 'When conflicts are rare, paying a retry occasionally beats making every transaction acquire locks.',
+    ),
+    QuizQuestion(
+      question: 'What does SELECT ... FOR UPDATE do?',
+      options: ['Marks rows for deletion', 'Acquires a pessimistic row lock so other writers (and other FOR UPDATE readers) block until this transaction commits', 'Creates a read-only snapshot', 'Updates rows during the select'],
+      correctIndex: 1,
+      explanation: 'It claims the rows up front — safe under contention, at the cost of blocking and potential deadlocks.',
+    ),
+    QuizQuestion(
+      question: 'Thousands of users fight over the same few rows (seats for one concert). Which strategy fits better and why?',
+      options: ['Optimistic — retries are always cheap', 'Pessimistic — under heavy same-row contention, optimistic retry storms waste more work than brief blocking does', 'Neither; use no locking', 'Optimistic, but only on replicas'],
+      correctIndex: 1,
+      explanation: 'High contention flips the trade-off: nearly every optimistic attempt would fail and retry, thrashing the hot rows.',
+    ),
+    QuizQuestion(
+      question: 'In the wallet-debit pattern "UPDATE wallets SET balance = ? WHERE user_id = ? AND version = ? AND balance >= amount", what does 0 rows affected signify?',
+      options: ['The database is down', 'Either a concurrent writer bumped the version or funds are insufficient — the caller must re-read and retry or fail the operation', 'The update succeeded silently', 'The WHERE clause has a syntax error'],
+      correctIndex: 1,
+      explanation: 'The conditional update makes the check-and-debit atomic; zero rows means the precondition no longer holds.',
+    ),
+  ];
+
+  static const _processThreadCoroutine = [
+    QuizQuestion(
+      question: 'What is the key difference between processes and threads?',
+      options: ['Threads are always faster to create than any alternative', 'Processes have isolated memory; threads share their process\'s memory — cheaper communication but easier corruption', 'Processes cannot run concurrently', 'Threads cannot block'],
+      correctIndex: 1,
+      explanation: 'Shared memory is both the benefit (cheap data sharing) and the risk (race conditions) of threads.',
+    ),
+    QuizQuestion(
+      question: 'Why can a runtime schedule millions of coroutines but not millions of OS threads?',
+      options: ['Coroutines run on the GPU', 'Coroutines are user-space scheduled with tiny stacks; OS threads each cost a real kernel stack and context-switch overhead', 'Operating systems ban large thread counts', 'Coroutines never wait on I/O'],
+      correctIndex: 1,
+      explanation: 'Cooperative user-space scheduling makes each coroutine orders of magnitude cheaper than a kernel thread.',
+    ),
+    QuizQuestion(
+      question: 'What is the main weakness of the event-loop concurrency model?',
+      options: ['It cannot handle more than 100 connections', 'One blocking or CPU-heavy call stalls every request on that loop — such work must be offloaded', 'It requires more memory than thread pools', 'It cannot serve HTTP'],
+      correctIndex: 1,
+      explanation: 'The loop\'s single thread multiplexes everything; anything that doesn\'t yield freezes all of it.',
+    ),
+    QuizQuestion(
+      question: 'Why are individual Redis commands atomic without any locking?',
+      options: ['Redis uses hardware transactional memory', 'Redis executes commands on a single thread, so no two commands ever interleave', 'Redis locks every key automatically', 'Redis commands never modify data'],
+      correctIndex: 1,
+      explanation: 'Single-threaded command execution is Redis\'s concurrency model — serialization by design.',
+    ),
+    QuizQuestion(
+      question: 'A service handles 10K mostly-idle concurrent connections (e.g. WebSockets). Why does an event loop fit better than a thread-per-request pool?',
+      options: ['Thread pools cannot accept WebSockets', 'Idle connections cost almost nothing on an event loop, while 10K threads mean 10K stacks and constant context switching for connections doing nothing', 'Event loops have better encryption', 'Thread pools cannot exceed 1K threads'],
+      correctIndex: 1,
+      explanation: 'I/O-heavy, mostly-idle workloads are exactly what non-blocking event loops were built for.',
+    ),
+  ];
+
+  static const _connectionPooling = [
+    QuizQuestion(
+      question: 'Why is opening a new database connection per request expensive?',
+      options: ['SQL parsing is slow', 'Each open pays TCP + TLS + auth handshakes, and the database allocates a real per-connection process or thread with memory', 'Databases only allow one connection', 'Connections cannot be closed'],
+      correctIndex: 1,
+      explanation: 'Connection setup costs tens of milliseconds and real server-side resources — amortize it by reusing warm connections.',
+    ),
+    QuizQuestion(
+      question: 'Why is the pool\'s bounded size a feature rather than a limitation?',
+      options: ['It reduces licensing costs', 'It caps concurrent load on the database — requests queue briefly at the pool instead of piling unbounded concurrent queries onto the DB', 'It makes queries return faster individually', 'Unbounded pools are illegal in most drivers'],
+      correctIndex: 1,
+      explanation: 'The cap is deliberate backpressure that prevents the app fleet from crushing the database during spikes.',
+    ),
+    QuizQuestion(
+      question: '200 app instances each hold a 20-connection pool. What problem appears, and what is the standard fix?',
+      options: ['Nothing — pools compose freely', '4,000 total DB connections can exhaust the database; put a shared proxy pooler (PgBouncer / RDS Proxy) between the fleet and the DB', 'The app instances will deadlock each other', 'The pools must be increased to 40 each'],
+      correctIndex: 1,
+      explanation: 'Per-instance pools multiply by fleet size; a shared external pooler consolidates them.',
+    ),
+    QuizQuestion(
+      question: 'What is the rough rule of thumb for sizing a connection pool?',
+      options: ['One connection per concurrent user', 'As large as memory allows', 'Surprisingly small — around the database\'s CPU cores × 2 — because an active connection is CPU-bound on the server', 'Exactly 100 connections'],
+      correctIndex: 2,
+      explanation: 'More connections than the DB can actively execute just adds queueing inside the database instead of in front of it.',
+    ),
+    QuizQuestion(
+      question: 'What is a "connection storm" and how does pooling prevent it?',
+      options: ['A burst of malicious login attempts', 'Many app instances (re)connecting simultaneously — e.g. after a deploy — overwhelming the DB; pools reuse persistent connections instead of reconnecting en masse', 'Lightning damaging network cables', 'Too many read replicas syncing at once'],
+      correctIndex: 1,
+      explanation: 'Reused warm connections mean restarts and scale-outs don\'t translate into a thundering herd of handshakes.',
+    ),
+  ];
+
+  static const _threePillarsObservability = [
+    QuizQuestion(
+      question: 'What questions do metrics, logs, and traces each answer?',
+      options: ['They all answer the same question redundantly', 'Metrics: is it healthy? Logs: what exactly happened? Traces: how did this request flow across services?', 'Metrics: who deployed? Logs: how much does it cost? Traces: which team owns it?', 'Only logs answer questions; the rest are decoration'],
+      correctIndex: 1,
+      explanation: 'The three pillars are complementary shapes of telemetry — each answers what the others cannot.',
+    ),
+    QuizQuestion(
+      question: 'What distinguishes observability from monitoring?',
+      options: ['Observability is just a newer word for monitoring', 'Monitoring watches known metrics for known failure modes; observability is the ability to understand ANY internal state — including unknown failures — from external outputs', 'Monitoring is for infrastructure, observability for apps', 'Observability requires a paid vendor'],
+      correctIndex: 1,
+      explanation: 'Monitoring tells you something is wrong; observability lets you work out why, even for failures you never predicted.',
+    ),
+    QuizQuestion(
+      question: 'Why are metrics the right pillar for dashboards and alerts, rather than logs?',
+      options: ['Logs cannot be graphed', 'Metrics are cheap numeric time-series, aggregatable and queryable in real time; logs are far more expensive per event and suited to detailed investigation', 'Metrics contain more detail than logs', 'Alerting systems cannot read logs'],
+      correctIndex: 1,
+      explanation: 'Cheap aggregation is what makes always-on evaluation of alert rules feasible.',
+    ),
+    QuizQuestion(
+      question: 'What is OpenTelemetry?',
+      options: ['A Grafana dashboard theme', 'The CNCF vendor-neutral standard for instrumentation: SDKs, a Collector, and the OTLP protocol feeding any backend', 'A proprietary Datadog agent', 'A log storage database'],
+      correctIndex: 1,
+      explanation: 'OTel decouples how you instrument from where you send telemetry — one SDK, any backend.',
+    ),
+    QuizQuestion(
+      question: 'A payment fails somewhere across six services. Which pillar do you reach for FIRST to find where, and which for the exact error?',
+      options: ['Logs first, then metrics', 'The trace shows which service/span failed across the flow; then that service\'s logs (joined via trace_id) give the exact error detail', 'Metrics for both steps', 'Traces for both steps'],
+      correctIndex: 1,
+      explanation: 'Traces localize the failure across services; logs, correlated by trace_id, explain it precisely.',
+    ),
+  ];
+
+  static const _metricsPrometheus = [
+    QuizQuestion(
+      question: 'How does Prometheus collect metrics from services?',
+      options: ['Services push metrics to Prometheus continuously', 'Prometheus scrapes each service\'s /metrics HTTP endpoint on a schedule (pull-based, typically every 15s)', 'Via reading service log files', 'Through database triggers'],
+      correctIndex: 1,
+      explanation: 'The pull model lets Prometheus own the schedule and instantly see when a target stops answering.',
+    ),
+    QuizQuestion(
+      question: 'Why prefer a histogram over a summary for request latency in a multi-pod service?',
+      options: ['Summaries use more memory', 'Histogram buckets can be aggregated across pods and percentiles computed server-side; client-side summary quantiles cannot be meaningfully merged', 'Histograms are more accurate per pod', 'Summaries only work in Go'],
+      correctIndex: 1,
+      explanation: 'You cannot average p99s from different pods; aggregatable buckets are why histograms win in distributed systems.',
+    ),
+    QuizQuestion(
+      question: 'Why is user_id a dangerous metric label?',
+      options: ['It violates GDPR in all cases', 'Cardinality: every unique label combination is a separate time-series, so millions of user_ids explode Prometheus storage and memory', 'Labels cannot contain numbers', 'It slows down the /metrics endpoint only'],
+      correctIndex: 1,
+      explanation: 'Good labels have few values (status_code, method); unbounded-value labels are the classic Prometheus outage.',
+    ),
+    QuizQuestion(
+      question: 'A nightly batch job finishes in 30 seconds. Why won\'t Prometheus see its metrics, and what is the fix?',
+      options: ['Batch jobs cannot emit metrics', 'The job ends before any scrape happens; it should push its metrics to Pushgateway, which Prometheus then scrapes', 'Prometheus must be restarted nightly', 'Use a summary instead of a counter'],
+      correctIndex: 1,
+      explanation: 'Pushgateway is the standard intermediary for short-lived jobs in a pull-based world.',
+    ),
+    QuizQuestion(
+      question: 'What does rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) compute?',
+      options: ['Total requests since startup', 'The real-time 5xx error rate: per-second 5xx rate divided by per-second total rate over the last 5 minutes', 'Average latency in milliseconds', 'The number of healthy pods'],
+      correctIndex: 1,
+      explanation: 'rate() turns monotonic counters into per-second rates; the ratio is the fraction of requests failing.',
+    ),
+  ];
+
+  static const _structuredLoggingPipeline = [
+    QuizQuestion(
+      question: 'Why must production logs be structured JSON rather than free-text strings?',
+      options: ['JSON compresses better', 'Consistent machine-parseable fields make logs searchable and aggregatable at scale — free text can only be grepped', 'Free text is deprecated by RFC', 'JSON logs are automatically encrypted'],
+      correctIndex: 1,
+      explanation: 'Structure is what turns billions of log lines into a queryable dataset instead of a text dump.',
+    ),
+    QuizQuestion(
+      question: 'Why does a log pipeline put Kafka between the shippers and the storage backend?',
+      options: ['Kafka indexes the logs', 'As a buffer that absorbs back-pressure — if Elasticsearch/Loki slows or fails, logs queue in Kafka instead of being dropped', 'Kafka encrypts logs in transit', 'To convert logs to metrics'],
+      correctIndex: 1,
+      explanation: 'Decoupling ingestion from storage keeps a storage hiccup from losing telemetry.',
+    ),
+    QuizQuestion(
+      question: 'What is the key difference between Loki and Elasticsearch for logs?',
+      options: ['Loki is a SaaS-only product', 'Loki indexes only metadata labels, not full content — much cheaper; Elasticsearch full-text-indexes everything — powerful but expensive', 'Elasticsearch cannot store logs', 'Loki requires Datadog'],
+      correctIndex: 1,
+      explanation: 'The indexing trade-off is the cost trade-off; Loki is the usual cost-performance sweet spot with Grafana.',
+    ),
+    QuizQuestion(
+      question: 'Which sampling policy cuts log volume without losing signal?',
+      options: ['Drop all logs above 1KB', 'Keep 100% of ERROR/WARN and slow requests, sample routine successful traffic (e.g. 10% of INFO)', 'Keep only the first log of each day', 'Sample errors at 1% to save money'],
+      correctIndex: 1,
+      explanation: 'Errors and outliers are the signal; high-volume routine successes are safely sampled.',
+    ),
+    QuizQuestion(
+      question: 'Which fields must NEVER appear in logs, and how is that enforced?',
+      options: ['Timestamps, since they leak timezones', 'PAN, CVV, passwords, API keys, JWTs, account numbers — scrubbed by pattern at the shipper, not left to developer discipline', 'trace_id, since it identifies requests', 'HTTP status codes'],
+      correctIndex: 1,
+      explanation: 'Sensitive-field scrubbing belongs in the pipeline where it applies uniformly to everything.',
+    ),
+  ];
+
+  static const _distributedTracingOtel = [
+    QuizQuestion(
+      question: 'What is the relationship between a trace and a span?',
+      options: ['They are synonyms', 'A trace covers one request end-to-end; spans are its units of work (each service call, DB query, queue publish), forming a parent-child tree', 'A span contains many traces', 'Traces are for errors, spans for successes'],
+      correctIndex: 1,
+      explanation: 'Root span at the entry service, child spans downstream — the tree shows exactly where time went.',
+    ),
+    QuizQuestion(
+      question: 'What breaks a distributed trace into disconnected fragments?',
+      options: ['Using more than 10 services', 'Any hop that fails to forward the context — the W3C traceparent header (or Kafka/gRPC metadata) must travel on every outgoing call', 'Using HTTPS between services', 'Spans longer than 30 seconds'],
+      correctIndex: 1,
+      explanation: 'Context propagation is the crux: one non-forwarding hop orphans everything downstream of it.',
+    ),
+    QuizQuestion(
+      question: 'What advantage does tail-based sampling have over head-based sampling?',
+      options: ['It requires no memory', 'Buffering spans and deciding after seeing the whole trace lets it keep every failed/slow trace, even ones head-sampling would have skipped', 'It samples more uniformly at random', 'It works without a collector'],
+      correctIndex: 1,
+      explanation: 'Head sampling decides blind at the entry point; tail sampling can guarantee the interesting traces survive.',
+    ),
+    QuizQuestion(
+      question: 'Which is a sensible head-based sampling policy for a high-traffic service?',
+      options: ['100% of everything, always', '1% random + 100% of errors + 100% of slow requests (>p99)', '0% — tracing is only for dev environments', 'Sample only GET requests'],
+      correctIndex: 1,
+      explanation: 'Keep all the anomalies, sample the routine bulk — the standard cost/signal balance.',
+    ),
+    QuizQuestion(
+      question: 'Why is Tempo dramatically cheaper to run than Jaeger-on-Elasticsearch?',
+      options: ['Tempo drops half the spans', 'Tempo writes traces to object storage (S3/GCS) with no indexing, queried by trace ID or TraceQL; Jaeger maintains a full ES/Cassandra index', 'Tempo is closed-source with a free tier', 'Jaeger stores traces in RAM only'],
+      correctIndex: 1,
+      explanation: 'No index = cheap storage; the trade-off is you mostly look traces up by ID or via metrics/log links.',
+    ),
+  ];
+
+  static const _sloSliErrorBudgets = [
+    QuizQuestion(
+      question: 'What is the relationship between SLI, SLO, and SLA?',
+      options: ['Three names for the same document', 'SLI = the measurement, SLO = your internal target for it, SLA = the weaker external customer contract', 'SLA is stricter than SLO by definition', 'SLIs are set by the legal team'],
+      correctIndex: 1,
+      explanation: 'Measure (SLI), target internally (SLO), promise externally (SLA) — with the SLO stricter to buy reaction time.',
+    ),
+    QuizQuestion(
+      question: 'With an availability SLO of 99.95% over 28 days, what is the error budget?',
+      options: ['About 4 hours of downtime', 'About 21.6 minutes — 0.05% of the window — which every incident spends from', 'Zero downtime is allowed', '5% of all requests may fail'],
+      correctIndex: 1,
+      explanation: '0.0005 × 28 days ≈ 21.6 minutes; the budget makes reliability a quantified, spendable resource.',
+    ),
+    QuizQuestion(
+      question: 'What does an error-budget burn rate of 14.4× mean?',
+      options: ['The service is 14.4% unavailable', 'At the current failure rate, the entire 28-day budget will be exhausted in about 2 hours — page immediately', 'Errors are 14.4× cheaper than usual', 'The SLO was set 14.4× too strict'],
+      correctIndex: 1,
+      explanation: 'Burn rate is consumption speed relative to "on pace"; multi-window burn-rate alerts replace naive error-count alerts.',
+    ),
+    QuizQuestion(
+      question: 'Why measure SLOs over a rolling 28-day window rather than calendar months?',
+      options: ['Calendar months are illegal in SRE', 'A bad week ages out smoothly instead of the budget resetting abruptly on the 1st; operations see a consistent trailing view', 'Rolling windows require less storage', '28 days aligns with lunar cycles required by Google'],
+      correctIndex: 1,
+      explanation: 'Trailing windows avoid the cliff-edge semantics of calendar resets.',
+    ),
+    QuizQuestion(
+      question: 'Why does a 4xx response count as "good" in an availability SLI?',
+      options: ['4xx responses are rare enough to ignore', 'The server correctly rejected a bad request — availability measures server correctness, not client correctness; 5xx is what counts against you', 'Clients never see 4xx responses', 'It inflates the SLO to look better'],
+      correctIndex: 1,
+      explanation: 'A correct rejection is the server doing its job; penalizing it would let bad clients burn your budget.',
+    ),
+  ];
+
+  static const _goldenSignalsRedUse = [
+    QuizQuestion(
+      question: 'What are Google SRE\'s Four Golden Signals?',
+      options: ['CPU, RAM, Disk, Network', 'Latency, Traffic, Errors, Saturation', 'Rate, Errors, Duration, Uptime', 'MTTR, MTTD, MTBF, SLA'],
+      correctIndex: 1,
+      explanation: 'The minimum viable signal set for any production system — every dashboard should cover all four.',
+    ),
+    QuizQuestion(
+      question: 'How do the RED and USE frameworks divide responsibility?',
+      options: ['RED is for weekends, USE for weekdays', 'RED (Rate, Errors, Duration) is the per-service request view; USE (Utilization, Saturation, Errors) is the per-resource infrastructure view', 'USE replaced RED entirely', 'RED is for databases only'],
+      correctIndex: 1,
+      explanation: 'Services need request-centric metrics; machines and resources need capacity-centric ones.',
+    ),
+    QuizQuestion(
+      question: 'Why show p99 latency on dashboards instead of only the average?',
+      options: ['Averages cannot be computed from histograms', 'The average hides the tail: p50 shows the typical experience while p99 shows the worst-served 1%, which is where degradation appears first', 'p99 is always lower than the average', 'Regulators require p99'],
+      correctIndex: 1,
+      explanation: 'A degrading dependency shows up in the tail long before it moves the mean.',
+    ),
+    QuizQuestion(
+      question: 'Which levers reduce MTTR (mean time to recover)?',
+      options: ['More unit tests and chaos engineering', 'Runbooks, practiced on-call drills, feature flags for quick rollback, and good tracing', 'Longer scrape intervals', 'Raising the SLA'],
+      correctIndex: 1,
+      explanation: 'MTTR is about recovery speed once detected; testing and chaos engineering improve MTBF instead.',
+    ),
+    QuizQuestion(
+      question: 'Transaction volume suddenly drops 70% while all error rates stay at zero. What should happen?',
+      options: ['Nothing — no errors means no problem', 'An alert: a sudden drop in expected volume is as alarming as a spike, usually meaning an upstream or client-side outage', 'Celebrate reduced load', 'Lower the SLO to match'],
+      correctIndex: 1,
+      explanation: 'Absence of traffic is a failure signal your own error rates cannot see — the upstream broke before reaching you.',
+    ),
+  ];
+
+  static const _alertingOncallRunbooks = [
+    QuizQuestion(
+      question: 'What makes an alert "actionable", and why does it matter?',
+      options: ['It fires at least daily to stay visible', 'A human must be able to do something specific about it — every noisy, non-actionable alert trains on-call to ignore alerts, degrading response to real incidents', 'It includes at least three graphs', 'It pages the entire team at once'],
+      correctIndex: 1,
+      explanation: 'Alert fatigue is cumulative: each useless page reduces the effectiveness of every real one.',
+    ),
+    QuizQuestion(
+      question: 'What must a runbook linked from an alert contain?',
+      options: ['The service\'s full source code', 'What the alert means, how to investigate, remediation steps, rollback procedure, and the escalation path', 'The on-call engineer\'s performance review', 'Marketing metrics'],
+      correctIndex: 1,
+      explanation: 'The runbook turns 3am confusion into a checklist — it is what actually shrinks MTTR.',
+    ),
+    QuizQuestion(
+      question: 'How do a FOR duration and hysteresis prevent flapping alerts?',
+      options: ['They delete noisy alerts automatically', 'FOR requires the condition to hold for a full N minutes before firing; hysteresis uses different on/off thresholds so the alert doesn\'t oscillate at the boundary', 'They lower the threshold until it stops firing', 'They mute alerts at night'],
+      correctIndex: 1,
+      explanation: 'Both mechanisms stop a metric hovering at the threshold from generating an on/off page storm.',
+    ),
+    QuizQuestion(
+      question: 'What is dead-man\'s-switch (absence) alerting?',
+      options: ['An alert that fires when an engineer leaves the company', 'An alert that fires when an expected recurring event STOPS happening — e.g. a reconciliation cron that hasn\'t reported in 10 minutes', 'An alert that can never be silenced', 'A physical button in the datacenter'],
+      correctIndex: 1,
+      explanation: 'A dead job produces no errors to alert on; only the absence of its heartbeat reveals it.',
+    ),
+    QuizQuestion(
+      question: 'Which severity-tier scheme reflects standard practice?',
+      options: ['Every alert pages everyone, always', 'P0: wake anyone any time (capital loss/total outage); P1: page on-call; P2: Slack channel; P3: create a ticket', 'Alerts are triaged monthly in a meeting', 'Severity is assigned after resolution'],
+      correctIndex: 1,
+      explanation: 'Tiered routing plus automatic escalation on unacknowledged pages matches response cost to impact.',
+    ),
+  ];
+
+  static const _businessMetricsReconciliation = [
+    QuizQuestion(
+      question: 'Why can a system look perfectly healthy on infrastructure dashboards while the business is losing money?',
+      options: ['Infrastructure dashboards are always wrong', 'Domain-level failures — a partner returning well-formed errors, one corridor degrading, transactions stuck mid-state — don\'t show up as CPU, memory, or 5xx anomalies', 'Business losses are not measurable', 'Money is tracked by a different cloud provider'],
+      correctIndex: 1,
+      explanation: 'Business-level metrics (success rate per corridor, stuck transactions) see failures infrastructure metrics cannot.',
+    ),
+    QuizQuestion(
+      question: 'Global payment success rate reads 99%, yet one corridor is failing badly. What monitoring principle does this illustrate?',
+      options: ['Round your metrics to whole percentages', 'Segment before aggregating: alert per corridor/provider (e.g. rate < 95% for 5 consecutive minutes per corridor), because global aggregation masks localized failure', 'Success rate is a vanity metric', 'One bad corridor is statistically acceptable'],
+      correctIndex: 1,
+      explanation: 'Aggregates hide exactly the failures that segment-level alerts catch.',
+    ),
+    QuizQuestion(
+      question: 'What does continuous double-entry ledger monitoring check, and what happens on drift?',
+      options: ['That the database has free disk space', 'That SUM(all ledger entries) = 0 at all times; any drift is an immediate P0, typically with automatic pausing of new payments', 'That backups completed overnight', 'That all entries are positive numbers'],
+      correctIndex: 1,
+      explanation: 'The double-entry invariant is absolute; violation means money is being created or destroyed somewhere.',
+    ),
+    QuizQuestion(
+      question: 'How do you detect transactions silently stuck in a PROCESSED state?',
+      options: ['Wait for customer complaints', 'A recurring check for rows where settlement_expected_at is past its SLA (e.g. WHERE status=\'PROCESSED\' AND settlement_expected_at < NOW() - INTERVAL \'1h\'), alerting if any exist', 'Stuck transactions raise 5xx errors automatically', 'Restart the pipeline nightly as prevention'],
+      correctIndex: 1,
+      explanation: 'Stalled state machines produce no errors — only an explicit stuck-state query surfaces them.',
+    ),
+    QuizQuestion(
+      question: 'Why does the reconciliation cron itself need heartbeat monitoring?',
+      options: ['Crons are billed per execution', 'If the reconciler silently stops running, every invariant it checks goes unwatched — absence alerting (no run in 10 min → alert) covers the watcher itself', 'Heartbeats make the cron run faster', 'To measure the cron\'s CPU usage'],
+      correctIndex: 1,
+      explanation: 'Who watches the watcher: a dead reconciler is worse than a failing one, because it fails silently.',
     ),
   ];
 }

@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Which content track a quiz result belongs to. Algorithm ids and
-/// fundamental-concept ids aren't guaranteed unique across each other, so
-/// results are keyed by (domain, id) rather than id alone.
-enum ProgressDomain { algorithm, fundamental }
+/// Which content track a result belongs to. Ids aren't guaranteed unique
+/// across tracks, so results are keyed by (domain, id) rather than id alone.
+/// [designProblem] records design-canvas checks that fully matched the
+/// reference architecture (score = matched items, total = reference items).
+enum ProgressDomain { algorithm, fundamental, designProblem }
 
 /// The best recorded attempt at a given quiz.
 @immutable

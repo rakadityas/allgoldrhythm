@@ -46,9 +46,10 @@ class _FundamentalsListScreenState extends State<FundamentalsListScreen> {
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         Text(
-          'The core theory behind every system design interview — networking, APIs, load balancing, '
-          'caching, databases, scaling, consistency, async processing, rate limiting, storage, security, '
-          'search, notifications, and geospatial indexing — independent of any specific case study.',
+          // Derived from the data so it can never drift as content grows.
+          'The core theory behind every system design interview — '
+          '${concepts.length} concepts across ${categorized.length} categories, '
+          'each with a quick quiz, independent of any specific case study.',
           style: theme.textTheme.bodyMedium,
         ),
         const SizedBox(height: AppSpacing.md),

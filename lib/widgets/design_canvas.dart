@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/system_design.dart';
+import '../services/progress_store.dart';
 import '../theme/app_theme.dart';
 
 const double _nodeSize = 76;
@@ -126,16 +128,31 @@ class _DesignCanvasState extends State<DesignCanvas> {
         .where((pair) => !placedTypePairs.contains(pair))
         .toList();
 
+    final result = _ValidationResult(
+      missingComponents: missingComponents,
+      missingConnections: missingConnections,
+      totalComponents: widget.problem.reference.components.length,
+      totalConnections: widget.problem.reference.connections.length,
+    );
+
     setState(() {
-      _result = _ValidationResult(
-        missingComponents: missingComponents,
-        missingConnections: missingConnections,
-        totalComponents: widget.problem.reference.components.length,
-        totalConnections: widget.problem.reference.connections.length,
-      );
+      _result = result;
       _connectMode = false;
       _connectFrom = null;
     });
+
+    // A fully matching design counts as completing the problem. Partial
+    // matches are deliberately not recorded — "completed" means the reference
+    // architecture was reproduced, not merely attempted.
+    if (result.isPerfect) {
+      final total = result.totalComponents + result.totalConnections;
+      context.read<ProgressStore>().recordQuizResult(
+            ProgressDomain.designProblem,
+            widget.problem.id,
+            total,
+            total,
+          );
+    }
   }
 
   @override

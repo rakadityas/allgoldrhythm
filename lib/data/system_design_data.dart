@@ -7,12 +7,15 @@ class SystemDesignData {
         _distributedCache,
         _chatApplication,
         _newsFeed,
+        _notificationSystem,
+        _webCrawler,
+        _ticketBooking,
       ];
 
   static const _urlShortener = SystemDesignProblem(
     id: 'url_shortener',
     title: 'Design a URL Shortener',
-    difficulty: 'Easy',
+    difficulty: Difficulty.easy,
     prompt: 'Design a URL shortening service like bit.ly. Users submit a long URL and receive a short '
         'alias; visiting the short URL redirects to the original.',
     functionalRequirements: [
@@ -67,7 +70,7 @@ class SystemDesignData {
   static const _rateLimiter = SystemDesignProblem(
     id: 'rate_limiter',
     title: 'Design a Rate Limiter',
-    difficulty: 'Medium',
+    difficulty: Difficulty.medium,
     prompt: 'Design a rate limiter that throttles how many requests a client can make to an API within '
         'a given time window, protecting backend services from being overwhelmed.',
     functionalRequirements: [
@@ -115,7 +118,7 @@ class SystemDesignData {
   static const _distributedCache = SystemDesignProblem(
     id: 'distributed_cache',
     title: 'Design a Distributed Key-Value Cache',
-    difficulty: 'Hard',
+    difficulty: Difficulty.hard,
     prompt: 'Design a distributed in-memory cache like Redis or Memcached: a horizontally-scalable '
         'key-value store that sits in front of a slower database and serves reads/writes with '
         'sub-millisecond latency.',
@@ -176,7 +179,7 @@ class SystemDesignData {
   static const _chatApplication = SystemDesignProblem(
     id: 'chat_application',
     title: 'Design a Chat Application',
-    difficulty: 'Hard',
+    difficulty: Difficulty.hard,
     prompt: 'Design a one-on-one and group messaging app like WhatsApp or Slack: users send messages that '
         'are delivered to online recipients in real time, and queued for delivery when recipients are offline.',
     functionalRequirements: [
@@ -243,7 +246,7 @@ class SystemDesignData {
   static const _newsFeed = SystemDesignProblem(
     id: 'news_feed',
     title: 'Design a News Feed',
-    difficulty: 'Hard',
+    difficulty: Difficulty.hard,
     prompt: 'Design a social media news feed like Instagram or Twitter\'s home timeline: users follow other '
         'users, and see a reverse-chronological (or ranked) feed of posts from everyone they follow.',
     functionalRequirements: [
@@ -307,6 +310,197 @@ class SystemDesignData {
         (ComponentType.apiServer, ComponentType.database),
         (ComponentType.apiServer, ComponentType.objectStorage),
         (ComponentType.client, ComponentType.cdn),
+      ],
+    ),
+  );
+
+  static const _notificationSystem = SystemDesignProblem(
+    id: 'notification_system',
+    title: 'Design a Notification System',
+    difficulty: Difficulty.medium,
+    prompt: 'Design a service that lets other internal systems send notifications to users across '
+        'multiple channels (push, email, SMS), reliably and without blocking the caller.',
+    functionalRequirements: [
+      'Internal services can request "send notification X to user Y" over a simple API',
+      'Deliver via the user\'s registered channels: mobile push, email, and/or SMS',
+      'Respect user preferences and opt-outs per notification type',
+      '(Optional) Deduplicate, so a user never receives the same notification twice',
+    ],
+    nonFunctionalRequirements: [
+      'The calling service must not wait for delivery — accepting a notification must be fast and async',
+      'At-least-once delivery — an accepted notification must eventually be delivered or explicitly dead-lettered',
+      'Scale — absorb large bursts (e.g. a marketing campaign to 10M users) without overwhelming downstream providers',
+      'Third-party providers (APNs, email/SMS gateways) fail and rate-limit — the design must retry and back off',
+    ],
+    capacityEstimation: [
+      'Assume 50M notifications/day average ≈ 600/sec, but campaign bursts of 100K/sec — a queue must absorb the spike',
+      'Provider throughput is the bottleneck: e.g. an SMS gateway capped at 1K msgs/sec means a 10M-user campaign drains over hours by design',
+      'Notification payloads are small (~1KB); 50M/day ≈ 50GB/day of transient queue data plus a delivery-status record per send',
+    ],
+    apiDesign: [
+      'POST /notifications { userId, type, channels?, payload } → 202 Accepted { notificationId }',
+      'GET /notifications/{id}/status → { status: queued | delivered | failed_per_channel }',
+      'PUT /users/{id}/preferences { channel opt-ins per notification type } → 200',
+    ],
+    highLevelDesign: 'The API server validates the request, checks user preferences and device tokens '
+        '(cached, since they\'re read on every send), then drops one message per target channel onto a '
+        'message queue and immediately returns 202. This is the core decoupling: the caller learns '
+        '"accepted", never "delivered", so a slow SMS provider can\'t slow down the checkout flow that '
+        'triggered the notification.\n\n'
+        'Pools of channel-specific workers consume the queue and call the third-party providers (APNs/FCM '
+        'for push, email and SMS gateways). Workers are where all the messy reliability logic lives: '
+        'per-provider rate limiting, retries with exponential backoff, and after repeated failures moving '
+        'the message to a dead-letter queue for inspection rather than retrying forever. Each attempt\'s '
+        'outcome is written to the database, which powers the status API and deduplication (skip if this '
+        'notificationId was already delivered on this channel).\n\n'
+        'Because workers pull from the queue at their own pace, a 10M-recipient campaign simply makes the '
+        'queue deep instead of making anything fall over — the queue converts a burst into a steady drain '
+        'at whatever rate the providers allow.',
+    reference: ReferenceArchitecture(
+      components: [
+        ComponentType.client,
+        ComponentType.loadBalancer,
+        ComponentType.apiServer,
+        ComponentType.messageQueue,
+        ComponentType.worker,
+        ComponentType.cache,
+        ComponentType.database,
+      ],
+      connections: [
+        (ComponentType.client, ComponentType.loadBalancer),
+        (ComponentType.loadBalancer, ComponentType.apiServer),
+        (ComponentType.apiServer, ComponentType.cache),
+        (ComponentType.apiServer, ComponentType.messageQueue),
+        (ComponentType.messageQueue, ComponentType.worker),
+        (ComponentType.worker, ComponentType.database),
+      ],
+    ),
+  );
+
+  static const _webCrawler = SystemDesignProblem(
+    id: 'web_crawler',
+    title: 'Design a Web Crawler',
+    difficulty: Difficulty.medium,
+    prompt: 'Design a crawler that starts from seed URLs and systematically downloads billions of web '
+        'pages (e.g. to feed a search index), discovering new links as it goes.',
+    functionalRequirements: [
+      'Start from a set of seed URLs and download each page\'s content',
+      'Extract links from downloaded pages and add unseen ones to the crawl frontier',
+      'Store raw page content for downstream processing (e.g. indexing)',
+      'Re-crawl pages periodically to pick up changes',
+    ],
+    nonFunctionalRequirements: [
+      'Politeness — never hammer a single host; respect robots.txt and per-domain rate limits',
+      'Scale — billions of URLs means the frontier and "seen" set can\'t fit on one machine',
+      'Robustness — malformed HTML, dead links, redirect loops, and spider traps must not crash or stall the crawl',
+      'Freshness vs coverage — prioritize which URLs to crawl next rather than pure FIFO',
+    ],
+    capacityEstimation: [
+      'Target 1B pages/month ≈ 400 pages/sec sustained fetch rate',
+      'At ~100KB average page size, 1B pages ≈ 100TB/month of raw content — object storage, not a database',
+      'The "have I seen this URL?" check happens for every extracted link — tens of thousands of lookups/sec, needing an in-memory structure (hash set / Bloom filter), not DB queries',
+      'A single fetcher spends most time waiting on network I/O, so hundreds of concurrent fetches per worker machine are practical',
+    ],
+    apiDesign: [
+      'Internal: enqueue(url, priority) → adds to the crawl frontier',
+      'Internal: fetch worker loop — dequeue URL → download → store content → extract links → enqueue unseen links',
+      'GET /crawl-status/{domain} → pages crawled, last crawl time (operational visibility)',
+    ],
+    highLevelDesign: 'The heart of the crawler is the frontier: a message queue of URLs to crawl, '
+        'organized so that each host\'s URLs drain at a polite rate (per-domain sub-queues with rate '
+        'limits) and prioritized by importance and freshness rather than pure FIFO. Fetcher workers pull '
+        'from the frontier, download the page, and hand the raw HTML to storage — there is no user-facing '
+        'client in this system; workers and queues ARE the system.\n\n'
+        'Downloaded content goes to object storage (billions of ~100KB blobs is exactly what it\'s for), '
+        'while page metadata — URL, crawl time, content hash, status — goes to the database. After '
+        'storing, the worker extracts links and checks each against the "seen" set — a cache-resident '
+        'structure (hash set or Bloom filter) since checking billions of URLs via database queries would '
+        'be far too slow. Unseen URLs are enqueued back into the frontier, closing the loop: the crawler '
+        'feeds itself.\n\n'
+        'Politeness and robustness live in the workers: respect robots.txt (cached per domain), cap '
+        'per-host concurrency, detect redirect loops and spider traps via depth/URL-pattern limits, and '
+        'use the content hash to skip storing duplicate pages reached from different URLs.',
+    reference: ReferenceArchitecture(
+      components: [
+        ComponentType.messageQueue,
+        ComponentType.worker,
+        ComponentType.cache,
+        ComponentType.database,
+        ComponentType.objectStorage,
+      ],
+      connections: [
+        (ComponentType.messageQueue, ComponentType.worker),
+        (ComponentType.worker, ComponentType.cache),
+        (ComponentType.worker, ComponentType.objectStorage),
+        (ComponentType.worker, ComponentType.database),
+        (ComponentType.worker, ComponentType.messageQueue),
+      ],
+    ),
+  );
+
+  static const _ticketBooking = SystemDesignProblem(
+    id: 'ticket_booking',
+    title: 'Design Ticketmaster',
+    difficulty: Difficulty.hard,
+    prompt: 'Design a ticket-booking system for live events: users browse events, view available seats, '
+        'and book them — where every popular on-sale is a stampede of users fighting over the same seats.',
+    functionalRequirements: [
+      'Browse events and view the seat map with real-time availability',
+      'Reserve specific seats: held for a short window (e.g. 10 minutes) while the user pays',
+      'Confirm the booking on successful payment; release the hold on timeout or cancellation',
+      'Never sell the same seat twice',
+    ],
+    nonFunctionalRequirements: [
+      'Strong consistency on seat state — double-selling a seat is the one unforgivable failure',
+      'Survive extreme contention — a popular on-sale means 100K+ users racing for a few thousand seats in seconds',
+      'Browsing must stay fast and available even while booking is under heavy load',
+      'Reservations must expire reliably — an abandoned checkout can\'t lock a seat forever',
+    ],
+    capacityEstimation: [
+      'Steady state is tiny (a few bookings/sec); design for the on-sale spike: 100K concurrent users targeting one event',
+      'A 20K-seat arena has only 20K sellable units — writes are inherently bounded; the flood is contention, not volume',
+      'Seat-map reads dominate during an on-sale (everyone refreshing availability) — serve them from cache, slightly stale, keeping the database for actual booking attempts',
+      'Booking records are small; even 100M tickets/year is trivial storage — the challenge is concurrency, not capacity',
+    ],
+    apiDesign: [
+      'GET /events/{id}/seats → seat map with availability (cached, may be seconds stale)',
+      'POST /events/{id}/reservations { seatIds } → 201 { reservationId, expiresAt } or 409 Conflict if any seat is taken',
+      'POST /reservations/{id}/confirm { paymentToken } → 200 booked, or 402 on payment failure',
+      'DELETE /reservations/{id} → 200, seats released',
+    ],
+    highLevelDesign: 'Seat state is the critical section. Each seat row in the database moves through '
+        'AVAILABLE → HELD → BOOKED, and the transition must be atomic: reserve with a conditional update '
+        '(UPDATE seats SET status = HELD, reservation_id = ? WHERE seat_id IN (...) AND status = '
+        'AVAILABLE) — if it affects fewer rows than requested, someone else won the race and the whole '
+        'reservation rolls back with a 409. This one database-enforced check is what makes double-selling '
+        'impossible; everything else in the design exists to keep load away from it.\n\n'
+        'Holds expire via a TTL: the reservation carries expiresAt, a background worker (fed by a delay '
+        'queue or periodic sweep) releases seats whose hold lapsed without payment, and the confirm step '
+        'only succeeds if the reservation is still live. Payment happens against a held seat, never an '
+        'available one, so the slow external payment call sits safely outside the contention window.\n\n'
+        'The read path is deliberately decoupled: the seat map everyone is refreshing is served from '
+        'cache, updated on every state change and acceptably a few seconds stale — a user may still '
+        'occasionally click a just-taken seat and get a clean 409. During extreme on-sales, a virtual '
+        'waiting room (admit users from a queue in batches) caps how many users can even reach the '
+        'reservation endpoint, converting a stampede into an orderly drain the database can survive.',
+    reference: ReferenceArchitecture(
+      components: [
+        ComponentType.client,
+        ComponentType.loadBalancer,
+        ComponentType.apiServer,
+        ComponentType.cache,
+        ComponentType.database,
+        ComponentType.messageQueue,
+        ComponentType.worker,
+      ],
+      connections: [
+        (ComponentType.client, ComponentType.loadBalancer),
+        (ComponentType.loadBalancer, ComponentType.apiServer),
+        (ComponentType.apiServer, ComponentType.cache),
+        (ComponentType.apiServer, ComponentType.database),
+        (ComponentType.apiServer, ComponentType.messageQueue),
+        (ComponentType.messageQueue, ComponentType.worker),
+        (ComponentType.worker, ComponentType.database),
       ],
     ),
   );

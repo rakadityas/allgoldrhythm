@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../app_info.dart';
 import '../data/algorithm_data.dart';
 import '../data/fundamentals_data.dart';
 import '../services/progress_store.dart';
@@ -13,17 +14,15 @@ class HomeScreen extends StatelessWidget {
   void _showAbout(BuildContext context) {
     showAboutDialog(
       context: context,
-      applicationName: 'AllGoldRhythm',
-      applicationVersion: '1.0.0',
+      applicationName: AppInfo.appName,
+      applicationVersion: AppInfo.appVersion,
       applicationIcon: Icon(
         Icons.school,
         size: 48,
         color: Theme.of(context).colorScheme.primary,
       ),
       children: const [
-        Text(
-          'A Data Structures & Algorithms and System Design interview-prep app.',
-        ),
+        Text(AppInfo.description),
       ],
     );
   }
@@ -204,8 +203,9 @@ class _AppDrawer extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Reset progress?'),
         content: const Text(
-          'This clears every recorded quiz score for both Data Structures & '
-          'Algorithms and System Design. This cannot be undone.',
+          'This clears every recorded quiz score for Data Structures & '
+          'Algorithms and System Design, plus completed design-canvas checks. '
+          'This cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -298,8 +298,8 @@ class _AppDrawer extends StatelessWidget {
               Navigator.pop(context);
               showLicensePage(
                 context: context,
-                applicationName: 'AllGoldRhythm',
-                applicationVersion: '1.0.0',
+                applicationName: AppInfo.appName,
+                applicationVersion: AppInfo.appVersion,
                 applicationIcon: Icon(
                   Icons.school,
                   size: 48,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../data/system_design_data.dart';
 import '../models/system_design.dart';
+import '../services/progress_store.dart';
 import '../theme/app_theme.dart';
 import 'fundamentals_list_screen.dart';
 import 'system_design_detail_screen.dart';
@@ -65,12 +67,12 @@ class _ProblemCard extends StatelessWidget {
 
   Color _difficultyColor(BuildContext context, ThemeData theme) {
     switch (problem.difficulty) {
-      case 'Easy':
+      case Difficulty.easy:
         return context.appColors.success;
-      case 'Hard':
-        return theme.colorScheme.error;
-      default:
+      case Difficulty.medium:
         return theme.colorScheme.primary;
+      case Difficulty.hard:
+        return theme.colorScheme.error;
     }
   }
 
@@ -78,6 +80,10 @@ class _ProblemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final difficultyColor = _difficultyColor(context, theme);
+    final completed = context
+            .watch<ProgressStore>()
+            .resultFor(ProgressDomain.designProblem, problem.id) !=
+        null;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -107,7 +113,24 @@ class _ProblemCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(problem.title, style: theme.textTheme.titleMedium),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(problem.title, style: theme.textTheme.titleMedium),
+                        ),
+                        if (completed) ...[
+                          const SizedBox(width: AppSpacing.sm),
+                          Tooltip(
+                            message: 'Design matched the reference architecture',
+                            child: Icon(
+                              Icons.check_circle,
+                              size: 20,
+                              color: context.appColors.success,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       problem.prompt,
@@ -123,7 +146,7 @@ class _ProblemCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        problem.difficulty,
+                        problem.difficulty.label,
                         style: theme.textTheme.labelMedium?.copyWith(color: difficultyColor),
                       ),
                     ),

@@ -29,7 +29,341 @@ class FundamentalsData {
         ..._communicationProtocols,
         ..._reliabilityResilience,
         ..._idsAndEstimation,
+        ..._curriculumGapConcepts,
+        ..._concurrency,
+        ..._observability,
       ];
+
+  /// Later additions that slot into existing categories (grouping is by the
+  /// category string, so these merge into their categories' sections).
+  static const _curriculumGapConcepts = [
+    FundamentalConcept(
+      id: 'failure_modes_gray_failure',
+      category: 'Reliability & Resilience',
+      title: 'Failure Modes & Gray Failures',
+      summary:
+          'Distributed systems don\'t just "go down" — they fail in distinct ways, and each way needs a '
+          'different defense. Crash (fail-stop) failures are the clean case: a node dies and stops '
+          'responding. Omission failures drop some messages. Timing failures are the dangerous middle '
+          'ground: the node is alive but too slow, so timeouts and health checks disagree about whether '
+          'it\'s "up". Byzantine failures are nodes that lie or behave arbitrarily. Gray failures are the '
+          'sneakiest: the node passes its health checks but users are suffering — partial degradation that '
+          'monitoring built around binary up/down misses entirely.',
+      keyPoints: [
+        'Crash / fail-stop: node dies cleanly — the easiest to detect and handle (restart, failover)',
+        'Timing failures are the dangerous ones: a slow node still "looks alive", holds connections, and drags down everything waiting on it',
+        'Gray failure: passes health checks but users suffer — hardest to detect; needs user-experience-level signals, not just liveness probes',
+        'Senior framing: enumerate failure units (disk → host → rack → AZ → region) and design a mitigation per blast-radius level',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'tail_latency_hedged_requests',
+      category: 'Reliability & Resilience',
+      title: 'Tail Latency & Hedged Requests',
+      summary:
+          'Averages lie at scale: a request that fans out to 100 servers, each with p99 latency of 10ms, '
+          'will very likely hit at least one slow server — so the whole request\'s latency is defined by '
+          'the slowest component, not the average one. This is why p99/p999, not the mean, defines user '
+          'experience in large systems ("The Tail at Scale", Dean & Barroso). Mitigations include hedged '
+          'requests (send a duplicate to a second replica after the p95 mark and take whichever answers '
+          'first) and tied requests (send to two, cancel the loser).',
+      keyPoints: [
+        'Fan-out multiplies tail exposure: at 100-way fan-out, ~63% of requests hit at least one p99-slow server (1 − 0.99¹⁰⁰)',
+        'Hedged requests: after a delay (e.g. the p95 latency), send the same request to another replica and use the first response — bounds the tail cheaply',
+        'Latency anchors worth memorizing: RAM ~100ns, SSD ~100µs, same-DC round trip ~0.5ms, cross-continent ~150ms — memory beats disk by ~1000×',
+        'Optimize the p99 before the average: the users who hit the tail are often your heaviest, most valuable users',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'load_shedding_backpressure',
+      category: 'Reliability & Resilience',
+      title: 'Load Shedding & Backpressure',
+      summary:
+          'When traffic exceeds capacity, something must give — the only choice is whether you decide what '
+          'to drop or let the system collapse and drop everything. Load shedding deliberately rejects '
+          'lower-priority work (with a fast, cheap error) so high-priority work keeps its latency. '
+          'Backpressure propagates the "slow down" signal upstream: bounded queues, blocking producers, '
+          'or explicit flow control, so pressure surfaces at the edge instead of silently ballooning '
+          'memory in the middle of the pipeline.',
+      keyPoints: [
+        'Rejecting early and cheaply (429/503 at the edge) protects the expensive backend path — a fast no beats a slow timeout',
+        'Unbounded queues turn overload into an out-of-memory crash later; bounded queues + backpressure surface the problem immediately where it can be handled',
+        'Shed by priority: drop analytics and prefetches before checkout and payments — requires classifying traffic ahead of time',
+        'Related but distinct from rate limiting: rate limiting enforces per-client fairness contracts; load shedding protects aggregate system survival',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'isolation_levels_anomalies',
+      category: 'Database Internals',
+      title: 'Transaction Isolation Levels & Anomalies',
+      summary:
+          'Isolation levels are the dial between correctness and concurrency for transactions running at '
+          'the same time. Read Uncommitted allows dirty reads (seeing uncommitted data). Read Committed '
+          '(the common default) prevents dirty reads but allows non-repeatable reads — the same row can '
+          'change between two reads in one transaction. Repeatable Read fixes that but can still allow '
+          'phantoms (new rows appearing that match a previous query). Serializable makes transactions '
+          'behave as if they ran one at a time — safest, slowest. Most databases implement these with MVCC '
+          '(readers see a snapshot; writers don\'t block readers).',
+      keyPoints: [
+        'Anomalies to name in interviews: dirty read, non-repeatable read, phantom read, lost update, write skew',
+        'Read Committed is the default in Postgres/Oracle; know what it does NOT protect against (two SELECTs in one txn can disagree)',
+        'Serializable prevents write skew (two txns each reading a condition the other invalidates — e.g. two doctors both going off-call), which weaker levels miss',
+        'MVCC gives readers a consistent snapshot without locking; the cost is vacuum/garbage collection of old row versions',
+        'The classic fix for lost updates at lower levels: optimistic locking with a version column, or SELECT ... FOR UPDATE',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'serialization_schema_evolution',
+      category: 'Communication Protocols',
+      title: 'Serialization & Schema Evolution',
+      summary:
+          'Every byte crossing a service boundary or resting in a queue was serialized by one version of '
+          'your code and will be deserialized by another. JSON is human-readable and schemaless but '
+          'verbose and typo-prone. Protocol Buffers and Avro are compact binary formats with explicit '
+          'schemas — and, crucially, rules for evolving them. Backward compatibility means new code reads '
+          'old data; forward compatibility means old code reads new data. In systems with queues and '
+          'rolling deploys you always need both, because old and new versions run simultaneously.',
+      keyPoints: [
+        'Protobuf evolution rules: never reuse or renumber field tags, only add optional fields, reserve deleted tags — old and new binaries can then coexist',
+        'Rolling deploys mean producer and consumer versions overlap: a message written mid-deploy must be readable by both the old and new consumer',
+        'A schema registry (common with Avro + Kafka) rejects incompatible schema changes at publish time instead of at 3am in a consumer crash-loop',
+        'JSON for public APIs (debuggability, ubiquity); Protobuf/Avro for internal high-volume paths (size, speed, type safety)',
+      ],
+    ),
+  ];
+
+  static const _concurrency = [
+    FundamentalConcept(
+      id: 'locks_sync_primitives',
+      category: 'Concurrency & Compute',
+      title: 'Locks & Synchronization Primitives',
+      summary:
+          'When multiple threads touch shared state, unsynchronized interleavings corrupt it — a race '
+          'condition. Synchronization primitives protect a critical section: a mutex admits one holder at '
+          'a time; a semaphore admits up to N (a resource pool); a read-write lock lets many readers OR '
+          'one writer through; a spinlock busy-waits instead of sleeping, worthwhile only for ultra-short '
+          'critical sections. The bathroom-key analogy: mutex = one key, semaphore = N keys, RW lock = '
+          'many can look, only one can redecorate.',
+      keyPoints: [
+        'Race condition: the bug class where correctness depends on thread interleaving — e.g. two threads both doing read-increment-write and losing one increment',
+        'Mutex = 1 holder; semaphore = N holders; RW lock = many readers or one writer; spinlock = busy-wait, only for critical sections shorter than a context switch',
+        'Lock ordering discipline prevents deadlock: if every thread acquires locks in the same global order, circular wait is impossible',
+        'These single-machine primitives motivate their distributed cousins: distributed locks, leases, and fencing tokens',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'optimistic_vs_pessimistic_locking',
+      category: 'Concurrency & Compute',
+      title: 'Optimistic vs Pessimistic Locking',
+      summary:
+          'Two strategies for concurrent writes to the same row. Optimistic locking takes no lock: read the '
+          'row with a version number, and update with "UPDATE ... WHERE id = ? AND version = N" — zero '
+          'rows updated means someone else won; retry. Cheap when conflicts are rare, so it\'s preferred '
+          'at high TPS. Pessimistic locking acquires the lock up front (SELECT ... FOR UPDATE) so nobody '
+          'else can even read-for-write until you commit — safe under heavy contention on the same rows, '
+          'but blocks other transactions and risks deadlocks.',
+      keyPoints: [
+        'Optimistic = edit freely, check "did anyone change this?" at save time; pessimistic = lock the door before editing',
+        'Optimistic wins under low contention (no lock overhead, no blocking); its cost is retries when conflicts do happen',
+        'Pessimistic wins when the same hot rows are fought over constantly (e.g. one event\'s seats) — retry storms would waste more than blocking does',
+        'Fintech classic: UPDATE wallets SET balance = balance - ? WHERE user_id = ? AND version = ? AND balance >= amount — 0 rows affected means retry',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'process_thread_coroutine',
+      category: 'Concurrency & Compute',
+      title: 'Processes, Threads, Coroutines & Event Loops',
+      summary:
+          'A process owns isolated memory; threads share their process\'s memory (cheap to communicate, '
+          'easy to corrupt); coroutines are cooperatively-scheduled tasks multiplexed onto few threads by '
+          'the language runtime — cheap enough to have millions. The two dominant server concurrency '
+          'models: a thread pool (each request occupies a thread; blocking is fine; limited by thread '
+          'count) and an event loop (one thread runs many requests via non-blocking I/O; great for '
+          'I/O-heavy loads; one blocking call stalls everyone).',
+      keyPoints: [
+        'Process = isolated memory, expensive; thread = shared memory within a process, cheaper; coroutine/async task = user-space scheduled, cheapest by far',
+        'Thread pool model (classic Java): simple mental model, blocking calls OK — but 10K concurrent connections means 10K threads\' worth of stacks and context switches',
+        'Event loop model (Node.js, Nginx, Redis): one thread handles thousands of connections via non-blocking I/O — but CPU-heavy or blocking work must be offloaded',
+        'Redis executes commands on a single thread — which is exactly why each individual command is atomic without locks',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'connection_pooling',
+      category: 'Concurrency & Compute',
+      title: 'Connection Pooling',
+      summary:
+          'Opening a database connection is expensive — TCP handshake, TLS, authentication, and a '
+          'per-connection process or thread with real memory on the database side. A connection pool '
+          '(HikariCP in-process, PgBouncer as a proxy) keeps a bounded set of warm connections that '
+          'requests borrow and return, like a fleet of pre-warmed taxis reused instead of building a new '
+          'taxi per ride. The bound is a feature: it caps concurrent load on the database and prevents '
+          'connection-storm outages when an app fleet scales out or restarts.',
+      keyPoints: [
+        'Per-request connection creation adds tens of milliseconds and can exhaust the DB\'s connection limit under load — pooling amortizes it away',
+        'The pool cap is deliberate backpressure: requests queue briefly at the pool instead of piling hundreds of concurrent queries onto the database',
+        'Fleet math matters: 200 app instances × 20 pool connections = 4,000 DB connections — this is why large fleets put a shared proxy pooler (PgBouncer/RDS Proxy) in front',
+        'Pool sizing rule of thumb: far smaller than you\'d guess (roughly CPU cores × 2 for the DB), because a connection actively doing work is CPU-bound on the server',
+      ],
+    ),
+  ];
+
+  static const _observability = [
+    FundamentalConcept(
+      id: 'three_pillars_observability',
+      category: 'Observability & Monitoring',
+      title: 'Metrics, Logs & Traces (Three Pillars)',
+      summary:
+          'Telemetry is the data a system emits about its own behavior, and it comes in three '
+          'complementary shapes. Metrics are cheap numeric time-series that answer "is it healthy?" — '
+          'ideal for dashboards and alerts. Logs are per-event records that answer "what exactly '
+          'happened?". Traces follow one request across every service it touched, answering "where did '
+          'the time go?". Monitoring watches known metrics for known failure modes; observability is the '
+          'stronger property of being able to understand any internal state — including failures you '
+          'never predicted — from the outside.',
+      keyPoints: [
+        'Metrics: is it healthy? Logs: what exactly happened? Traces: how did this request flow across services? You need all three',
+        'Monitoring = watching known metrics for known failure modes; observability = the ability to debug unknown failures from external outputs',
+        'Metrics are cheap to store and aggregate; logs are expensive and detailed; traces connect the dots across service boundaries',
+        'OpenTelemetry is the CNCF vendor-neutral standard: one instrumentation SDK + Collector + OTLP protocol feeding any backend',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'metrics_prometheus',
+      category: 'Observability & Monitoring',
+      title: 'Metrics & Prometheus',
+      summary:
+          'Prometheus is the industry-standard open-source metrics system: each service exposes a /metrics '
+          'HTTP endpoint, and Prometheus scrapes it on a schedule (pull-based, typically every 15s), '
+          'storing time-series queryable with PromQL. Four metric types: a counter only goes up (requests '
+          'served — use rate() to get per-second); a gauge goes up and down (active connections); a '
+          'histogram buckets observations so percentiles (p95, p99) can be computed server-side; a summary '
+          'computes quantiles client-side but can\'t be aggregated across pods — prefer histograms.',
+      keyPoints: [
+        'Counter (only up; rate() for per-second), gauge (snapshot value), histogram (buckets → server-side percentiles, aggregatable), summary (avoid in distributed systems)',
+        'Labels add dimensions (status_code, method) — but cardinality is the cost: user_id or request_id as a label explodes storage exponentially',
+        'Pull model quirk: short-lived batch jobs finish before any scrape — they push to Pushgateway, which Prometheus then scrapes',
+        'Prometheus (open-source, pull, self-hosted, PromQL) vs Datadog (SaaS, push, agent, easier but pricey) — same conceptual model either way',
+        'Real-time error rate in PromQL: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'structured_logging_pipeline',
+      category: 'Observability & Monitoring',
+      title: 'Structured Logging & Log Pipelines',
+      summary:
+          'Production logs are JSON objects with consistent machine-parseable fields (timestamp, level, '
+          'service, trace_id, event, duration_ms), never free-text strings — structure is what makes them '
+          'searchable at scale. A typical pipeline: each node runs a lightweight shipper (Fluent Bit) '
+          'tailing container logs → a Kafka buffer absorbs back-pressure → storage in Elasticsearch '
+          '(full-text search, expensive) or Loki (indexes only labels, much cheaper) → queried via '
+          'Kibana/Grafana. Levels control verbosity: DEBUG (dev only), INFO, WARN, ERROR, FATAL.',
+      keyPoints: [
+        'Structured JSON logs with a standard field set (timestamp, level, service, version, trace_id, event, duration_ms) — including trace_id makes logs joinable with traces',
+        'Pipeline: service → Fluent Bit (per-node DaemonSet) → Kafka (buffer/back-pressure) → Elasticsearch or Loki → Grafana/Kibana',
+        'Loki indexes only metadata labels, not content — dramatically cheaper than Elasticsearch; the usual cost-performance sweet spot',
+        'Sampling tames volume: keep 100% of ERROR/WARN and slow requests, sample routine successes — ~90% volume cut without losing signal',
+        'Never log: PAN, CVV, passwords, API keys, JWTs, account numbers — scrub sensitive patterns at the shipper; tier retention (hot 7d → warm 90d → cold archive)',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'distributed_tracing_otel',
+      category: 'Observability & Monitoring',
+      title: 'Distributed Tracing & OpenTelemetry',
+      summary:
+          'One user request fanning across ten services is nearly impossible to debug from ten separate '
+          'log files. Tracing fixes this: the entry service creates a trace with a root span; every '
+          'downstream call creates a child span (each DB query, RPC, or queue publish is one span with '
+          'start time, duration, and attributes), forming a tree that shows exactly where time went. The '
+          'glue is context propagation: the W3C traceparent header carries trace and span ids on every '
+          'outgoing call. OpenTelemetry standardizes the SDKs and wire protocol; Jaeger, Tempo, and '
+          'Zipkin are backends that store and visualize the result.',
+      keyPoints: [
+        'Trace = one request end-to-end; span = one unit of work within it; spans form a parent-child tree (gateway → service → DB query)',
+        'Context propagation is the crux: forward the W3C traceparent header on every outgoing HTTP call, gRPC metadata, and Kafka message header — miss one hop and the trace breaks',
+        'Sampling: head-based (decide at the entry, e.g. 1% random + 100% of errors/slow) is simple; tail-based (buffer, decide after seeing the full trace) can keep every failed trace',
+        'Backends: Jaeger (mature, ES/Cassandra-backed), Tempo (cheapest — object storage, no indexing), Zipkin (simplest, older); all speak OTLP now',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'slo_sli_error_budgets',
+      category: 'Observability & Monitoring',
+      title: 'SLI, SLO, SLA & Error Budgets',
+      summary:
+          'An SLI is a measured indicator of service health — e.g. availability = successful requests / '
+          'total, or latency = requests under 500ms / total. An SLO is your internal target for that SLI '
+          '(99.95% over a rolling 28 days). An SLA is the weaker external contract with customers, kept '
+          'below the SLO to leave reaction room. The error budget is 1 − SLO: at 99.95%, you may be '
+          'unreliable for 21.6 minutes per 28 days. Burn rate measures how fast you\'re consuming it — '
+          'and pre-agreed budget policies (freeze deploys at 2× burn) turn reliability-vs-velocity '
+          'arguments into arithmetic.',
+      keyPoints: [
+        'SLI = measurement, SLO = internal target, SLA = external contract; always set SLO stricter than SLA to create an operational buffer',
+        'Error budget = 1 − SLO: 99.95% over 28 days = 21.6 minutes of allowed downtime; every incident spends from it',
+        'Burn rate: 1× = on pace, 2× = budget gone in half the window, 14.4× = gone in 2 hours — alert on burn rate, not raw error count',
+        'Rolling windows (last 28 days) beat calendar months: a bad week ages out smoothly instead of resetting to zero on the 1st',
+        'Counting 4xx as "good" is deliberate: the server correctly rejected a bad request; availability measures server correctness, not client correctness',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'golden_signals_red_use',
+      category: 'Observability & Monitoring',
+      title: 'Golden Signals, RED & USE',
+      summary:
+          'Three overlapping frameworks tell you what to put on a dashboard. Google SRE\'s Four Golden '
+          'Signals — Latency, Traffic, Errors, Saturation — are the minimum for any production system. '
+          'RED (Rate, Errors, Duration) is the per-service view: every service dashboard shows request '
+          'rate, error percentage, and latency percentiles (p50/p95/p99). USE (Utilization, Saturation, '
+          'Errors) is the per-resource view for infrastructure: CPU, memory, disk, network. Incident math '
+          'is tracked as MTTD (time to detect), MTTR (time to recover), and MTBF (time between failures).',
+      keyPoints: [
+        'Golden Signals: Latency, Traffic, Errors, Saturation — if a dashboard lacks one, ask why',
+        'RED for every service (rate, error rate, duration percentiles); USE for every resource (utilization, saturation, errors) — services and machines need different lenses',
+        'Watch percentiles, not averages: p50 says the typical experience, p99 says the worst-served 1% — and dashboards should show both',
+        'MTTD shrinks with better alerting; MTTR shrinks with runbooks, rollback tooling, and tracing; MTBF grows with testing and resilient architecture — each metric has different levers',
+        'A sudden DROP in traffic is as alarming as a spike — absence of expected volume usually means an upstream outage',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'alerting_oncall_runbooks',
+      category: 'Observability & Monitoring',
+      title: 'Alerting, On-Call & Runbooks',
+      summary:
+          'An alert is a condition + threshold + duration that fires a notification — and it is only valid '
+          'if a human must act on it. Noisy, non-actionable alerts cause alert fatigue: on-call engineers '
+          'tune everything out and miss the real incident. Discipline: every alert links a runbook (what '
+          'this means, how to investigate, remediation, rollback, escalation); a FOR duration or '
+          'hysteresis prevents flapping; severity tiers route appropriately (P0 wake anyone, P1 page '
+          'on-call, P2 Slack, P3 ticket); escalation chains catch unacknowledged pages; Alertmanager '
+          'deduplicates and routes to PagerDuty/Slack.',
+      keyPoints: [
+        'Every alert must be actionable and carry a runbook link — bad: "Disk > 70%"; good: "Disk fills in <4h, payment service will crash — run cleanup script"',
+        'FOR duration (condition true for a full N minutes) and hysteresis (different on/off thresholds) kill flapping alerts',
+        'Severity tiers with routing: P0 = wake anyone (capital loss/total outage), P1 = page on-call, P2 = Slack channel, P3 = ticket — and automatic escalation if unacknowledged',
+        'Dead-man\'s-switch alerting: alert when an expected recurring event STOPS (cron heartbeat missing) — absence of signal is itself a signal',
+        'Alertmanager deduplicates (same alert from 3 replicas = 1 notification), groups, and routes; toil (repetitive manual ops work) is tracked and automated away',
+      ],
+    ),
+    FundamentalConcept(
+      id: 'business_metrics_reconciliation',
+      category: 'Observability & Monitoring',
+      title: 'Business Metrics & Reconciliation Monitoring',
+      summary:
+          'Infrastructure can look perfectly green while the business quietly bleeds: a partner\'s API '
+          'returning well-formed failures, one payment corridor degrading, transactions stuck mid-state. '
+          'Business-level monitoring tracks domain metrics — transactions per minute, payment success '
+          'rate per corridor/provider, revenue impact of failures — visible to both engineering and '
+          'business stakeholders. Reconciliation monitoring continuously checks invariants: double-entry '
+          'ledger entries must sum to zero, internal balances must match partner-bank statements, and '
+          'nothing may sit in PROCESSED past its settlement SLA.',
+      keyPoints: [
+        'Segment before you aggregate: a global 99% success rate hides one corridor at 60% — alert per corridor/provider, not only on the global number',
+        'Invariant checks as alerts: SUM(ledger entries) must equal 0 continuously; any drift is an immediate P0 with automatic pause of new payments',
+        'Stuck-state detection: rows in PROCESSED with settlement_expected_at older than the SLA → alert; catches silent pipeline stalls that error rates never show',
+        'Per-provider health (p99, error rate, circuit-breaker state) drives automatic failover: if one bank integration degrades, route around it',
+        'Reconciliation crons need heartbeat monitoring of their own — a reconciler that silently stopped running is worse than one that alerts',
+      ],
+    ),
+  ];
 
   static const _networking = [
     FundamentalConcept(
