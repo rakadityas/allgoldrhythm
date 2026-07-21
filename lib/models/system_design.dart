@@ -12,7 +12,8 @@ enum ComponentType {
   cdn('CDN', Icons.public),
   messageQueue('Message Queue', Icons.swap_horiz),
   objectStorage('Object Storage', Icons.folder_outlined),
-  idGenerator('ID Generator', Icons.tag);
+  idGenerator('ID Generator', Icons.tag),
+  webSocketServer('WebSocket Server', Icons.cable_outlined);
 
   final String label;
   final IconData icon;

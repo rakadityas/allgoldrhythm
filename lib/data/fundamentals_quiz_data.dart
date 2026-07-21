@@ -36,9 +36,54 @@ class FundamentalsQuizData {
     'rate_limiting_algorithms': _rateLimitingAlgorithms,
     'object_storage': _objectStorage,
     'authn_authz': _authnAuthz,
+    'oauth2_oidc_sso': _oauth2OidcSso,
+    'jwt_and_sessions': _jwtAndSessions,
+    'mfa_and_passwordless': _mfaAndPasswordless,
+    'authorization_models': _authorizationModels,
+    'encryption_at_rest_transit': _encryptionAtRestTransit,
+    'secrets_management': _secretsManagement,
+    'api_security_owasp': _apiSecurityOwasp,
+    'network_security_zero_trust': _networkSecurityZeroTrust,
+    'threat_modeling_stride': _threatModelingStride,
+    'audit_logging_nonrepudiation': _auditLoggingNonrepudiation,
+    'fintech_security_patterns': _fintechSecurityPatterns,
+    'supply_chain_security': _supplyChainSecurity,
     'search_full_text_indexing': _searchFullTextIndexing,
     'push_notifications_fanout': _pushNotificationsFanout,
     'geospatial_indexing': _geospatialIndexing,
+    'distributed_transactions_2pc_saga': _distributedTransactions2pcSaga,
+    'gossip_protocol': _gossipProtocol,
+    'vector_clocks_hlc': _vectorClocksHlc,
+    'merkle_trees': _merkleTrees,
+    'bloom_cuckoo_filters': _bloomCuckooFilters,
+    'hyperloglog': _hyperloglog,
+    'consistent_hashing': _consistentHashing,
+    'btree_vs_lsm': _btreeVsLsm,
+    'oltp_vs_olap': _oltpVsOlap,
+    'data_warehouse_lake_lakehouse': _dataWarehouseLakeLakehouse,
+    'change_data_capture': _changeDataCapture,
+    'normalize_vs_denormalize': _normalizeVsDenormalize,
+    'microservices_vs_monolith': _microservicesVsMonolith,
+    'cqrs_event_sourcing': _cqrsEventSourcing,
+    'circuit_breaker_bulkhead': _circuitBreakerBulkhead,
+    'service_mesh_sidecar': _serviceMeshSidecar,
+    'api_gateway_bff': _apiGatewayBff,
+    'n_tier_thick_thin_client': _nTierThickThinClient,
+    'strangler_fig_pattern': _stranglerFigPattern,
+    'http_evolution': _httpEvolution,
+    'grpc_protobuf': _grpcProtobuf,
+    'webrtc_and_realtime': _webrtcAndRealtime,
+    'retries_backoff_jitter': _retriesBackoffJitter,
+    'delivery_semantics': _deliverySemantics,
+    'health_checks_liveness_readiness': _healthChecksLivenessReadiness,
+    'graceful_degradation_deploy_strategies': _gracefulDegradationDeployStrategies,
+    'chaos_engineering': _chaosEngineering,
+    'cascading_failures_thundering_herd': _cascadingFailuresThunderingHerd,
+    'id_generation_snowflake_uuid': _idGenerationSnowflakeUuid,
+    'back_of_envelope_estimation': _backOfEnvelopeEstimation,
+    'requirements_gathering_tradeoffs': _requirementsGatheringTradeoffs,
+    'erasure_coding_vs_replication': _erasureCodingVsReplication,
+    'semantic_vector_search': _semanticVectorSearch,
   };
 
   static const _dnsRequestRouting = [
@@ -866,6 +911,402 @@ class FundamentalsQuizData {
     ),
   ];
 
+  static const _oauth2OidcSso = [
+    QuizQuestion(
+      question: 'What does OAuth2 fundamentally let a user do?',
+      options: ['Encrypt their password before sending it', 'Grant an application limited access to their data on another service, without sharing their password', 'Skip authentication entirely', 'Generate a TLS certificate'],
+      correctIndex: 1,
+      explanation: 'OAuth2 is a delegation protocol — "Sign in with Google" grants access without handing over credentials.',
+    ),
+    QuizQuestion(
+      question: 'What does OIDC (OpenID Connect) add on top of plain OAuth2?',
+      options: ['A faster network transport', 'An ID token (a JWT) that answers "who is this user," not just "what can this app do"', 'Password hashing', 'A rate limiter'],
+      correctIndex: 1,
+      explanation: 'OIDC is a thin identity layer over OAuth2, adding an ID token that describes the authenticated user.',
+    ),
+    QuizQuestion(
+      question: 'Which OAuth2 flow is standard for web and mobile apps to prevent authorization code interception?',
+      options: ['Client Credentials', 'Device Code', 'Authorization Code + PKCE', 'Implicit flow'],
+      correctIndex: 2,
+      explanation: 'PKCE adds a code verifier/challenge pair so an intercepted authorization code alone cannot be redeemed.',
+    ),
+    QuizQuestion(
+      question: 'Which OAuth2 flow fits service-to-service authentication with no user involved?',
+      options: ['Client Credentials', 'Authorization Code + PKCE', 'Device Code', 'SSO redirect'],
+      correctIndex: 0,
+      explanation: 'Client Credentials authenticates a service directly with a client ID and secret, no user in the loop.',
+    ),
+    QuizQuestion(
+      question: 'What is SSO (Single Sign-On)?',
+      options: ['A password strength requirement', 'Logging in once at a trusted identity provider and accessing many apps without re-authenticating', 'A type of database replication', 'A rate-limiting algorithm'],
+      correctIndex: 1,
+      explanation: 'SSO is the product of OAuth2/OIDC/SAML: one login, many downstream apps trust the same session.',
+    ),
+  ];
+
+  static const _jwtAndSessions = [
+    QuizQuestion(
+      question: 'What is the key difference between a session token and a JWT?',
+      options: ['They are functionally identical', 'A session token is opaque and stateful (server stores the data); a JWT is self-contained and stateless (the token carries the data)', 'JWTs cannot be signed', 'Session tokens cannot be stored in Redis'],
+      correctIndex: 1,
+      explanation: 'Session tokens require a server-side lookup; JWTs are self-contained and verifiable without one.',
+    ),
+    QuizQuestion(
+      question: 'Why should secrets never be put in a JWT payload?',
+      options: ['JWTs have a strict 100-byte size limit', 'The payload is base64-encoded, not encrypted — it is visible to anyone who has the token', 'JWTs are stored in plaintext on the server', 'It is technically impossible to add custom claims'],
+      correctIndex: 1,
+      explanation: 'A JWT payload is only encoded, not encrypted, so its contents are readable by anyone holding the token.',
+    ),
+    QuizQuestion(
+      question: 'How is a JWT typically revoked before its natural expiry?',
+      options: ['JWTs cannot be revoked under any circumstances', 'A jti blocklist (e.g. in Redis with a TTL) is checked after signature verification on each request', 'By changing the server\'s IP address', 'By restarting the API server'],
+      correctIndex: 1,
+      explanation: 'Since a JWT is otherwise valid until it expires, early revocation needs an explicit blocklist check.',
+    ),
+    QuizQuestion(
+      question: 'What does refresh token rotation protect against?',
+      options: ['Slow database queries', 'A stolen refresh token being reused — reuse of an already-rotated token is treated as a theft signal, revoking all tokens for that user', 'DNS cache poisoning', 'SQL injection'],
+      correctIndex: 1,
+      explanation: 'Issuing a new refresh token on every use and invalidating the old one turns reuse into a clear signal of compromise.',
+    ),
+    QuizQuestion(
+      question: 'What is the fastest way to revoke a stateful session token immediately?',
+      options: ['Wait for it to expire', 'DEL session:{token} in the shared session store', 'Rotate the server\'s TLS certificate', 'Restart the client application'],
+      correctIndex: 1,
+      explanation: 'Since stateful sessions are looked up server-side, deleting the stored session immediately invalidates it.',
+    ),
+  ];
+
+  static const _mfaAndPasswordless = [
+    QuizQuestion(
+      question: 'Why use Argon2id or bcrypt instead of SHA256 for password storage?',
+      options: ['SHA256 is not a real hashing algorithm', 'Argon2id/bcrypt are deliberately slow and memory-hard, making brute-forcing stolen hashes impractical, unlike fast general-purpose hashes like SHA256', 'SHA256 cannot process strings', 'There is no meaningful difference'],
+      correctIndex: 1,
+      explanation: 'Password hashing needs to be intentionally slow/memory-hard to resist brute-force attacks; general-purpose hashes like SHA256 are too fast for that.',
+    ),
+    QuizQuestion(
+      question: 'What problem does a per-user salt solve?',
+      options: ['It speeds up login', 'It defeats precomputed rainbow-table attacks and ensures identical passwords produce different stored hashes', 'It compresses the password for storage', 'It encrypts the network connection'],
+      correctIndex: 1,
+      explanation: 'A unique salt per user means two users with the same password get different hashes, and precomputed tables become useless.',
+    ),
+    QuizQuestion(
+      question: 'Which MFA method is considered weakest due to SIM-swap attacks?',
+      options: ['WebAuthn/FIDO2 hardware key', 'TOTP authenticator app', 'SMS OTP', 'Biometric fingerprint'],
+      correctIndex: 2,
+      explanation: 'An attacker who ports a victim\'s phone number to their own SIM can intercept SMS OTPs entirely.',
+    ),
+    QuizQuestion(
+      question: 'What makes WebAuthn/FIDO2 phishing-resistant compared to a password or OTP?',
+      options: ['It requires a longer password', 'It is origin-bound — the cryptographic credential only works with the legitimate site it was registered to, so a fake phishing site cannot use it', 'It sends a code via email', 'It disables the browser'],
+      correctIndex: 1,
+      explanation: 'WebAuthn credentials are cryptographically tied to the real origin, so they simply do not function against a spoofed site.',
+    ),
+    QuizQuestion(
+      question: 'What is step-up authentication?',
+      options: ['Requiring MFA on every single request', 'Re-authenticating or requiring an extra factor mid-session only when a sensitive action is triggered', 'A way to skip authentication for trusted IPs', 'A password complexity rule'],
+      correctIndex: 1,
+      explanation: 'Step-up auth adds friction only where risk is highest (e.g. a large transfer), rather than everywhere.',
+    ),
+  ];
+
+  static const _authorizationModels = [
+    QuizQuestion(
+      question: 'What is RBAC (Role-Based Access Control)?',
+      options: ['Permissions derived from a relationship graph', 'Roles assigned to users, permissions assigned to roles — coarse-grained and simple', 'A rule engine based on request attributes', 'A form of encryption'],
+      correctIndex: 1,
+      explanation: 'RBAC is the simplest model: users get roles, and roles carry a fixed set of permissions.',
+    ),
+    QuizQuestion(
+      question: 'Which rule style is characteristic of ABAC?',
+      options: ['"Anyone with the admin role can do anything"', '"Block if new_device AND amount > 10M AND hour > 22:00"', '"Users in the same folder share access"', '"All requests are denied by default forever"'],
+      correctIndex: 1,
+      explanation: 'ABAC evaluates conditions over attributes of the user, resource, and context, not just a fixed role.',
+    ),
+    QuizQuestion(
+      question: 'When does ReBAC (Relationship-Based Access Control) fit best?',
+      options: ['When permissions are graph-like — social graphs, nested folders, multi-tenant platforms', 'Only for single-user applications', 'When there is exactly one role in the system', 'It replaces the need for authentication entirely'],
+      correctIndex: 0,
+      explanation: 'ReBAC (the Google Zanzibar model) derives access from relationships, which suits graph-shaped permission structures.',
+    ),
+    QuizQuestion(
+      question: 'What is OPA (Open Policy Agent) used for?',
+      options: ['Encrypting data at rest', 'Running authorization rules as version-controlled, testable policy code, often as a sidecar', 'Generating TLS certificates', 'Load balancing traffic'],
+      correctIndex: 1,
+      explanation: 'OPA (using the Rego language) externalizes authorization logic into policy code that can be tested and deployed independently of the app.',
+    ),
+    QuizQuestion(
+      question: 'Why start with RBAC even though it is coarse-grained?',
+      options: ['It is the only model that works with HTTPS', 'It is simple to reason about and a good starting point, upgrading to ABAC/ReBAC only when fine-grained rules are actually needed', 'It requires no code at all', 'It automatically encrypts all data'],
+      correctIndex: 1,
+      explanation: 'RBAC covers most needs simply; more complex models add real value once requirements outgrow role-based checks.',
+    ),
+  ];
+
+  static const _encryptionAtRestTransit = [
+    QuizQuestion(
+      question: 'What does forward secrecy (via ephemeral Diffie-Hellman) protect against in TLS?',
+      options: ['Slow network speeds', 'A compromised private key later being used to decrypt previously captured traffic', 'DNS spoofing', 'Password reuse'],
+      correctIndex: 1,
+      explanation: 'Ephemeral session keys mean even a later-leaked long-term private key cannot decrypt past sessions.',
+    ),
+    QuizQuestion(
+      question: 'What distinguishes mTLS from regular TLS?',
+      options: ['mTLS does not use certificates at all', 'In mTLS, both the client and server present certificates, giving cryptographic identity to both sides', 'mTLS is slower but otherwise identical', 'mTLS only works over UDP'],
+      correctIndex: 1,
+      explanation: 'Regular TLS authenticates the server only; mTLS requires both sides to prove their identity.',
+    ),
+    QuizQuestion(
+      question: 'In envelope encryption, what does rotating the Master Encryption Key (MEK) actually require?',
+      options: ['Re-encrypting the entire dataset', 'Re-encrypting only the small Data Encryption Keys (DEKs), not all the underlying data', 'Nothing — MEKs cannot be rotated', 'Deleting all encrypted data'],
+      correctIndex: 1,
+      explanation: 'Since the MEK only ever encrypts DEKs (not data directly), rotation is cheap: only the DEKs need re-encrypting.',
+    ),
+    QuizQuestion(
+      question: 'What is field-level encryption?',
+      options: ['Encrypting every column in every table identically', 'Encrypting only specific sensitive columns (e.g. card numbers), while IDs and metadata stay queryable in plaintext', 'A network-layer encryption protocol', 'A type of database index'],
+      correctIndex: 1,
+      explanation: 'Field-level encryption targets sensitive columns specifically, keeping the rest of the row usable for normal queries.',
+    ),
+    QuizQuestion(
+      question: 'What is the standard algorithm/mode for encrypting data at rest today?',
+      options: ['MD5', 'AES-256-GCM (authenticated encryption)', 'Base64 encoding', 'ROT13'],
+      correctIndex: 1,
+      explanation: 'AES-GCM is both fast (with hardware acceleration) and authenticated, detecting tampering as well as providing confidentiality.',
+    ),
+  ];
+
+  static const _secretsManagement = [
+    QuizQuestion(
+      question: 'What is the safest place for an API key or database password in source code?',
+      options: ['Hardcoded directly in the source file', 'Committed to a private Git repo only', 'Nowhere — it should be fetched at runtime from a secrets manager, never hardcoded or committed', 'In a code comment for documentation'],
+      correctIndex: 2,
+      explanation: 'Secrets should never appear in source or Git history at all; a secrets manager should supply them at runtime.',
+    ),
+    QuizQuestion(
+      question: 'What is a "dynamic secret" as implemented by tools like Vault?',
+      options: ['A password that never changes', 'A fresh, unique credential generated per service instance with a short TTL, auto-revoked on expiry', 'A secret stored in a public S3 bucket', 'A hardcoded fallback password'],
+      correctIndex: 1,
+      explanation: 'Dynamic secrets avoid long-lived shared passwords by minting short-lived, per-instance credentials automatically.',
+    ),
+    QuizQuestion(
+      question: 'Why is a leaked dynamic secret less dangerous than a leaked long-lived password?',
+      options: ['Dynamic secrets are always encrypted twice', 'It has a short TTL and is auto-revoked, so it is only useful for a narrow window before expiring', 'Dynamic secrets cannot be used by attackers under any circumstance', 'It is not actually less dangerous'],
+      correctIndex: 1,
+      explanation: 'The short lifetime of a dynamic secret sharply limits how long a leaked credential remains useful.',
+    ),
+    QuizQuestion(
+      question: 'What does secret rotation with a "grace period overlap" achieve?',
+      options: ['It makes secrets permanent', 'It changes secrets regularly while keeping the old one valid briefly, avoiding downtime during the swap', 'It disables the secret entirely during rotation', 'It has nothing to do with availability'],
+      correctIndex: 1,
+      explanation: 'Overlapping validity between old and new secrets lets services roll over without a service interruption.',
+    ),
+    QuizQuestion(
+      question: 'What role does a sidecar play in secrets management?',
+      options: ['It encrypts network traffic only', 'It fetches and renews secrets on behalf of the app, so the app just reads a local file/env without talking to the secrets manager API directly', 'It stores secrets permanently in the container image', 'It replaces the need for TLS'],
+      correctIndex: 1,
+      explanation: 'A secrets sidecar handles the fetch/renew lifecycle, keeping secrets-manager integration out of the application code.',
+    ),
+  ];
+
+  static const _apiSecurityOwasp = [
+    QuizQuestion(
+      question: 'What is BOLA (Broken Object Level Authorization)?',
+      options: ['A network timeout error', 'Accessing another user\'s resource by guessing or changing an ID in the request, without an ownership check', 'A type of encryption algorithm', 'A load balancing strategy'],
+      correctIndex: 1,
+      explanation: 'BOLA, the #1 OWASP API risk, happens when an endpoint fetches a resource by ID without verifying it belongs to the caller.',
+    ),
+    QuizQuestion(
+      question: 'How is BOLA typically fixed?',
+      options: ['By encrypting the ID', 'By always scoping the query to the authenticated user, e.g. WHERE txn.user_id = auth.user_id, rather than trusting the path parameter alone', 'By using a longer ID format', 'By removing IDs from URLs entirely'],
+      correctIndex: 1,
+      explanation: 'The fix is enforcing ownership at the query level, never trusting a client-supplied ID by itself.',
+    ),
+    QuizQuestion(
+      question: 'What prevents SQL injection?',
+      options: ['String-concatenating user input carefully', 'Parameterized queries / prepared statements', 'Rate limiting', 'CORS headers'],
+      correctIndex: 1,
+      explanation: 'Parameterized queries separate code from data so user input can never be interpreted as SQL syntax.',
+    ),
+    QuizQuestion(
+      question: 'What does a Content-Security-Policy header primarily defend against?',
+      options: ['SQL injection', 'XSS (Cross-Site Scripting)', 'DNS spoofing', 'Password brute-forcing'],
+      correctIndex: 1,
+      explanation: 'CSP restricts which scripts can execute on a page, blocking most injected-script attacks.',
+    ),
+    QuizQuestion(
+      question: 'What should be blocked to prevent SSRF (Server-Side Request Forgery)?',
+      options: ['All outbound HTTPS traffic', 'Internal/private IP ranges (RFC 1918) and cloud metadata endpoints like 169.254.169.254', 'All incoming requests', 'Only requests from mobile devices'],
+      correctIndex: 1,
+      explanation: 'SSRF abuses a server\'s own network access, so requests to internal ranges and metadata endpoints need explicit blocking/validation.',
+    ),
+  ];
+
+  static const _networkSecurityZeroTrust = [
+    QuizQuestion(
+      question: 'What is the core idea of "zero trust"?',
+      options: ['Trust any request from inside the corporate network automatically', 'Never trust a request based on network location alone — authenticate and authorize every request, even internal service-to-service calls', 'Disable all authentication for speed', 'Only external requests need authentication'],
+      correctIndex: 1,
+      explanation: 'Zero trust removes the assumption that "internal" traffic is automatically safe.',
+    ),
+    QuizQuestion(
+      question: 'What does a service mesh sidecar proxy (Istio/Linkerd) typically handle?',
+      options: ['Compiling the application code', 'mTLS, retries, timeouts, and traffic shifting transparently, without app code changes', 'Rendering the user interface', 'Writing to the database'],
+      correctIndex: 1,
+      explanation: 'The sidecar absorbs cross-cutting networking concerns so services do not need to implement them individually.',
+    ),
+    QuizQuestion(
+      question: 'What is network segmentation designed to prevent?',
+      options: ['Slow queries', 'A database or internal service being directly reachable from the public internet', 'Long build times', 'Excessive logging'],
+      correctIndex: 1,
+      explanation: 'Segmentation (VPCs, subnets, security groups) keeps sensitive services reachable only from what actually needs them.',
+    ),
+    QuizQuestion(
+      question: 'What does a WAF (Web Application Firewall) do?',
+      options: ['Encrypts data at rest', 'Inspects HTTP traffic and blocks known attack patterns (SQLi, XSS, bad bots) before they reach the app', 'Generates TLS certificates', 'Balances load across servers by round robin'],
+      correctIndex: 1,
+      explanation: 'A WAF sits in front of the application, filtering malicious request patterns using rule-based and ML-based detection.',
+    ),
+    QuizQuestion(
+      question: 'What is the role of DDoS protection services like Cloudflare or AWS Shield?',
+      options: ['They replace the need for authentication', 'They absorb volumetric attacks at the edge before they reach origin servers', 'They encrypt database backups', 'They handle password resets'],
+      correctIndex: 1,
+      explanation: 'DDoS protection is positioned at the network edge to soak up floods of traffic before origin infrastructure is affected.',
+    ),
+  ];
+
+  static const _threatModelingStride = [
+    QuizQuestion(
+      question: 'What does STRIDE stand for as a threat-modeling framework?',
+      options: ['A single vulnerability type', 'Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege', 'A database replication strategy', 'A caching eviction policy'],
+      correctIndex: 1,
+      explanation: 'STRIDE is a mnemonic for six threat categories applied per system component.',
+    ),
+    QuizQuestion(
+      question: 'Which STRIDE category is "pretending to be another user or service"?',
+      options: ['Tampering', 'Spoofing', 'Repudiation', 'Denial of Service'],
+      correctIndex: 1,
+      explanation: 'Spoofing is impersonation — claiming a false identity to gain unauthorized access.',
+    ),
+    QuizQuestion(
+      question: 'What is "Repudiation" in the STRIDE model, and how is it mitigated?',
+      options: ['Overwhelming a system with traffic; mitigated by rate limiting', 'Denying an action occurred (e.g. "I never sent that transfer"); mitigated by an append-only audit log and digital signatures', 'Reading someone else\'s data; mitigated by encryption', 'Gaining higher permissions; mitigated by RBAC'],
+      correctIndex: 1,
+      explanation: 'Repudiation is about disputing that an action happened — non-repudiation proof (signed, immutable logs) counters it.',
+    ),
+    QuizQuestion(
+      question: 'Which mitigation class primarily addresses Information Disclosure?',
+      options: ['Rate limiting', 'Encryption, BOLA checks on every query, and masking sensitive data in responses', 'Auto-scaling', 'Digital signatures on transactions'],
+      correctIndex: 1,
+      explanation: 'Preventing unauthorized data exposure relies on encryption plus strict per-request authorization checks.',
+    ),
+    QuizQuestion(
+      question: 'Why apply STRIDE per component rather than to the system as a whole?',
+      options: ['STRIDE only works on a single monolithic component', 'Each component may have different threats and mitigations relevant to it, so per-component analysis surfaces more precise risks', 'It has no effect on the analysis either way', 'STRIDE cannot be applied to distributed systems'],
+      correctIndex: 1,
+      explanation: 'Different components (API gateway, database, queue) face different subsets of STRIDE threats, so a per-component pass is more thorough.',
+    ),
+  ];
+
+  static const _auditLoggingNonrepudiation = [
+    QuizQuestion(
+      question: 'What makes an audit log trustworthy as evidence?',
+      options: ['It is stored in a fast in-memory cache', 'It is append-only and immutable — even operators with elevated access cannot modify or delete entries', 'It is only kept for 24 hours', 'It is encrypted with a symmetric key shared by all services'],
+      correctIndex: 1,
+      explanation: 'Immutability is what prevents even a compromised insider from covering their tracks in the log.',
+    ),
+    QuizQuestion(
+      question: 'What is "non-repudiation" in a security context?',
+      options: ['The ability to undo any transaction', 'Cryptographic proof that a specific user performed a specific action, strong enough to hold up in a dispute', 'A type of rate limiting', 'A caching invalidation strategy'],
+      correctIndex: 1,
+      explanation: 'Non-repudiation means the user cannot plausibly deny having performed the signed action.',
+    ),
+    QuizQuestion(
+      question: 'What does WORM (Write Once Read Many) storage guarantee?',
+      options: ['Faster read performance only', 'Log entries physically cannot be overwritten or deleted, even by someone with elevated access', 'Automatic backups every hour', 'Data is compressed before storage'],
+      correctIndex: 1,
+      explanation: 'WORM storage (e.g. S3 Object Lock) enforces immutability at the storage layer itself.',
+    ),
+    QuizQuestion(
+      question: 'Why include a trace_id on every logged sensitive action?',
+      options: ['It speeds up encryption', 'It enables cross-system correlation when investigating an incident spanning multiple services', 'It is required for TLS handshakes', 'It replaces the need for a timestamp'],
+      correctIndex: 1,
+      explanation: 'A shared trace_id lets investigators follow one logical action across every service it touched.',
+    ),
+    QuizQuestion(
+      question: 'What kinds of actions should always be logged in a fintech system?',
+      options: ['Only failed login attempts', 'Every payment, admin action, and configuration change', 'Only successful page loads', 'Nothing — logging is optional for compliance'],
+      correctIndex: 1,
+      explanation: 'High-stakes actions (payments, admin actions, config changes) are exactly what audit logs exist to capture.',
+    ),
+  ];
+
+  static const _fintechSecurityPatterns = [
+    QuizQuestion(
+      question: 'How does optimistic locking prevent a balance from being corrupted by concurrent writes?',
+      options: ['By locking the row for the entire request', 'By updating only if the row\'s version/balance still matches what was read (WHERE version = N), retrying on 0 rows affected', 'By queuing all writes globally', 'By disabling concurrent access to the app entirely'],
+      correctIndex: 1,
+      explanation: 'A conditional UPDATE ensures a concurrent modification is detected (0 rows updated) rather than silently overwritten.',
+    ),
+    QuizQuestion(
+      question: 'What does HMAC request signing protect against?',
+      options: ['Slow network round-trips', 'Tampering and replay — the receiver verifies a signature over the payload and timestamp before processing', 'Running out of database storage', 'DNS resolution failures'],
+      correctIndex: 1,
+      explanation: 'HMAC-SHA256(secret, timestamp + body) lets the receiver confirm the request is genuine and unmodified.',
+    ),
+    QuizQuestion(
+      question: 'What does webhook signature verification (X-Signature header) prevent?',
+      options: ['Slow webhook delivery', 'An attacker spoofing a payment notification to a merchant', 'Webhooks from being retried', 'The need for HTTPS'],
+      correctIndex: 1,
+      explanation: 'Verifying the signature confirms a webhook payload genuinely originated from the expected sender.',
+    ),
+    QuizQuestion(
+      question: 'What is a classic trigger for step-up authentication in fraud prevention?',
+      options: ['A user viewing their own profile', 'A new device combined with an unusually large transaction', 'Logging in during business hours', 'Using a strong password'],
+      correctIndex: 1,
+      explanation: 'New device + large transaction is a common risk-scoring signal that prompts extra verification.',
+    ),
+    QuizQuestion(
+      question: 'Which attack vectors commonly lead to Account Takeover (ATO)?',
+      options: ['Slow page load times', 'Credential stuffing, phishing, and SIM swapping', 'Using HTTPS', 'Rate limiting'],
+      correctIndex: 1,
+      explanation: 'ATO is typically achieved via credential stuffing, phishing, or SIM swap, defended with MFA and anomaly detection.',
+    ),
+  ];
+
+  static const _supplyChainSecurity = [
+    QuizQuestion(
+      question: 'What does a lockfile like go.sum or package-lock.json protect against?',
+      options: ['Slow builds', 'A build silently pulling in a different, potentially compromised dependency version', 'SQL injection', 'DDoS attacks'],
+      correctIndex: 1,
+      explanation: 'Lockfiles pin exact versions/hashes so dependency resolution is reproducible and not silently swapped.',
+    ),
+    QuizQuestion(
+      question: 'What is an SBOM (Software Bill of Materials) used for?',
+      options: ['Encrypting source code', 'Providing a full inventory of every dependency, so exposure to a newly disclosed CVE can be assessed quickly', 'Load balancing incoming requests', 'Generating TLS certificates'],
+      correctIndex: 1,
+      explanation: 'An SBOM lets a team quickly determine whether a new vulnerability affects them by checking their dependency inventory.',
+    ),
+    QuizQuestion(
+      question: 'Why scan for CVEs continuously in CI rather than just once at initial adoption?',
+      options: ['It has no real benefit', 'New vulnerabilities are disclosed in already-adopted dependencies over time, so continuous scanning catches newly-discovered risk', 'CI scanning is required by law everywhere', 'It replaces the need for a lockfile'],
+      correctIndex: 1,
+      explanation: 'A dependency safe today can have a CVE disclosed tomorrow — continuous scanning catches that drift.',
+    ),
+    QuizQuestion(
+      question: 'What does a "distroless" container base image provide?',
+      options: ['Faster CPU performance', 'A minimal image with no shell or package manager, reducing what an attacker could use after a compromise', 'Automatic code compilation', 'Built-in load balancing'],
+      correctIndex: 1,
+      explanation: 'Distroless images strip out unnecessary tooling, shrinking the attack surface available post-compromise.',
+    ),
+    QuizQuestion(
+      question: 'Which container hardening practices reduce the blast radius of a compromised container?',
+      options: ['Running as root with a writable filesystem', 'Running as a non-root user, using a read-only filesystem, and dropping unnecessary Linux capabilities', 'Disabling all logging', 'Exposing every port by default'],
+      correctIndex: 1,
+      explanation: 'Non-root, read-only, and minimal capabilities all limit what an attacker can do even after breaking into a container.',
+    ),
+  ];
+
   static const _searchFullTextIndexing = [
     QuizQuestion(
       question: 'Why can\'t a normal relational index efficiently answer "which documents contain this word"?',
@@ -962,6 +1403,1095 @@ class FundamentalsQuizData {
       options: ['Update frequency has no bearing on structure choice', 'Because these indexes need updating whenever a point moves, so frequent updates favor structures that are cheap to update over ones that are merely precise but expensive to maintain', 'Frequent updates make indexing unnecessary entirely', 'Only geohashing supports any updates at all'],
       correctIndex: 1,
       explanation: 'When positions change constantly, the cost of keeping the index up to date becomes a first-order concern, not just query speed.',
+    ),
+  ];
+
+  static const _distributedTransactions2pcSaga = [
+    QuizQuestion(
+      question: 'What is the main downside of Two-Phase Commit (2PC)?',
+      options: ['It cannot guarantee consistency', 'Participants hold locks while waiting for the vote, so one slow or dead node blocks everyone', 'It only works with a single participant', 'It requires no coordinator'],
+      correctIndex: 1,
+      explanation: '2PC keeps resources locked across the whole prepare/commit exchange, hurting availability and scalability.',
+    ),
+    QuizQuestion(
+      question: 'How does a Saga handle a failure partway through a multi-step process?',
+      options: ['It ignores the failure and continues', 'It runs compensating transactions to undo the steps that already completed', 'It restarts the entire cluster', 'It locks all participants until manually resolved'],
+      correctIndex: 1,
+      explanation: 'Sagas rely on explicit compensating actions per step rather than a global lock/rollback.',
+    ),
+    QuizQuestion(
+      question: 'What is the difference between orchestrated and choreographed Sagas?',
+      options: ['There is no difference', 'Orchestration uses a central coordinator telling each service what to do; choreography has each service react to events from the previous step', '2PC is a synonym for choreography', 'Choreography requires a central lock manager'],
+      correctIndex: 1,
+      explanation: 'Orchestration centralizes control flow; choreography distributes it via events, trading coupling for flexibility.',
+    ),
+    QuizQuestion(
+      question: 'What tradeoff does a Saga accept in exchange for better availability than 2PC?',
+      options: ['Higher storage cost only', 'The system passes through visibly inconsistent intermediate states while steps are in progress', 'It cannot span more than one service', 'It requires synchronous locking across all services'],
+      correctIndex: 1,
+      explanation: 'Without cross-service locks, other readers can observe a Saga mid-flight, before compensation (if needed) completes.',
+    ),
+    QuizQuestion(
+      question: 'When is 2PC still a reasonable choice over a Saga?',
+      options: ['Never — Sagas are always strictly better', 'When strict atomicity is non-negotiable and the set of participants is small and reliable', 'Only for read-only operations', 'When there is exactly one microservice in the system'],
+      correctIndex: 1,
+      explanation: '2PC still has a place where guaranteed atomicity matters more than availability and the participant set is limited.',
+    ),
+  ];
+
+  static const _gossipProtocol = [
+    QuizQuestion(
+      question: 'How does a gossip protocol spread information through a cluster?',
+      options: ['Every node broadcasts to every other node simultaneously', 'Each node periodically shares what it knows with a few random peers, who do the same next round', 'A single central server pushes updates to everyone', 'Nodes only exchange information once at startup'],
+      correctIndex: 1,
+      explanation: 'Gossip spreads state via repeated random peer exchanges rather than centralized or full broadcasts.',
+    ),
+    QuizQuestion(
+      question: 'Why does gossip scale well as a cluster grows?',
+      options: ['It requires a central coordinator that scales linearly', 'Each node only talks to a few random peers per round, so per-node bandwidth stays flat regardless of cluster size', 'Larger clusters gossip less frequently', 'It only works for clusters under 10 nodes'],
+      correctIndex: 1,
+      explanation: 'Because gossip fan-out per node is small and constant, the protocol does not require more per-node work as the cluster grows.',
+    ),
+    QuizQuestion(
+      question: 'How does gossip-based failure detection typically work?',
+      options: ['A central health-check server pings every node', 'Nodes periodically signal "still here"; missing several heartbeats marks a node suspect, and that news also spreads via gossip', 'Failures are detected only during a full cluster restart', 'Nodes never detect failures automatically'],
+      correctIndex: 1,
+      explanation: 'Heartbeat misses trigger suspicion, and that suspicion itself propagates through the same gossip mechanism.',
+    ),
+    QuizQuestion(
+      question: 'What real systems use gossip protocols for cluster membership?',
+      options: ['Traditional single-node relational databases', 'Cassandra and DynamoDB-style distributed databases', 'Static file servers', 'DNS root servers exclusively'],
+      correctIndex: 1,
+      explanation: 'Gossip is a foundational mechanism in Dynamo-style databases like Cassandra for tracking membership and health.',
+    ),
+    QuizQuestion(
+      question: 'What is a key advantage of gossip over a centralized membership service?',
+      options: ['It is always faster for small clusters of 2 nodes', 'No single point of failure and no central coordinator bottleneck', 'It eliminates the need for any network communication', 'It guarantees zero propagation delay'],
+      correctIndex: 1,
+      explanation: 'Decentralization is gossip\'s core benefit — the cluster keeps functioning even if individual nodes fail.',
+    ),
+  ];
+
+  static const _vectorClocksHlc = [
+    QuizQuestion(
+      question: 'What question does a vector clock help answer?',
+      options: ['How much disk space a node is using', 'Whether one event causally happened before another, or whether two events were concurrent', 'The exact wall-clock time an event occurred', 'How many replicas a database has'],
+      correctIndex: 1,
+      explanation: 'Vector clocks capture causal ordering between distributed events, which physical clocks alone cannot reliably do.',
+    ),
+    QuizQuestion(
+      question: 'How does a Dynamo-style database use vector clocks?',
+      options: ['To compress stored data', 'To detect concurrent, conflicting writes to the same key so they can be surfaced for resolution', 'To speed up TLS handshakes', 'To generate primary keys'],
+      correctIndex: 1,
+      explanation: 'When two writes are concurrent (neither vector clock dominates the other), the system flags a conflict rather than silently choosing one.',
+    ),
+    QuizQuestion(
+      question: 'What does a Hybrid Logical Clock (HLC) combine?',
+      options: ['Two separate physical clocks for redundancy', 'A logical counter with wall-clock time, so timestamps are both roughly human-meaningful and causally correct', 'A vector clock with a Bloom filter', 'A checksum and a hash function'],
+      correctIndex: 1,
+      explanation: 'HLCs blend logical ordering guarantees with real-time meaning, unlike a pure logical counter or a pure physical clock alone.',
+    ),
+    QuizQuestion(
+      question: 'Why is naive last-write-wins by wall-clock timestamp risky in a distributed system?',
+      options: ['Wall clocks are always perfectly synchronized', 'Clocks on different machines can drift, so a "later" timestamp is not guaranteed to reflect the true causal order, risking silent data loss', 'Wall-clock timestamps cannot be stored in a database', 'It is not risky at all'],
+      correctIndex: 1,
+      explanation: 'Clock drift between machines can make an earlier causal write appear to have a later timestamp, causing incorrect conflict resolution.',
+    ),
+    QuizQuestion(
+      question: 'Do vector clocks or HLCs require perfectly synchronized physical clocks to work correctly?',
+      options: ['Yes, both require perfect synchronization', 'No — both are designed to give correct causal ordering even when node clocks are not perfectly in sync', 'Only vector clocks require synchronization', 'Only HLCs require synchronization'],
+      correctIndex: 1,
+      explanation: 'Both mechanisms are specifically designed to tolerate the reality that distributed clocks are never perfectly synchronized.',
+    ),
+  ];
+
+  static const _merkleTrees = [
+    QuizQuestion(
+      question: 'How is a Merkle tree constructed?',
+      options: ['Randomly assigning hashes to nodes', 'Leaves hash data blocks, and each parent hashes the combination of its children\'s hashes, up to a single root hash', 'Only the root node is hashed', 'Each node stores a copy of the full dataset'],
+      correctIndex: 1,
+      explanation: 'The tree structure propagates hashes upward so the root summarizes the entire dataset in one value.',
+    ),
+    QuizQuestion(
+      question: 'How do two replicas quickly check if their data is identical using Merkle trees?',
+      options: ['By comparing every individual record', 'By comparing just their root hashes — a match means the data is identical', 'By re-downloading the entire dataset each time', 'By comparing only the timestamps of the last write'],
+      correctIndex: 1,
+      explanation: 'A single root-hash comparison can confirm equality without touching individual records.',
+    ),
+    QuizQuestion(
+      question: 'When two replicas\' root hashes differ, what happens next?',
+      options: ['The entire dataset is retransmitted from scratch', 'Only the branches whose hashes disagree are walked further, narrowing in on the actual divergence', 'The comparison is abandoned entirely', 'Both replicas are deleted and recreated'],
+      correctIndex: 1,
+      explanation: 'Merkle trees let you drill down only into the mismatched subtrees, avoiding a full scan.',
+    ),
+    QuizQuestion(
+      question: 'Which distributed databases use Merkle trees for anti-entropy repair?',
+      options: ['None — Merkle trees are theoretical only', 'Cassandra and Dynamo-style systems', 'Traditional single-node relational databases exclusively', 'In-memory caches only'],
+      correctIndex: 1,
+      explanation: 'Merkle-tree-based anti-entropy is a standard mechanism in Dynamo-style replicated databases like Cassandra.',
+    ),
+    QuizQuestion(
+      question: 'What other well-known systems use the same Merkle tree idea?',
+      options: ['Only spreadsheet software', 'Git (comparing commit trees) and blockchains (comparing block contents)', 'Only DNS resolution', 'Only video compression codecs'],
+      correctIndex: 1,
+      explanation: 'Merkle trees are a general-purpose technique for cheaply detecting divergence, used well beyond databases.',
+    ),
+  ];
+
+  static const _bloomCuckooFilters = [
+    QuizQuestion(
+      question: 'Can a Bloom filter produce a false negative?',
+      options: ['Yes, frequently', 'No — a Bloom filter never says an item is absent when it was actually added; it can only have false positives', 'Only after 50% capacity is reached', 'Only for string keys'],
+      correctIndex: 1,
+      explanation: 'Bloom filters guarantee no false negatives; the only error mode is a false positive ("maybe present" when it is not).',
+    ),
+    QuizQuestion(
+      question: 'What is the main limitation of a standard Bloom filter compared to a Cuckoo filter?',
+      options: ['It uses more memory', 'It cannot support deleting an item once added', 'It cannot be used with hash functions', 'It always has false negatives'],
+      correctIndex: 1,
+      explanation: 'A Cuckoo filter supports deletion; a classic Bloom filter does not, since bits are shared across items.',
+    ),
+    QuizQuestion(
+      question: 'Why do LSM-tree databases like Cassandra put a Bloom filter per SSTable?',
+      options: ['To compress the SSTable data', 'To avoid checking files on disk that definitely do not contain the key being looked up', 'To encrypt SSTable contents', 'To replicate SSTables across nodes'],
+      correctIndex: 1,
+      explanation: 'A "definitely not present" answer from the Bloom filter skips an expensive disk read entirely.',
+    ),
+    QuizQuestion(
+      question: 'What happens when a Bloom filter says an item might be present ("maybe")?',
+      options: ['The item is guaranteed to be present', 'It could be a false positive — the caller still needs to check the real source before trusting it', 'The filter automatically adds the item', 'The filter deletes a random other item'],
+      correctIndex: 1,
+      explanation: 'A "maybe" answer is probabilistic — callers still need to verify against the real data source since false positives are possible.',
+    ),
+    QuizQuestion(
+      question: 'What extra capability does a Cuckoo filter add over a standard Bloom filter?',
+      options: ['Faster network transmission', 'Support for removing (deleting) an item after it has been added', 'Unlimited capacity', 'Built-in encryption'],
+      correctIndex: 1,
+      explanation: 'Bloom filters cannot support deletion because bits are shared across multiple items; Cuckoo filters are designed to allow it.',
+    ),
+  ];
+
+  static const _hyperloglog = [
+    QuizQuestion(
+      question: 'What does HyperLogLog estimate?',
+      options: ['The exact sum of all values in a dataset', 'The approximate number of distinct items in a stream, using a small fixed amount of memory', 'The median of a dataset', 'The exact count of duplicate items'],
+      correctIndex: 1,
+      explanation: 'HyperLogLog is a cardinality estimator — it approximates "how many distinct items," not an exact count.',
+    ),
+    QuizQuestion(
+      question: 'What is the typical accuracy tradeoff HyperLogLog makes?',
+      options: ['Perfect accuracy at the cost of massive memory', 'A small error (commonly under 2%) in exchange for using only a few KB of memory regardless of scale', 'It only works for counts under 1000', 'It requires exact storage of every unique item'],
+      correctIndex: 1,
+      explanation: 'HyperLogLog\'s whole value proposition is bounded, small error for dramatically reduced memory use at any scale.',
+    ),
+    QuizQuestion(
+      question: 'How does Redis expose HyperLogLog functionality?',
+      options: ['It does not support HyperLogLog', 'Via PFADD to add items and PFCOUNT to estimate cardinality', 'Only through a third-party plugin', 'Via SQL queries'],
+      correctIndex: 1,
+      explanation: 'Redis ships HyperLogLog natively with the PFADD/PFCOUNT command family.',
+    ),
+    QuizQuestion(
+      question: 'What is a good use case for HyperLogLog?',
+      options: ['Storing exact user account balances', 'Estimating unique visitors or unique search queries at scale', 'Guaranteeing no duplicate payments are processed', 'Encrypting sensitive data'],
+      correctIndex: 1,
+      explanation: 'HyperLogLog fits "roughly how many uniques" questions, not situations requiring an exact count or strong guarantees.',
+    ),
+    QuizQuestion(
+      question: 'Can multiple HyperLogLog sketches be combined?',
+      options: ['No, each sketch is isolated forever', 'Yes — they can be merged (union) without losing accuracy, useful for combining per-shard or per-hour counts', 'Only if they were created on the same machine', 'Only by recomputing from raw data'],
+      correctIndex: 1,
+      explanation: 'HyperLogLog sketches support mergeable unions, letting partial estimates be combined into a total estimate.',
+    ),
+  ];
+
+  static const _consistentHashing = [
+    QuizQuestion(
+      question: 'What goes wrong with naive hash(key) % N sharding when N changes?',
+      options: ['Nothing, it works perfectly', 'Almost every key remaps to a different node, causing a massive unnecessary data reshuffle', 'Only one key needs to move', 'It becomes faster automatically'],
+      correctIndex: 1,
+      explanation: 'Modulo-based sharding is extremely sensitive to changes in N, since the modulus itself changes for nearly every key.',
+    ),
+    QuizQuestion(
+      question: 'How does consistent hashing decide which node owns a key?',
+      options: ['Random assignment each time', 'The key is placed on a hash ring, and the first node found walking clockwise from that position owns it', 'Alphabetical order of the key', 'The node with the most free memory'],
+      correctIndex: 1,
+      explanation: 'Consistent hashing maps both keys and nodes onto a ring, using ring position (not key % N) to determine ownership.',
+    ),
+    QuizQuestion(
+      question: 'What is the impact of adding or removing a node in consistent hashing?',
+      options: ['The entire keyspace must be reshuffled', 'Only the keys between the changed node and its neighbor on the ring are remapped — the rest stay put', 'No keys are ever remapped', 'All nodes must be restarted'],
+      correctIndex: 1,
+      explanation: 'Consistent hashing localizes the impact of membership changes to a small neighborhood on the ring.',
+    ),
+    QuizQuestion(
+      question: 'What problem do virtual nodes solve in consistent hashing?',
+      options: ['They encrypt the ring positions', 'Each physical node claims multiple ring positions, spreading load more evenly and avoiding hot spots', 'They eliminate the need for hashing entirely', 'They reduce the total number of physical nodes needed'],
+      correctIndex: 1,
+      explanation: 'Without virtual nodes, an unlucky ring distribution can leave one physical node owning a disproportionate share of keys.',
+    ),
+    QuizQuestion(
+      question: 'Which systems commonly rely on consistent hashing?',
+      options: ['Single-node relational databases only', 'Distributed caches and databases like DynamoDB, Cassandra, and memcached client-side sharding', 'Static HTML file servers', 'DNS root servers exclusively'],
+      correctIndex: 1,
+      explanation: 'Consistent hashing is a foundational technique wherever a distributed store needs to scale node count without a full data migration.',
+    ),
+  ];
+
+  static const _btreeVsLsm = [
+    QuizQuestion(
+      question: 'How does a B-tree handle writes?',
+      options: ['By appending sequentially to a log', 'By editing the relevant page in place, which involves random disk I/O', 'By never persisting writes to disk', 'By storing writes only in memory permanently'],
+      correctIndex: 1,
+      explanation: 'B-trees update the actual page containing the record, which is a random-access operation.',
+    ),
+    QuizQuestion(
+      question: 'Why are LSM trees considered write-optimized?',
+      options: ['They skip writing to disk entirely', 'Writes go to an in-memory memtable and are appended sequentially, which is far cheaper than random-access page edits', 'They compress every write before storing it', 'They only support single-threaded writes'],
+      correctIndex: 1,
+      explanation: 'Sequential appends are much cheaper than the random I/O a B-tree needs for in-place updates.',
+    ),
+    QuizQuestion(
+      question: 'What is the role of compaction in an LSM tree?',
+      options: ['Encrypting SSTables', 'Merging and tidying SSTables in the background, removing overwritten/deleted entries so reads don\'t check ever-more files', 'Replicating data to other nodes', 'Generating backups'],
+      correctIndex: 1,
+      explanation: 'Compaction keeps the number of files reads need to check bounded, maintaining read performance over time.',
+    ),
+    QuizQuestion(
+      question: 'Which storage engine style would you pick for a write-heavy workload like time-series ingestion?',
+      options: ['B-tree', 'LSM tree', 'Neither supports writes', 'It makes no difference'],
+      correctIndex: 1,
+      explanation: 'LSM trees are optimized for high write throughput, which fits heavy-ingestion workloads well.',
+    ),
+    QuizQuestion(
+      question: 'What database examples use a B-tree vs an LSM tree as their primary storage engine?',
+      options: ['Both Postgres and Cassandra use B-trees', 'Postgres/MySQL InnoDB typically use B-trees; Cassandra/RocksDB/LevelDB use LSM trees', 'Both use LSM trees exclusively', 'Neither uses either structure'],
+      correctIndex: 1,
+      explanation: 'This maps to the read-optimized vs write-optimized tradeoff each database family is generally tuned for.',
+    ),
+  ];
+
+  static const _oltpVsOlap = [
+    QuizQuestion(
+      question: 'What characterizes an OLTP workload?',
+      options: ['Few queries scanning millions of rows for aggregates', 'Many small, low-latency reads/writes on individual rows', 'No writes at all, only analytics', 'Batch processing run once a year'],
+      correctIndex: 1,
+      explanation: 'OLTP is the live application workload: frequent, small, fast operations on individual records.',
+    ),
+    QuizQuestion(
+      question: 'What characterizes an OLAP workload?',
+      options: ['Millisecond single-row lookups only', 'Fewer, larger queries that aggregate across millions of rows', 'It never touches historical data', 'It is identical to OLTP'],
+      correctIndex: 1,
+      explanation: 'OLAP is analytics: large scans and aggregations, prioritizing throughput over per-query latency.',
+    ),
+    QuizQuestion(
+      question: 'Why is running heavy analytical queries directly against a production OLTP database risky?',
+      options: ['It is completely safe with no downsides', 'It competes for the same resources as live application traffic and can degrade performance for real users', 'OLTP databases cannot execute SELECT statements', 'It automatically corrupts the data'],
+      correctIndex: 1,
+      explanation: 'Large OLAP-style scans can starve the live application of I/O and CPU on a shared OLTP database.',
+    ),
+    QuizQuestion(
+      question: 'What is the typical pattern for separating OLTP and OLAP workloads?',
+      options: ['Run everything on one database and hope for the best', 'OLTP stays the app\'s source of truth; data is periodically piped into a dedicated OLAP/analytics store', 'Delete the OLTP data once analytics is needed', 'OLAP queries are banned entirely'],
+      correctIndex: 1,
+      explanation: 'Separation via ETL/streaming lets each system be optimized for its own access pattern without conflict.',
+    ),
+    QuizQuestion(
+      question: 'Which of these is a typical OLAP-oriented data store?',
+      options: ['A typical OLTP-tuned Postgres instance', 'Snowflake, BigQuery, Redshift, or ClickHouse', 'A Redis in-memory cache', 'A message queue like Kafka'],
+      correctIndex: 1,
+      explanation: 'These are columnar, analytics-oriented warehouses purpose-built for large aggregate queries.',
+    ),
+  ];
+
+  static const _dataWarehouseLakeLakehouse = [
+    QuizQuestion(
+      question: 'What is a key characteristic of a data warehouse?',
+      options: ['It stores only raw, unstructured data', 'It stores structured, schema-enforced data optimized for fast analytical queries', 'It has no schema at all', 'It is only used for real-time application state'],
+      correctIndex: 1,
+      explanation: 'Warehouses enforce schema up front, which is what makes their analytical queries fast and predictable.',
+    ),
+    QuizQuestion(
+      question: 'What is the tradeoff a data lake makes compared to a warehouse?',
+      options: ['It is more expensive but faster', 'It stores data of any shape cheaply at scale, deferring schema to read time, but risks becoming a disorganized "data swamp"', 'It cannot store any unstructured data', 'It has no tradeoffs at all'],
+      correctIndex: 1,
+      explanation: 'Lakes prioritize flexibility and cost over the up-front structure a warehouse enforces.',
+    ),
+    QuizQuestion(
+      question: 'What does a lakehouse (Delta Lake, Apache Iceberg) try to combine?',
+      options: ['Only the cost benefits of a lake, nothing else', 'Cheap lake-style storage with warehouse-style schema enforcement, ACID transactions, and query performance', 'Only the schema strictness of a warehouse', 'A replacement for OLTP databases'],
+      correctIndex: 1,
+      explanation: 'Lakehouses layer structure and transactional guarantees on top of cheap object storage.',
+    ),
+    QuizQuestion(
+      question: 'Why do modern warehouses/lakehouses favor columnar storage formats like Parquet?',
+      options: ['Columnar formats are required for row-by-row transactional updates', 'Analytical queries typically read a few columns across many rows, which columnar layout serves efficiently', 'Columnar formats cannot be compressed', 'They are slower but more secure'],
+      correctIndex: 1,
+      explanation: 'Storing data column-by-column lets an aggregate query read only the relevant columns instead of full rows.',
+    ),
+    QuizQuestion(
+      question: 'Which storage style best fits "cheap, flexible storage for many different raw data shapes"?',
+      options: ['Data warehouse', 'Data lake', 'A single-node relational database', 'An in-memory cache'],
+      correctIndex: 1,
+      explanation: 'Lakes are designed precisely for cheap, schema-flexible storage at scale.',
+    ),
+  ];
+
+  static const _changeDataCapture = [
+    QuizQuestion(
+      question: 'What does Change Data Capture (CDC) read from to detect changes?',
+      options: ['The application\'s HTTP access logs', 'The database\'s own internal transaction log (WAL or binlog)', 'A manually maintained changelog file', 'The database\'s query cache'],
+      correctIndex: 1,
+      explanation: 'CDC taps directly into the database\'s transaction log rather than polling tables or logging changes separately.',
+    ),
+    QuizQuestion(
+      question: 'What is Debezium commonly used for?',
+      options: ['Compiling application code', 'Tailing a database\'s transaction log and publishing row-level changes as events, typically to Kafka', 'Load balancing HTTP traffic', 'Generating TLS certificates'],
+      correctIndex: 1,
+      explanation: 'Debezium is the standard open-source CDC connector for streaming database changes into Kafka.',
+    ),
+    QuizQuestion(
+      question: 'What problem does CDC avoid compared to application-level dual writes?',
+      options: ['It avoids the need for a database entirely', 'It avoids dual-write bugs, where a DB write and a separate write to another system (like a search index) could get out of sync if one fails', 'It avoids the need for any network calls', 'It eliminates the need for backups'],
+      correctIndex: 1,
+      explanation: 'Since CDC reads from the single source of truth (the transaction log), there is no separate write path that can drift out of sync.',
+    ),
+    QuizQuestion(
+      question: 'Which downstream systems commonly consume a CDC change stream?',
+      options: ['None — CDC output is not consumed by anything', 'Search indexes, caches (for invalidation), analytics warehouses, and other microservices', 'Only the original database itself', 'Only the client\'s web browser'],
+      correctIndex: 1,
+      explanation: 'CDC streams are commonly fanned out to keep multiple downstream systems in sync with the source database.',
+    ),
+    QuizQuestion(
+      question: 'Does CDC require changes to the application code that writes to the database?',
+      options: ['Yes, every write path must be rewritten', 'No — CDC reads the database\'s own log, so it works without app-level changes', 'Only if the database is NoSQL', 'Only for delete operations'],
+      correctIndex: 1,
+      explanation: 'Because CDC observes the transaction log itself, the application does not need to change how it writes data.',
+    ),
+  ];
+
+  static const _normalizeVsDenormalize = [
+    QuizQuestion(
+      question: 'What does normalizing a schema mean?',
+      options: ['Duplicating data across multiple tables for speed', 'Storing each fact exactly once and linking related data via foreign keys', 'Removing all indexes', 'Storing everything as unstructured JSON'],
+      correctIndex: 1,
+      explanation: 'Normalization eliminates duplication by storing each fact in one place and referencing it elsewhere.',
+    ),
+    QuizQuestion(
+      question: 'What is the main tradeoff of a normalized schema?',
+      options: ['It uses far more storage than denormalized schemas', 'Reads often require joins across multiple tables', 'It cannot enforce data integrity', 'It is only usable with NoSQL databases'],
+      correctIndex: 1,
+      explanation: 'Avoiding duplication means related data often lives in separate tables, requiring joins to read together.',
+    ),
+    QuizQuestion(
+      question: 'What is the benefit of denormalizing, e.g. storing an author\'s name directly on a post?',
+      options: ['It reduces total storage used', 'It avoids a join at read time, making reads faster and simpler, at the cost of needing to update duplicated data in multiple places', 'It removes the need for any database', 'It guarantees data is always consistent automatically'],
+      correctIndex: 1,
+      explanation: 'Denormalization trades some storage and write complexity for significantly faster, simpler reads.',
+    ),
+    QuizQuestion(
+      question: 'What does "query-first design" mean in the context of NoSQL schema modeling?',
+      options: ['Designing the schema around the exact read queries the application needs, since there are no joins to rely on', 'Writing all SQL queries before writing any code', 'Ignoring performance until production', 'Only supporting a single query per table'],
+      correctIndex: 0,
+      explanation: 'Without cheap joins, NoSQL schemas are typically shaped directly around the specific access patterns the app will use.',
+    ),
+    QuizQuestion(
+      question: 'What is a common middle-ground pattern between normalization and denormalization?',
+      options: ['Pick one and never mix them', 'Normalize the OLTP source of truth, then denormalize into read-optimized views/caches for hot query paths', 'Denormalize everything including the source of truth', 'Normalize only string columns'],
+      correctIndex: 1,
+      explanation: 'Keeping a clean normalized source of truth while denormalizing derived read paths gets benefits of both approaches.',
+    ),
+  ];
+
+  static const _microservicesVsMonolith = [
+    QuizQuestion(
+      question: 'What is a key advantage of a monolith early in a project?',
+      options: ['Unlimited independent scaling of every feature', 'Simplicity — one codebase, one deployment, easy to develop and reason about', 'It requires no database at all', 'It automatically handles eventual consistency'],
+      correctIndex: 1,
+      explanation: 'A monolith\'s single codebase and deployment keeps early development simple, before scale or team size demands more.',
+    ),
+    QuizQuestion(
+      question: 'What new class of problems do microservices introduce compared to a monolith?',
+      options: ['None — microservices have no downsides', 'Network calls replacing function calls, eventual consistency across services, and greater operational complexity', 'The need for a database', 'Slower local development for a single feature'],
+      correctIndex: 1,
+      explanation: 'Splitting a monolith into services turns in-process calls into network calls with all their new failure modes.',
+    ),
+    QuizQuestion(
+      question: 'What does Conway\'s Law state?',
+      options: ['Systems always outperform monoliths', 'System structure tends to mirror the communication/team structure that built it', 'Microservices are always faster than monoliths', 'Databases must be normalized'],
+      correctIndex: 1,
+      explanation: 'Conway\'s Law observes that software architecture reflects organizational structure — a key reason to align service boundaries with team boundaries.',
+    ),
+    QuizQuestion(
+      question: 'What is a common, pragmatic path many successful systems take?',
+      options: ['Always start with microservices from day one', 'Start as a monolith, and extract services only where independent scaling or ownership genuinely justifies the added complexity', 'Never migrate away from a monolith', 'Rewrite in microservices every year'],
+      correctIndex: 1,
+      explanation: 'Starting simple and extracting services incrementally, as real needs emerge, avoids paying distributed-systems costs prematurely.',
+    ),
+    QuizQuestion(
+      question: 'What is a key benefit microservices offer over a monolith when done well?',
+      options: ['Zero network latency', 'Independent deployability and scaling per service, plus clearer team ownership boundaries', 'Automatic elimination of all bugs', 'No need for monitoring'],
+      correctIndex: 1,
+      explanation: 'The main payoff of microservices is being able to scale, deploy, and own services independently.',
+    ),
+  ];
+
+  static const _cqrsEventSourcing = [
+    QuizQuestion(
+      question: 'What does CQRS stand for and mean?',
+      options: ['Command Query Responsibility Segregation — separate models for writes and reads', 'A database replication protocol', 'A type of consistent hashing', 'A caching eviction policy'],
+      correctIndex: 0,
+      explanation: 'CQRS splits the write (command) model from the read (query) model, letting each be optimized independently.',
+    ),
+    QuizQuestion(
+      question: 'Why might the read side in CQRS be denormalized and eventually consistent?',
+      options: ['Because denormalization is required for all databases', 'Because it is purpose-built for fast reads, independent of the write model\'s validation/consistency needs', 'Because CQRS forbids normalized data structures', 'Because reads are always slower than writes'],
+      correctIndex: 1,
+      explanation: 'The read model can be shaped purely around query needs, since it is decoupled from the write model.',
+    ),
+    QuizQuestion(
+      question: 'What does Event Sourcing store, instead of just the current state?',
+      options: ['Only a snapshot of the current state', 'The full sequence of events that led to the current state', 'Nothing — Event Sourcing has no persistence', 'Only the most recent event'],
+      correctIndex: 1,
+      explanation: 'Event sourcing keeps the complete history of changes, deriving current state by replaying them.',
+    ),
+    QuizQuestion(
+      question: 'What is a major benefit of Event Sourcing?',
+      options: ['It eliminates the need for any database', 'A complete audit trail comes for free, and new read models can be built later by replaying history', 'It guarantees zero latency reads', 'It removes the need for testing'],
+      correctIndex: 1,
+      explanation: 'Since every change is recorded as an event, you get a full history and the flexibility to derive new views from it later.',
+    ),
+    QuizQuestion(
+      question: 'Are CQRS and Event Sourcing required to be used together?',
+      options: ['Yes, they are the same pattern', 'No — they are independent choices, often paired but each usable without the other', 'CQRS requires Event Sourcing to function at all', 'Event Sourcing requires CQRS to function at all'],
+      correctIndex: 1,
+      explanation: 'They complement each other well but are architecturally separate decisions.',
+    ),
+  ];
+
+  static const _circuitBreakerBulkhead = [
+    QuizQuestion(
+      question: 'What happens when a circuit breaker "trips" to the open state?',
+      options: ['It sends even more traffic to test recovery', 'It stops sending traffic to the failing dependency and fails fast locally instead', 'It permanently deletes the dependency', 'It doubles the timeout for every request'],
+      correctIndex: 1,
+      explanation: 'An open circuit breaker rejects calls immediately rather than letting them pile up against a failing dependency.',
+    ),
+    QuizQuestion(
+      question: 'What is the purpose of the half-open state in a circuit breaker?',
+      options: ['To permanently block all future traffic', 'To let a small trial request through and check whether the dependency has recovered before fully closing again', 'To double the request rate', 'To delete cached responses'],
+      correctIndex: 1,
+      explanation: 'Half-open is a cautious probe: a limited number of requests test recovery before resuming full traffic.',
+    ),
+    QuizQuestion(
+      question: 'Why is failing fast better than letting requests queue up against a down dependency?',
+      options: ['It is not better, queuing is always preferred', 'Piled-up slow/timing-out requests can exhaust threads and connections, risking a cascading failure elsewhere', 'Failing fast uses more memory', 'It has no real effect on system health'],
+      correctIndex: 1,
+      explanation: 'Resource exhaustion from stuck requests is exactly the cascading-failure risk fail-fast circuit breaking avoids.',
+    ),
+    QuizQuestion(
+      question: 'What does the bulkhead pattern do?',
+      options: ['It merges all resource pools into one shared pool', 'It partitions resources (connection/thread pools) per dependency, so one failing dependency cannot starve others', 'It encrypts traffic between services', 'It replaces the need for a circuit breaker entirely'],
+      correctIndex: 1,
+      explanation: 'Like watertight compartments in a ship, bulkheads contain a failure to the resources allocated for that specific dependency.',
+    ),
+    QuizQuestion(
+      question: 'What do circuit breakers and bulkheads have in common as patterns?',
+      options: ['Both encrypt data at rest', 'Both aim to contain the blast radius of one dependency\'s failure rather than let it cascade through the system', 'Both are used only for database indexing', 'Both are authentication mechanisms'],
+      correctIndex: 1,
+      explanation: 'They are complementary resilience patterns focused on isolating and containing failure.',
+    ),
+  ];
+
+  static const _serviceMeshSidecar = [
+    QuizQuestion(
+      question: 'What does a sidecar proxy handle on behalf of a service?',
+      options: ['Compiling the service\'s source code', 'mTLS, retries, timeouts, load balancing, and telemetry, transparently', 'Storing the service\'s primary database', 'Rendering the user interface'],
+      correctIndex: 1,
+      explanation: 'The sidecar absorbs cross-cutting networking concerns so the service code does not need to implement them.',
+    ),
+    QuizQuestion(
+      question: 'What is the role of a service mesh\'s control plane (e.g. Istio)?',
+      options: ['It stores application data', 'It centrally configures every sidecar proxy, so policies are set once instead of reimplemented per service', 'It replaces the need for a load balancer entirely', 'It compiles application binaries'],
+      correctIndex: 1,
+      explanation: 'The control plane pushes configuration to all the sidecars, giving consistent, centrally managed behavior.',
+    ),
+    QuizQuestion(
+      question: 'How can a service mesh change traffic routing (e.g. for a canary release) without redeploying app code?',
+      options: ['It cannot — code changes are always required', 'By updating mesh-level traffic policy, since routing is handled by the sidecars, not the application', 'By manually editing each service\'s source code', 'By restarting the entire cluster'],
+      correctIndex: 1,
+      explanation: 'Because routing logic lives in the mesh/sidecars, traffic-shifting policy changes do not require touching application code.',
+    ),
+    QuizQuestion(
+      question: 'What is a real cost of adopting a service mesh?',
+      options: ['It has no costs at all', 'Added operational complexity and per-hop latency overhead from the extra proxy layer', 'It removes the ability to use mTLS', 'It eliminates the need for any monitoring'],
+      correctIndex: 1,
+      explanation: 'Every request now passes through sidecar proxies, adding both operational surface area and a small latency cost.',
+    ),
+    QuizQuestion(
+      question: 'When does adopting a service mesh tend to pay off?',
+      options: ['For a single-service application', 'Once there are enough services that reimplementing networking logic per-service becomes the bigger cost', 'Only for static websites', 'Never — it is purely overhead'],
+      correctIndex: 1,
+      explanation: 'The value of centralizing cross-cutting networking logic grows with the number of services that would otherwise duplicate it.',
+    ),
+  ];
+
+  static const _apiGatewayBff = [
+    QuizQuestion(
+      question: 'What does an API Gateway centralize before requests reach individual services?',
+      options: ['Only database backups', 'Authentication, coarse-grained rate limiting, routing, and basic authorization', 'Nothing — it just forwards packets unmodified', 'Compilation of service code'],
+      correctIndex: 1,
+      explanation: 'The gateway handles cross-cutting concerns once, so individual services don\'t need to reimplement them.',
+    ),
+    QuizQuestion(
+      question: 'From a client\'s perspective, what does an API Gateway hide?',
+      options: ['The client\'s own IP address', 'Which specific backend service actually handled the request', 'The existence of HTTPS', 'The request method (GET/POST)'],
+      correctIndex: 1,
+      explanation: 'Clients talk only to the gateway; the underlying service topology stays invisible to them.',
+    ),
+    QuizQuestion(
+      question: 'What problem does a Backend-for-Frontend (BFF) solve?',
+      options: ['It replaces the need for any backend service', 'A generic one-size-fits-all API forcing clients to over-fetch or make many round trips — BFF tailors a layer per client type', 'It eliminates the need for authentication', 'It only applies to mobile apps, never web'],
+      correctIndex: 1,
+      explanation: 'BFF shapes the API around each specific client\'s actual data needs, instead of one generic API for everyone.',
+    ),
+    QuizQuestion(
+      question: 'What is a risk of introducing an API Gateway?',
+      options: ['It has no risks at all', 'It becomes a new operational component and potential bottleneck/single point of failure if not made highly available', 'It automatically encrypts all backend data', 'It removes the need for load balancing entirely'],
+      correctIndex: 1,
+      explanation: 'Since all traffic flows through it, the gateway itself needs to be scaled and made resilient.',
+    ),
+    QuizQuestion(
+      question: 'How many gateway/aggregation layers does the BFF pattern typically introduce?',
+      options: ['Exactly one shared by every client', 'One per client type (web, iOS, Android), each tailored to that client', 'Zero — BFF removes the gateway concept entirely', 'One per individual user'],
+      correctIndex: 1,
+      explanation: 'BFF\'s defining trait is a dedicated layer per client type rather than one generic layer for all clients.',
+    ),
+  ];
+
+  static const _nTierThickThinClient = [
+    QuizQuestion(
+      question: 'What distinguishes a 3-tier architecture from a 2-tier one?',
+      options: ['3-tier has no database', ' 3-tier adds a dedicated application/business-logic layer between the client and the database', '2-tier and 3-tier are identical', '3-tier removes the client entirely'],
+      correctIndex: 1,
+      explanation: '2-tier is just client-server; 3-tier separates business logic into its own layer.',
+    ),
+    QuizQuestion(
+      question: 'What is a thick client?',
+      options: ['A client that does almost nothing locally', 'A client (native app, feature-rich mobile app) that performs significant logic and stores data locally', 'A synonym for a thin client', 'A client that cannot run offline under any circumstances'],
+      correctIndex: 1,
+      explanation: 'Thick clients handle meaningful work and state locally, unlike thin clients that depend on the server for almost everything.',
+    ),
+    QuizQuestion(
+      question: 'What is a key advantage of a thin client architecture?',
+      options: ['Rich offline support', 'Updates are trivial — change the server, and every client benefits immediately without shipping a new release', 'It requires no server at all', 'It performs all computation locally'],
+      correctIndex: 1,
+      explanation: 'Since logic lives server-side, thin clients get updates automatically without needing new client builds.',
+    ),
+    QuizQuestion(
+      question: 'What is a tradeoff of a thick client compared to a thin one?',
+      options: ['Thick clients cannot store any data', 'Thick clients are harder to update everywhere at once, since logic/data live on each individual device', 'Thick clients always require more server resources', 'There is no meaningful tradeoff'],
+      correctIndex: 1,
+      explanation: 'Distributing logic to clients means a fix or feature has to be shipped and adopted across many individual devices.',
+    ),
+    QuizQuestion(
+      question: 'What generally happens to separation of concerns as you add more tiers?',
+      options: ['It gets worse with more tiers', 'It generally improves, at the cost of more network hops and operational pieces to manage', 'Tiers have no relationship to separation of concerns', 'Adding tiers always reduces latency'],
+      correctIndex: 1,
+      explanation: 'More tiers typically isolate responsibilities more cleanly, but add architectural and operational overhead.',
+    ),
+  ];
+
+  static const _stranglerFigPattern = [
+    QuizQuestion(
+      question: 'What is the core idea of the strangler fig pattern?',
+      options: ['Rewrite the entire system in one release', 'Incrementally redirect traffic from the old system to the new one, one slice at a time, with both running side by side', 'Delete the legacy system before building the replacement', 'Only migrate systems with no active users'],
+      correctIndex: 1,
+      explanation: 'The pattern is named for a vine that gradually grows around and replaces a host tree without ever felling it outright.',
+    ),
+    QuizQuestion(
+      question: 'What component decides whether a request goes to the old or new system during a strangler fig migration?',
+      options: ['The end user manually chooses each time', 'A router/proxy in front of both systems', 'There is no such component — both handle every request identically', 'The database decides based on data age'],
+      correctIndex: 1,
+      explanation: 'A routing layer directs traffic to whichever system currently owns a given slice of functionality.',
+    ),
+    QuizQuestion(
+      question: 'What is the main risk this pattern avoids compared to a "big bang" rewrite?',
+      options: ['The risk of ever writing new code', 'A risky all-at-once cutover with no way to validate the new system against real traffic before full switchover', 'The need for testing', 'The cost of running two systems at all'],
+      correctIndex: 1,
+      explanation: 'Incremental migration lets each slice be validated against production traffic before expanding further.',
+    ),
+    QuizQuestion(
+      question: 'When is the legacy system finally decommissioned in this pattern?',
+      options: ['On day one of the migration', 'Only once every code path has been migrated and nothing routes to it anymore', 'It is never decommissioned', 'As soon as the new system is deployed, regardless of traffic'],
+      correctIndex: 1,
+      explanation: 'The legacy system stays live and serving traffic until it has been fully "strangled" — no remaining routes point to it.',
+    ),
+    QuizQuestion(
+      question: 'Why migrate "one slice (endpoint/feature) at a time" instead of everything at once?',
+      options: ['It is slower with no other benefit', 'Each slice can be independently validated, limiting the blast radius of any migration issue', 'Slices cannot be tested individually', 'It requires deleting old code immediately'],
+      correctIndex: 1,
+      explanation: 'Migrating incrementally contains risk to a small, verifiable piece of functionality at a time.',
+    ),
+  ];
+
+  static const _httpEvolution = [
+    QuizQuestion(
+      question: 'How do browsers work around HTTP/1.1 only allowing one request in flight per connection?',
+      options: ['They wait for each request to finish before sending the next, always', 'They open several parallel connections to the same server', 'They switch to UDP automatically', 'They cache every response forever'],
+      correctIndex: 1,
+      explanation: 'Multiple parallel connections let HTTP/1.1 clients approximate concurrency, at the cost of connection overhead.',
+    ),
+    QuizQuestion(
+      question: 'What does HTTP/2 multiplexing achieve?',
+      options: ['It requires a new connection per request, like HTTP/1.1', 'Many requests share a single TCP connection using binary framing, removing the need for multiple parallel connections', 'It disables all compression', 'It only works for GET requests'],
+      correctIndex: 1,
+      explanation: 'HTTP/2 interleaves multiple request/response streams over one connection, cutting the overhead of many separate connections.',
+    ),
+    QuizQuestion(
+      question: 'What limitation does HTTP/2 still have due to running over TCP?',
+      options: ['It cannot compress headers', 'A single lost packet blocks all multiplexed streams on that connection (head-of-line blocking)', 'It cannot support more than one request', 'It requires a new TCP connection per request'],
+      correctIndex: 1,
+      explanation: 'TCP guarantees in-order delivery across the whole connection, so one lost packet stalls every stream sharing it.',
+    ),
+    QuizQuestion(
+      question: 'What transport does HTTP/3 use instead of TCP?',
+      options: ['UDP directly, with no additional protocol', 'QUIC, which runs over UDP', 'A new version of TCP', 'FTP'],
+      correctIndex: 1,
+      explanation: 'HTTP/3 is built on QUIC, a UDP-based transport that avoids TCP\'s connection-wide head-of-line blocking.',
+    ),
+    QuizQuestion(
+      question: 'What extra resilience does HTTP/3 (via QUIC) provide that HTTP/2 does not?',
+      options: ['It compresses images automatically', 'Connections survive a client\'s network change (e.g. wifi to cellular) without a fresh handshake', 'It eliminates the need for encryption', 'It removes the need for a server entirely'],
+      correctIndex: 1,
+      explanation: 'QUIC connection IDs are decoupled from the underlying IP/port, letting connections migrate across networks seamlessly.',
+    ),
+  ];
+
+  static const _grpcProtobuf = [
+    QuizQuestion(
+      question: 'What is Protocol Buffers (protobuf)?',
+      options: ['A human-readable text format like JSON', 'A compact binary serialization format defined by a strict, versioned schema', 'A type of database index', 'A load balancing algorithm'],
+      correctIndex: 1,
+      explanation: 'Protobuf trades human-readability for a smaller, faster-to-parse binary wire format.',
+    ),
+    QuizQuestion(
+      question: 'What transport protocol does gRPC run over?',
+      options: ['HTTP/1.1 only', 'HTTP/2', 'Raw TCP with no HTTP layer', 'UDP directly'],
+      correctIndex: 1,
+      explanation: 'gRPC is built on HTTP/2, inheriting its multiplexing and framing.',
+    ),
+    QuizQuestion(
+      question: 'What capability does gRPC get natively from running over HTTP/2 that plain REST lacks a standard answer for?',
+      options: ['Header compression only', 'Client, server, and bidirectional streaming', 'The ability to use JSON', 'Basic authentication'],
+      correctIndex: 1,
+      explanation: 'HTTP/2\'s multiplexed streams give gRPC built-in support for long-lived streaming in either or both directions.',
+    ),
+    QuizQuestion(
+      question: 'How are gRPC client and server code kept in sync?',
+      options: ['Manually, with no tooling support', 'Both are code-generated from the same .proto schema file, catching mismatches at compile time', 'They are never guaranteed to match', 'By writing separate JSON schemas for each side'],
+      correctIndex: 1,
+      explanation: 'Schema-first codegen means client and server stubs are derived from one shared source of truth.',
+    ),
+    QuizQuestion(
+      question: 'Where does gRPC fit best compared to REST/JSON?',
+      options: ['Public browser-facing APIs where human readability matters most', 'Internal service-to-service traffic where performance and strict schemas matter', 'It is a strict replacement for REST in all cases', 'Only for static file serving'],
+      correctIndex: 1,
+      explanation: 'gRPC\'s performance and schema strictness shine for internal traffic; REST/JSON remains more accessible for public APIs.',
+    ),
+  ];
+
+  static const _webrtcAndRealtime = [
+    QuizQuestion(
+      question: 'How does WebRTC connect two browsers on a video call?',
+      options: ['All media is routed through a central server permanently', 'Directly, peer-to-peer — a signaling server only helps them find each other and negotiate, then steps out of the data path', 'Through email attachments', 'Via DNS lookups only'],
+      correctIndex: 1,
+      explanation: 'WebRTC\'s signaling server assists connection setup but is not in the media path once the peer connection is established.',
+    ),
+    QuizQuestion(
+      question: 'Why does WebRTC tolerate some packet loss instead of retransmitting?',
+      options: ['Retransmission is impossible over UDP', 'Retransmitting would add latency real-time audio/video cannot afford', 'Packet loss never actually occurs in WebRTC', 'It always uses TCP for reliability'],
+      correctIndex: 1,
+      explanation: 'For live media, a slightly degraded frame now is better than a perfect frame delayed by a retransmit round trip.',
+    ),
+    QuizQuestion(
+      question: 'Is WebRTC traffic encrypted by default?',
+      options: ['No, encryption must be added separately', 'Yes — encryption (DTLS-SRTP) is built in, not an opt-in add-on', 'Only for text chat, never for media', 'Only when using a paid service'],
+      correctIndex: 1,
+      explanation: 'WebRTC mandates encryption as part of the standard, unlike plain WebSockets where security is opt-in.',
+    ),
+    QuizQuestion(
+      question: 'Which protocol fits a one-way live ticker where the server continuously pushes updates to the client?',
+      options: ['WebRTC', 'Server-Sent Events (SSE)', 'gRPC exclusively', 'FTP'],
+      correctIndex: 1,
+      explanation: 'SSE is designed exactly for one-directional server-to-client push, simpler than a full-duplex WebSocket for that use case.',
+    ),
+    QuizQuestion(
+      question: 'Which protocol fits internal robot-to-robot (service-to-service) calls needing high performance?',
+      options: ['WebRTC', 'gRPC', 'Server-Sent Events', 'Plain email'],
+      correctIndex: 1,
+      explanation: 'gRPC\'s binary protobuf encoding and HTTP/2 transport suit high-performance internal service calls well.',
+    ),
+  ];
+
+  static const _retriesBackoffJitter = [
+    QuizQuestion(
+      question: 'What does exponential backoff do between retry attempts?',
+      options: ['Waits the same fixed amount of time every retry', 'Waits progressively longer between each attempt (e.g. doubling)', 'Retries instantly with no delay', 'Increases the request payload size each time'],
+      correctIndex: 1,
+      explanation: 'Growing the delay between attempts gives a struggling dependency room to recover instead of piling on more load.',
+    ),
+    QuizQuestion(
+      question: 'What problem does adding jitter to backoff solve?',
+      options: ['It makes retries happen faster', 'It prevents many clients that failed simultaneously from retrying in lockstep and recreating the same spike', 'It removes the need for a retry cap', 'It encrypts the retry request'],
+      correctIndex: 1,
+      explanation: 'Randomizing the wait spreads out retries that would otherwise all land at the same moment.',
+    ),
+    QuizQuestion(
+      question: 'Why should retries always be capped with a maximum attempt count and timeout?',
+      options: ['Caps are unnecessary if backoff is used', 'A truly dead dependency should eventually fail the caller instead of being retried forever', 'Capping retries makes requests faster', 'It has no real purpose'],
+      correctIndex: 1,
+      explanation: 'Without a cap, a permanently failing dependency would cause retries to continue indefinitely, wasting resources and delaying failure signals.',
+    ),
+    QuizQuestion(
+      question: 'Why is it risky to retry a non-idempotent operation like "charge the credit card" by default?',
+      options: ['It is never risky', 'A retry could cause the charge to be applied more than once unless paired with an idempotency key', 'Non-idempotent operations cannot be retried at all, technically', 'It only affects read operations'],
+      correctIndex: 1,
+      explanation: 'Retrying a side-effecting, non-idempotent call risks duplicating that effect unless idempotency is explicitly handled.',
+    ),
+    QuizQuestion(
+      question: 'What is the "everyone redialing a busy line at once" scenario an analogy for?',
+      options: ['A benefit of retries', 'The problem that immediate, synchronized retries from many clients can worsen an already-struggling dependency', 'A reason to avoid using backoff', 'A description of exactly-once delivery'],
+      correctIndex: 1,
+      explanation: 'This illustrates why naive immediate retries can amplify load on a struggling system instead of helping it recover.',
+    ),
+  ];
+
+  static const _deliverySemantics = [
+    QuizQuestion(
+      question: 'What does at-most-once delivery guarantee?',
+      options: ['A message is never lost and never duplicated', 'A message might be lost, but is never delivered more than once', 'A message is always delivered exactly one time, guaranteed', 'A message is always duplicated for safety'],
+      correctIndex: 1,
+      explanation: 'At-most-once is fire-and-forget: simplest, but accepts possible message loss.',
+    ),
+    QuizQuestion(
+      question: 'What does at-least-once delivery require of the receiver?',
+      options: ['Nothing special — duplicates are impossible', 'The receiver must tolerate and handle duplicate messages, usually via idempotency', 'The receiver must reject all retried messages', 'The receiver must always crash on duplicates'],
+      correctIndex: 1,
+      explanation: 'Since the sender retries until acknowledged, the receiver may see the same message more than once and must handle that safely.',
+    ),
+    QuizQuestion(
+      question: 'What does "exactly-once" delivery actually mean in practice across a real network?',
+      options: ['A magic transport-layer guarantee with zero duplicates ever', 'At-least-once delivery combined with idempotent processing on the receiving end', 'The same as at-most-once', 'It is theoretically impossible and never implemented'],
+      correctIndex: 1,
+      explanation: 'True exactly-once delivery isn\'t achievable at the transport layer alone; it\'s effectively at-least-once plus idempotency.',
+    ),
+    QuizQuestion(
+      question: 'What is a Dead Letter Queue (DLQ) used for?',
+      options: ['Storing successfully processed messages permanently', 'Catching messages that repeatedly fail processing, instead of blocking the queue or silently dropping them', 'Encrypting messages in transit', 'Load balancing across consumers'],
+      correctIndex: 1,
+      explanation: 'A DLQ isolates poison messages for inspection/reprocessing without stalling the rest of the queue.',
+    ),
+    QuizQuestion(
+      question: 'What happens without a Dead Letter Queue when a message consistently fails processing?',
+      options: ['Nothing changes, it is automatically fine', 'It could block the queue indefinitely or be silently and permanently lost, depending on the queue\'s retry behavior', 'The message automatically fixes itself', 'The consumer is guaranteed to crash safely'],
+      correctIndex: 1,
+      explanation: 'Without somewhere to route persistently failing messages, they either stall processing or vanish without a trace.',
+    ),
+  ];
+
+  static const _healthChecksLivenessReadiness = [
+    QuizQuestion(
+      question: 'What question does a liveness check answer?',
+      options: ['Should traffic be routed to this instance right now?', 'Is this process alive, or should it be restarted?', 'How much memory is available?', 'Is the database schema up to date?'],
+      correctIndex: 1,
+      explanation: 'Liveness is about whether the process itself needs to be killed and restarted.',
+    ),
+    QuizQuestion(
+      question: 'What question does a readiness check answer?',
+      options: ['Is this process alive?', 'Is this instance ready to take traffic right now?', 'Should the process be restarted?', 'How old is the deployed code?'],
+      correctIndex: 1,
+      explanation: 'Readiness is narrower — about routing eligibility, not process survival.',
+    ),
+    QuizQuestion(
+      question: 'Why can a process be alive but not ready?',
+      options: ['This scenario is impossible', 'It might still be starting up (loading data/warming a cache) or a dependency it needs might be temporarily down', 'Readiness and liveness always match exactly', 'Only databases can be unready'],
+      correctIndex: 1,
+      explanation: 'A perfectly healthy process can still be unable to serve traffic during startup or a dependency outage, without needing a restart.',
+    ),
+    QuizQuestion(
+      question: 'What would go wrong if a system restarted an instance every time it failed a readiness check?',
+      options: ['Nothing, this is the correct behavior', 'It could cause unnecessary restarts of otherwise-healthy instances that are just temporarily unready (e.g. still starting up)', 'It would improve startup time', 'It has no effect on availability'],
+      correctIndex: 1,
+      explanation: 'Conflating readiness with liveness risks restarting instances that just need a moment, delaying recovery further.',
+    ),
+    QuizQuestion(
+      question: 'How does Kubernetes use liveness and readiness probes differently?',
+      options: ['They are treated identically by Kubernetes', 'readinessProbe controls whether a Service routes traffic to the pod; livenessProbe controls whether the pod gets restarted', 'livenessProbe controls traffic routing; readinessProbe controls restarts', 'Kubernetes only supports one type of probe'],
+      correctIndex: 1,
+      explanation: 'Kubernetes explicitly separates these two probes to match their different purposes.',
+    ),
+  ];
+
+  static const _gracefulDegradationDeployStrategies = [
+    QuizQuestion(
+      question: 'What is graceful degradation?',
+      options: ['Showing a blank error page when anything fails', 'Falling back to a plain, working version of a feature instead of a full error when a non-critical part breaks', 'Automatically restarting the entire system', 'Deleting the failing feature permanently'],
+      correctIndex: 1,
+      explanation: 'Graceful degradation isolates a failure to just the affected feature, rather than breaking the whole page/experience.',
+    ),
+    QuizQuestion(
+      question: 'What is the key tradeoff of a blue-green deployment?',
+      options: ['It requires no extra infrastructure', 'It needs two complete environments (roughly double infrastructure cost) in exchange for instant traffic flip and instant rollback', 'It cannot support rollback at all', 'It is identical to a rolling deployment'],
+      correctIndex: 1,
+      explanation: 'Blue-green trades extra infrastructure cost for the safety of an instant, clean cutover and rollback.',
+    ),
+    QuizQuestion(
+      question: 'How does a canary release limit risk?',
+      options: ['By deploying to 100% of traffic immediately', 'By sending a small percentage of traffic to the new version, watching metrics, then ramping up gradually', 'By skipping monitoring entirely', 'By running the old version forever'],
+      correctIndex: 1,
+      explanation: 'Canary releases limit the blast radius of a bad release to a small slice of users before it reaches everyone.',
+    ),
+    QuizQuestion(
+      question: 'What does a feature flag let you do that a deployment alone cannot?',
+      options: ['Nothing different from a normal deploy', 'Turn a feature on or off at runtime without a redeploy, decoupling shipping code from activating behavior', 'Automatically fix bugs in the code', 'Bypass the need for testing entirely'],
+      correctIndex: 1,
+      explanation: 'Feature flags separate "the code is deployed" from "the behavior is active," giving a runtime kill switch.',
+    ),
+    QuizQuestion(
+      question: 'What happens to running versions during a rolling deployment?',
+      options: ['Only the new version ever runs, instantly', 'Old and new versions run simultaneously as instances are replaced batch by batch', 'The system goes fully offline during the rollout', 'Two complete separate environments are always required'],
+      correctIndex: 1,
+      explanation: 'Rolling deployments replace instances gradually, meaning mixed versions coexist for the duration of the rollout.',
+    ),
+  ];
+
+  static const _chaosEngineering = [
+    QuizQuestion(
+      question: 'What is the core idea of chaos engineering?',
+      options: ['Randomly breaking production with no plan or oversight', 'Deliberately injecting controlled failures to surface weaknesses on your own terms, rather than during a real incident', 'Avoiding all testing in favor of hoping for the best', 'Only testing in a fully isolated environment with no relation to production'],
+      correctIndex: 1,
+      explanation: 'Chaos engineering is controlled, hypothesis-driven failure injection, not random destruction.',
+    ),
+    QuizQuestion(
+      question: 'What does Netflix\'s Chaos Monkey do?',
+      options: ['Monitors CPU usage passively', 'Randomly terminates production instances to force services to tolerate real instance loss', 'Only runs in a staging environment, never production', 'Automatically fixes any bug it finds'],
+      correctIndex: 1,
+      explanation: 'Chaos Monkey is the best-known chaos engineering tool, specifically killing production instances at random.',
+    ),
+    QuizQuestion(
+      question: 'What should a chaos engineering experiment start from?',
+      options: ['No plan — pure randomness is the point', 'A specific hypothesis about how the system should behave under a given failure', 'A guarantee that nothing will go wrong', 'A requirement to test in production with zero blast radius control'],
+      correctIndex: 1,
+      explanation: 'Well-run chaos experiments test a specific expectation, rather than injecting failure without a clear question to answer.',
+    ),
+    QuizQuestion(
+      question: 'Why start chaos experiments with a small blast radius?',
+      options: ['Small blast radius has no practical benefit', 'To limit the impact if the experiment reveals a real, unexpected weakness', 'Because larger blast radii are always safer', 'Blast radius is not a consideration in chaos engineering'],
+      correctIndex: 1,
+      explanation: 'Starting small contains risk while still surfacing real issues, expanding scope only as confidence grows.',
+    ),
+    QuizQuestion(
+      question: 'What is the ultimate goal of chaos engineering?',
+      options: ['To cause as much downtime as possible', 'To find and fix resilience gaps proactively, before they cause a real unplanned incident', 'To replace all monitoring and alerting', 'To eliminate the need for circuit breakers'],
+      correctIndex: 1,
+      explanation: 'Chaos engineering exists to validate resilience assumptions deliberately, on a controlled schedule.',
+    ),
+  ];
+
+  static const _cascadingFailuresThunderingHerd = [
+    QuizQuestion(
+      question: 'What is a cascading failure?',
+      options: ['A failure contained entirely to one component with no other effects', 'An initial failure causing retries/timeouts that overload and fail neighboring components, spreading through the system', 'A planned maintenance window', 'A type of database index'],
+      correctIndex: 1,
+      explanation: 'Cascading failures spread because the response to the first failure (retries, timeouts) overloads healthy neighbors.',
+    ),
+    QuizQuestion(
+      question: 'Which patterns exist specifically to prevent cascading failures?',
+      options: ['Data normalization and denormalization', 'Circuit breakers, bulkheads, and backoff/jitter on retries', 'SQL indexing strategies', 'DNS caching'],
+      correctIndex: 1,
+      explanation: 'These resilience patterns are designed to stop one failure from propagating outward.',
+    ),
+    QuizQuestion(
+      question: 'What is a thundering herd?',
+      options: ['A gradual, staggered increase in traffic over hours', 'Every waiting request stampeding the origin at the exact same instant when a popular cache entry expires or a resource becomes unavailable', 'A type of database replication', 'A security attack involving SQL injection'],
+      correctIndex: 1,
+      explanation: 'Thundering herd describes synchronized demand overwhelming an origin all at once.',
+    ),
+    QuizQuestion(
+      question: 'How does request coalescing help prevent a thundering herd?',
+      options: ['By blocking all requests permanently', 'By having only one in-flight request per key go to the origin, while other simultaneous requests wait for that result', 'By duplicating every request to increase redundancy', 'By deleting the cache entirely'],
+      correctIndex: 1,
+      explanation: 'Coalescing collapses many simultaneous identical requests into a single origin call, sharing the result.',
+    ),
+    QuizQuestion(
+      question: 'Why stagger cache TTLs across different keys?',
+      options: ['It has no practical effect', 'So items don\'t all expire at the same moment, avoiding a synchronized stampede back to the origin', 'To make caching slower on purpose', 'To guarantee cache entries never expire'],
+      correctIndex: 1,
+      explanation: 'Spreading out expiration times avoids many keys triggering a thundering herd simultaneously.',
+    ),
+  ];
+
+  static const _idGenerationSnowflakeUuid = [
+    QuizQuestion(
+      question: 'Why doesn\'t a simple auto-incrementing counter work for distributed ID generation?',
+      options: ['Counters are too slow to compute', 'Multiple machines generating IDs independently would eventually produce the same number', 'Auto-increment cannot be used in any database', 'It uses too much storage'],
+      correctIndex: 1,
+      explanation: 'A shared counter needs central coordination; independent machines without it will eventually collide.',
+    ),
+    QuizQuestion(
+      question: 'What is a limitation of UUID v4 for use as a database primary key?',
+      options: ['It is not unique enough', 'It is not sortable and scatters randomly across a B-tree index, hurting index performance', 'It cannot be generated without a central server', 'It is too short to be useful'],
+      correctIndex: 1,
+      explanation: 'UUID v4\'s full randomness means related index pages are not created near each other, unlike a sortable ID.',
+    ),
+    QuizQuestion(
+      question: 'What three components make up a Snowflake ID?',
+      options: ['A random number, a checksum, and a version byte', 'A timestamp, a machine/worker ID, and a per-millisecond counter', 'A username, a password hash, and a salt', 'Only a random UUID with no structure'],
+      correctIndex: 1,
+      explanation: 'Snowflake IDs combine these three pieces to guarantee both uniqueness and rough time-ordering without coordination.',
+    ),
+    QuizQuestion(
+      question: 'What advantage does a Snowflake ID have over a random UUID v4?',
+      options: ['It is smaller in every case', 'It is naturally sortable by creation time, since the timestamp occupies the high-order bits', 'It requires a central coordinator to generate', 'It cannot be generated across multiple machines'],
+      correctIndex: 1,
+      explanation: 'Because the timestamp leads the ID, Snowflake IDs sort roughly in creation order — useful for pagination and indexing.',
+    ),
+    QuizQuestion(
+      question: 'What is ULID designed to offer compared to a plain random UUID?',
+      options: ['Less uniqueness guarantee', 'Time-sortability and compactness while remaining collision-resistant, splitting the difference between UUID and Snowflake', 'A requirement for centralized generation', 'Only support for numeric values'],
+      correctIndex: 1,
+      explanation: 'ULID keeps UUID-like properties but adds a leading timestamp for sortability.',
+    ),
+  ];
+
+  static const _backOfEnvelopeEstimation = [
+    QuizQuestion(
+      question: 'Why do back-of-envelope estimates matter before designing a system?',
+      options: ['They are purely a formality with no design impact', 'They reveal the order of magnitude of scale (e.g. 10 req/sec vs 100,000 req/sec), which drives completely different architecture choices', 'They replace the need for functional requirements', 'They are only relevant after the system is already built'],
+      correctIndex: 1,
+      explanation: 'The right architecture differs enormously depending on scale, so estimating it early avoids over- or under-engineering.',
+    ),
+    QuizQuestion(
+      question: 'What is the typical first step in estimating request volume?',
+      options: ['Guessing a random number', 'Converting a stated assumption (like DAU and actions per user per day) into requests per second', 'Skipping straight to database schema design', 'Assuming infinite scale by default'],
+      correctIndex: 1,
+      explanation: 'Requests/second is the foundational number that most other estimates and decisions build on.',
+    ),
+    QuizQuestion(
+      question: 'How is rough yearly storage growth typically estimated?',
+      options: ['It cannot be estimated in advance', 'Record size × records created per day × retention period', 'By guessing a fixed number regardless of scale', 'By only counting the size of the codebase'],
+      correctIndex: 1,
+      explanation: 'Multiplying per-record size by creation rate and retention gives a workable storage estimate.',
+    ),
+    QuizQuestion(
+      question: 'Why does the read:write ratio matter for architecture decisions?',
+      options: ['It has no bearing on design', 'A heavily read-dominant system (e.g. 100:1) benefits from aggressive caching in a way a write-heavy system does not', 'Read:write ratio only matters for security', 'Write-heavy systems never need a database'],
+      correctIndex: 1,
+      explanation: 'Knowing which side dominates tells you where to invest optimization effort — caching for reads, throughput for writes.',
+    ),
+    QuizQuestion(
+      question: 'What is the actual goal of back-of-envelope estimation?',
+      options: ['Producing numbers accurate to three significant figures', 'Order-of-magnitude sanity-checking that clearly rules an approach in or out, not precise numbers', 'Avoiding any numerical reasoning entirely', 'Calculating the exact salary budget for the team'],
+      correctIndex: 1,
+      explanation: 'The estimate just needs to be right enough to steer the design — precision beyond that is wasted effort.',
+    ),
+  ];
+
+  static const _erasureCodingVsReplication = [
+    QuizQuestion(
+      question: 'What does simple replication do to protect against data loss?',
+      options: ['Splits data into fragments with parity', 'Keeps multiple full copies of the data (commonly 3)', 'Deletes old data periodically', 'Compresses data to save space'],
+      correctIndex: 1,
+      explanation: 'Replication is straightforward: N complete copies of the same data.',
+    ),
+    QuizQuestion(
+      question: 'What is the storage cost tradeoff of 3x replication?',
+      options: ['No extra storage cost at all', 'It uses roughly 3 times the raw storage of a single copy', 'It uses less storage than a single copy', 'It requires exactly the same storage as erasure coding'],
+      correctIndex: 1,
+      explanation: 'N-way replication multiplies storage by N to achieve its fault tolerance.',
+    ),
+    QuizQuestion(
+      question: 'How does erasure coding achieve fault tolerance more storage-efficiently than replication?',
+      options: ['By keeping 5 full copies instead of 3', 'By splitting data into fragments plus parity fragments, reconstructable from any large-enough subset', 'By never storing any redundant data', 'By using a faster network protocol'],
+      correctIndex: 1,
+      explanation: 'Erasure coding needs far less overhead than full copies to tolerate the same number of failures.',
+    ),
+    QuizQuestion(
+      question: 'What does erasure coding cost in exchange for its storage savings?',
+      options: ['Nothing — it is strictly better in every way', 'More CPU work to reconstruct data from fragments on read', 'It cannot tolerate any failures', 'It requires manual intervention for every read'],
+      correctIndex: 1,
+      explanation: 'Reconstructing from fragments takes computation that a direct read of an intact replica does not need.',
+    ),
+    QuizQuestion(
+      question: 'When do object storage systems typically favor erasure coding over replication?',
+      options: ['For frequently accessed hot data needing the lowest possible latency', 'For cold/archival data where storage cost matters more than reconstruction latency', 'Erasure coding is never used in object storage', 'Only for data under 1KB in size'],
+      correctIndex: 1,
+      explanation: 'Erasure coding\'s storage savings pay off most where access is infrequent and CPU cost of reconstruction is a lesser concern.',
+    ),
+  ];
+
+  static const _semanticVectorSearch = [
+    QuizQuestion(
+      question: 'Why can full-text search fail to connect "sneakers" with "running shoes"?',
+      options: ['Full-text search is broken by design', 'It matches on exact shared words, and these two phrases share no literal words', 'Full-text search only works with numbers', 'The words are too short to index'],
+      correctIndex: 1,
+      explanation: 'Keyword-based search relies on literal term overlap, which purely synonymous phrases may lack entirely.',
+    ),
+    QuizQuestion(
+      question: 'What is a vector embedding?',
+      options: ['A compressed image file format', 'A point in high-dimensional space representing text/image content, where similar meanings land close together', 'A type of database index for exact matches', 'A network routing table'],
+      correctIndex: 1,
+      explanation: 'Embeddings map content into a space where geometric closeness reflects semantic similarity.',
+    ),
+    QuizQuestion(
+      question: 'How does semantic search find relevant results?',
+      options: ['By scanning for exact keyword matches only', 'By performing a nearest-neighbor query over vectors in embedding space', 'By randomly sampling the document set', 'By sorting alphabetically'],
+      correctIndex: 1,
+      explanation: 'Semantic search retrieves whatever content\'s embedding is closest to the query\'s embedding.',
+    ),
+    QuizQuestion(
+      question: 'What do Approximate Nearest Neighbor (ANN) algorithms like HNSW trade off?',
+      options: ['They guarantee perfect accuracy with zero performance cost', 'A small amount of accuracy for much faster nearest-neighbor search at scale versus an exact scan', 'They only work for exact keyword matching', 'They eliminate the need for embeddings entirely'],
+      correctIndex: 1,
+      explanation: 'ANN algorithms sacrifice some precision to make nearest-neighbor search practical at large scale.',
+    ),
+    QuizQuestion(
+      question: 'What is "hybrid search"?',
+      options: ['Using only vector search and never keyword search', 'Combining keyword (full-text) and vector search, blending their rankings, since exact matches still matter alongside semantic ones', 'A search index that only works offline', 'A deprecated search technique no longer used'],
+      correctIndex: 1,
+      explanation: 'Hybrid search blends both approaches since exact matches (like a SKU or name) and semantic matches both have value.',
+    ),
+  ];
+
+  static const _requirementsGatheringTradeoffs = [
+    QuizQuestion(
+      question: 'What should typically be gathered first in a system design discussion?',
+      options: ['The exact database schema', 'Functional requirements — the concrete features/use cases the system must support', 'The final deployment infrastructure', 'The API rate limits'],
+      correctIndex: 1,
+      explanation: 'Understanding what the system needs to do comes before deciding how it will do it.',
+    ),
+    QuizQuestion(
+      question: 'What do non-functional requirements typically cover?',
+      options: ['The exact button colors in the UI', 'Scale (DAU/QPS), latency targets, consistency model, availability target, and durability', 'Only the programming language to use', 'The company\'s org chart'],
+      correctIndex: 1,
+      explanation: 'Non-functional requirements are the "how well" constraints that shape architecture and capacity decisions.',
+    ),
+    QuizQuestion(
+      question: 'Why state assumptions out loud rather than silently guessing?',
+      options: ['It has no practical benefit', 'A stated assumption can be corrected by an interviewer or stakeholder; a silent one cannot', 'It slows down the discussion unnecessarily', 'Assumptions should never be made at all'],
+      correctIndex: 1,
+      explanation: 'Voicing assumptions gives others the chance to correct a wrong premise before it shapes the whole design.',
+    ),
+    QuizQuestion(
+      question: 'What distinguishes a senior-level design answer from a list of technologies?',
+      options: ['Using the most technologies possible', 'Explicitly naming trade-offs — what is being optimized for and what is being given up — tied back to the actual requirements', 'Avoiding any mention of trade-offs entirely', 'Only using the newest available tools'],
+      correctIndex: 1,
+      explanation: 'Reasoning connects each choice to the requirements; a bare list of tech names does not demonstrate that reasoning.',
+    ),
+    QuizQuestion(
+      question: 'What is the recommended balance between building for the future and avoiding over-engineering?',
+      options: ['Always build for the largest possible scale from day one', 'Build so today\'s decisions don\'t force an unnecessary teardown later, without over-engineering for scale that may never arrive', 'Never consider future scale at all', 'Rewrite the system from scratch every year'],
+      correctIndex: 1,
+      explanation: 'The goal is avoiding painful rework later without wasting effort solving problems that do not yet exist.',
     ),
   ];
 }

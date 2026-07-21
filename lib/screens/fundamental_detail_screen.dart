@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../data/fundamentals_quiz_data.dart';
 import '../models/fundamental_concept.dart';
+import '../services/progress_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/architecture_diagram.dart';
 import '../widgets/quiz_view.dart';
@@ -31,6 +33,14 @@ class FundamentalDetailScreen extends StatelessWidget {
               child: QuizView(
                 questions: FundamentalsQuizData.questionsFor(concept.id),
                 emptyStateMessage: 'No quiz questions available yet for ${concept.title}.',
+                onCompleted: (score, total) {
+                  context.read<ProgressStore>().recordQuizResult(
+                        ProgressDomain.fundamental,
+                        concept.id,
+                        score,
+                        total,
+                      );
+                },
               ),
             ),
           ],

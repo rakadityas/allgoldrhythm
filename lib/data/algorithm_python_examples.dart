@@ -1234,4 +1234,903 @@ for node_val in test_nodes:
 ''',
     };
   }
+
+  static Map<String, String> getDoublyLinkedListExamples() {
+    return {
+      'Backward Traversal': '''
+# Doubly Linked List - Backward Traversal
+# Traverse the list from tail to head using the prev pointers
+class DListNode:
+    def __init__(self, val):
+        self.val = val
+        self.prev = None
+        self.next = None
+
+class DoublyLinkedList:
+    def __init__(self):
+        self.head = None
+        self.tail = None
+
+    def append(self, val):
+        node = DListNode(val)
+        if not self.head:
+            self.head = self.tail = node
+        else:
+            node.prev = self.tail
+            self.tail.next = node
+            self.tail = node
+
+    def traverse_backward(self):
+        values = []
+        current = self.tail
+        while current:
+            values.append(current.val)
+            current = current.prev
+        return values
+
+# Example usage
+dll = DoublyLinkedList()
+for value in [10, 20, 30, 40]:
+    dll.append(value)
+
+print(dll.traverse_backward())  # Output: [40, 30, 20, 10]
+''',
+
+      'O(1) Deletion': '''
+# Doubly Linked List - O(1) Deletion
+# Deleting a known node takes O(1) since we can relink prev/next directly,
+# unlike a singly linked list where you first need to find the predecessor
+class DListNode:
+    def __init__(self, val):
+        self.val = val
+        self.prev = None
+        self.next = None
+
+def delete_node(node):
+    if node.prev:
+        node.prev.next = node.next
+    if node.next:
+        node.next.prev = node.prev
+    node.prev = node.next = None
+
+# Example usage: build 1 <-> 2 <-> 3 <-> 4 and delete node 3 in O(1)
+n1, n2, n3, n4 = DListNode(1), DListNode(2), DListNode(3), DListNode(4)
+n1.next, n2.prev = n2, n1
+n2.next, n3.prev = n3, n2
+n3.next, n4.prev = n4, n3
+
+delete_node(n3)  # No traversal needed, we already had the node reference
+
+values = []
+current = n1
+while current:
+    values.append(current.val)
+    current = current.next
+print(values)  # Output: [1, 2, 4]
+''',
+    };
+  }
+
+  static Map<String, String> getCircularLinkedListExamples() {
+    return {
+      'Round-Robin Traversal': '''
+# Circular Linked List - Round-Robin Traversal
+# The tail's next pointer wraps back to the head, so iterating n steps
+# past the end just continues from the start again
+class CListNode:
+    def __init__(self, val):
+        self.val = val
+        self.next = None
+
+def build_circular_list(values):
+    head = CListNode(values[0])
+    current = head
+    for v in values[1:]:
+        current.next = CListNode(v)
+        current = current.next
+    current.next = head  # wrap the tail back to the head
+    return head
+
+def round_robin(head, turns):
+    result = []
+    current = head
+    for _ in range(turns):
+        result.append(current.val)
+        current = current.next
+    return result
+
+# Example usage: 3 processes sharing CPU time, walked for 7 turns
+head = build_circular_list(["P1", "P2", "P3"])
+print(round_robin(head, 7))  # Output: ['P1', 'P2', 'P3', 'P1', 'P2', 'P3', 'P1']
+''',
+
+      'Josephus Problem': '''
+# Circular Linked List - Josephus Problem
+# Repeatedly eliminate every k-th node from a circle until one remains
+class CListNode:
+    def __init__(self, val):
+        self.val = val
+        self.next = None
+
+def josephus(values, k):
+    head = CListNode(values[0])
+    current = head
+    for v in values[1:]:
+        current.next = CListNode(v)
+        current = current.next
+    current.next = head  # close the circle
+
+    current = head
+    while current.next != current:
+        # Walk k - 1 steps to reach the node just before the one to remove
+        for _ in range(k - 1):
+            current = current.next
+        current.next = current.next.next  # remove the k-th node
+        current = current.next
+
+    return current.val
+
+# Example usage: 7 people in a circle, every 3rd person is eliminated
+print(josephus([1, 2, 3, 4, 5, 6, 7], 3))  # Output: 4 (last person standing)
+''',
+    };
+  }
+
+  static Map<String, String> getSortingExamples() {
+    return {
+      'Bubble Sort': '''
+# Bubble Sort
+# Repeatedly swap adjacent elements that are out of order
+def bubble_sort(nums):
+    n = len(nums)
+    for i in range(n):
+        swapped = False
+        # After each pass, the largest remaining element bubbles to the end
+        for j in range(n - i - 1):
+            if nums[j] > nums[j + 1]:
+                nums[j], nums[j + 1] = nums[j + 1], nums[j]
+                swapped = True
+        if not swapped:
+            break  # already sorted, stop early
+    return nums
+
+# Example usage
+print(bubble_sort([5, 2, 9, 1, 5, 6]))  # Output: [1, 2, 5, 5, 6, 9]
+''',
+
+      'Quick Sort': '''
+# Quick Sort
+# Pick a pivot, partition the array around it, then recursively sort both sides
+def quick_sort(nums):
+    if len(nums) <= 1:
+        return nums
+
+    pivot = nums[len(nums) // 2]
+    left = [x for x in nums if x < pivot]
+    middle = [x for x in nums if x == pivot]
+    right = [x for x in nums if x > pivot]
+
+    return quick_sort(left) + middle + quick_sort(right)
+
+# Example usage
+print(quick_sort([5, 2, 9, 1, 5, 6]))  # Output: [1, 2, 5, 5, 6, 9]
+''',
+
+      'Merge Sort': '''
+# Merge Sort
+# Split the array in half, recursively sort each half, then merge the sorted halves
+def merge_sort(nums):
+    if len(nums) <= 1:
+        return nums
+
+    mid = len(nums) // 2
+    left = merge_sort(nums[:mid])
+    right = merge_sort(nums[mid:])
+    return _merge(left, right)
+
+def _merge(left, right):
+    merged = []
+    i = j = 0
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            merged.append(left[i])
+            i += 1
+        else:
+            merged.append(right[j])
+            j += 1
+    merged.extend(left[i:])
+    merged.extend(right[j:])
+    return merged
+
+# Example usage
+print(merge_sort([5, 2, 9, 1, 5, 6]))  # Output: [1, 2, 5, 5, 6, 9]
+''',
+    };
+  }
+
+  static Map<String, String> getHeapExamples() {
+    return {
+      'Build a Min-Heap': '''
+# Build a Min-Heap
+# Uses Python's heapq, which implements a binary min-heap on a list
+import heapq
+
+def build_min_heap(nums):
+    heap = nums[:]
+    heapq.heapify(heap)  # O(n), rearranges the list in place into heap order
+    return heap
+
+# Example usage
+nums = [9, 4, 7, 1, 3, 8]
+heap = build_min_heap(nums)
+print(heap[0])                 # Output: 1  (smallest is always at the root)
+print(heapq.heappop(heap))     # Output: 1
+print(heapq.heappop(heap))     # Output: 3
+''',
+
+      'Kth Largest Element': '''
+# Kth Largest Element (Min-Heap of size k)
+# Keep a min-heap of the k largest values seen so far; its root is the answer
+import heapq
+
+def find_kth_largest(nums, k):
+    heap = []
+    for num in nums:
+        heapq.heappush(heap, num)
+        if len(heap) > k:
+            heapq.heappop(heap)  # discard the smallest, keeping only the top k
+    return heap[0]
+
+# Example usage
+nums = [3, 2, 1, 5, 6, 4]
+print(find_kth_largest(nums, 2))  # Output: 5 (2nd largest value)
+''',
+    };
+  }
+
+  static Map<String, String> getGreedyExamples() {
+    return {
+      'Activity Selection': '''
+# Activity Selection
+# Sort by end time, then greedily pick each activity that starts after
+# the previous one ends - this always yields the maximum number of activities
+def activity_selection(activities):
+    activities = sorted(activities, key=lambda a: a[1])  # sort by end time
+    selected = [activities[0]]
+    last_end = activities[0][1]
+
+    for start, end in activities[1:]:
+        if start >= last_end:
+            selected.append((start, end))
+            last_end = end
+
+    return selected
+
+# Example usage: (start, end) pairs
+activities = [(1, 4), (3, 5), (0, 6), (5, 7), (3, 9), (5, 9), (6, 10), (8, 11)]
+print(activity_selection(activities))  # Output: [(1, 4), (5, 7), (8, 11)]
+''',
+
+      'Jump Game': '''
+# Jump Game
+# Greedily track the farthest index reachable so far; if we ever reach an
+# index beyond that farthest point, the end is unreachable
+def can_jump(nums):
+    farthest = 0
+    for i, num in enumerate(nums):
+        if i > farthest:
+            return False  # this index is unreachable
+        farthest = max(farthest, i + num)
+    return True
+
+# Example usage
+print(can_jump([2, 3, 1, 1, 4]))  # Output: True
+print(can_jump([3, 2, 1, 0, 4]))  # Output: False (stuck at index 3)
+''',
+    };
+  }
+
+  static Map<String, String> getBacktrackingExamples() {
+    return {
+      'Generate All Subsets': '''
+# Generate All Subsets (Power Set)
+# At each element, branch into two choices: include it, or do not
+def subsets(nums):
+    result = []
+
+    def backtrack(start, current):
+        result.append(current[:])  # record every partial subset, not just full paths
+        for i in range(start, len(nums)):
+            current.append(nums[i])
+            backtrack(i + 1, current)  # explore including nums[i]
+            current.pop()              # undo the choice (backtrack)
+
+    backtrack(0, [])
+    return result
+
+# Example usage
+print(subsets([1, 2, 3]))
+# Output: [[], [1], [1, 2], [1, 2, 3], [1, 3], [2], [2, 3], [3]]
+''',
+
+      'N-Queens': '''
+# N-Queens
+# Place queens row by row, backtracking whenever a placement conflicts
+# with a previously placed queen (same column or diagonal)
+def solve_n_queens(n):
+    solutions = []
+    columns = set()
+    diagonals = set()       # row - col is constant along a downward diagonal
+    anti_diagonals = set()  # row + col is constant along an upward diagonal
+    placement = [-1] * n
+
+    def backtrack(row):
+        if row == n:
+            solutions.append(placement[:])
+            return
+        for col in range(n):
+            if col in columns or (row - col) in diagonals or (row + col) in anti_diagonals:
+                continue
+            columns.add(col)
+            diagonals.add(row - col)
+            anti_diagonals.add(row + col)
+            placement[row] = col
+
+            backtrack(row + 1)
+
+            columns.remove(col)          # undo the choice (backtrack)
+            diagonals.remove(row - col)
+            anti_diagonals.remove(row + col)
+
+    backtrack(0)
+    return solutions
+
+# Example usage
+solutions = solve_n_queens(4)
+print(len(solutions))  # Output: 2 (two distinct solutions for a 4x4 board)
+print(solutions[0])    # Output: [1, 3, 0, 2] (column index of the queen in each row)
+''',
+    };
+  }
+
+  static Map<String, String> getGraphExamples() {
+    return {
+      'Breadth-First Search (BFS)': '''
+# Graph - Breadth-First Search (BFS)
+# Explore level by level using a queue, visiting the nearest nodes first
+from collections import deque
+
+def bfs(graph, start):
+    visited = {start}
+    order = []
+    queue = deque([start])
+
+    while queue:
+        node = queue.popleft()
+        order.append(node)
+        for neighbor in graph[node]:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append(neighbor)
+
+    return order
+
+# Example usage
+graph = {
+    "A": ["B", "C"],
+    "B": ["A", "D"],
+    "C": ["A", "D"],
+    "D": ["B", "C", "E"],
+    "E": ["D"],
+}
+print(bfs(graph, "A"))  # Output: ['A', 'B', 'C', 'D', 'E']
+''',
+
+      'Depth-First Search (DFS)': '''
+# Graph - Depth-First Search (DFS)
+# Explore as far as possible down each branch before backtracking
+def dfs(graph, start, visited=None, order=None):
+    if visited is None:
+        visited = set()
+        order = []
+
+    visited.add(start)
+    order.append(start)
+
+    for neighbor in graph[start]:
+        if neighbor not in visited:
+            dfs(graph, neighbor, visited, order)
+
+    return order
+
+# Example usage
+graph = {
+    "A": ["B", "C"],
+    "B": ["A", "D"],
+    "C": ["A", "D"],
+    "D": ["B", "C", "E"],
+    "E": ["D"],
+}
+print(dfs(graph, "A"))  # Output: ['A', 'B', 'D', 'C', 'E']
+''',
+
+      'Topological Sort': '''
+# Graph - Topological Sort (Kahn's Algorithm)
+# Repeatedly remove nodes with no remaining incoming edges - only valid
+# on a Directed Acyclic Graph (DAG)
+from collections import deque
+
+def topological_sort(graph):
+    in_degree = {node: 0 for node in graph}
+    for node in graph:
+        for neighbor in graph[node]:
+            in_degree[neighbor] += 1
+
+    queue = deque([node for node in graph if in_degree[node] == 0])
+    order = []
+
+    while queue:
+        node = queue.popleft()
+        order.append(node)
+        for neighbor in graph[node]:
+            in_degree[neighbor] -= 1
+            if in_degree[neighbor] == 0:
+                queue.append(neighbor)
+
+    if len(order) != len(graph):
+        raise ValueError("Graph has a cycle, no valid topological order exists")
+    return order
+
+# Example usage: course prerequisites (course -> courses that depend on it)
+graph = {
+    "intro": ["data_structures"],
+    "data_structures": ["algorithms"],
+    "algorithms": ["system_design"],
+    "system_design": [],
+}
+print(topological_sort(graph))
+# Output: ['intro', 'data_structures', 'algorithms', 'system_design']
+''',
+    };
+  }
+
+  static Map<String, String> getHashingExamples() {
+    return {
+      'Two Sum (Hash Map)': '''
+# Two Sum (Hash Map)
+# Store each visited number's index; for every new number, check whether
+# its complement was already seen - O(n) instead of the O(n^2) brute force
+def two_sum(nums, target):
+    seen = {}  # value -> index
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return [seen[complement], i]
+        seen[num] = i
+    return []
+
+# Example usage
+print(two_sum([2, 7, 11, 15], 9))  # Output: [0, 1] (2 + 7 = 9)
+''',
+
+      'Detect Duplicates (Hash Set)': '''
+# Detect Duplicates (Hash Set)
+# A set gives O(1) average membership checks, so a single pass suffices
+def contains_duplicate(nums):
+    seen = set()
+    for num in nums:
+        if num in seen:
+            return True
+        seen.add(num)
+    return False
+
+# Example usage
+print(contains_duplicate([1, 2, 3, 1]))  # Output: True
+print(contains_duplicate([1, 2, 3, 4]))  # Output: False
+''',
+    };
+  }
+
+  static Map<String, String> getDynamicProgrammingExamples() {
+    return {
+      'Climbing Stairs (1D DP)': '''
+# Climbing Stairs (1D DP)
+# The number of ways to reach step n is the sum of the ways to reach the
+# two steps before it (you arrive there via a 1-step or a 2-step move)
+def climb_stairs(n):
+    if n <= 2:
+        return n
+
+    prev2, prev1 = 1, 2  # ways to reach step 1 and step 2
+    for _ in range(3, n + 1):
+        prev2, prev1 = prev1, prev1 + prev2
+    return prev1
+
+# Example usage
+print(climb_stairs(5))  # Output: 8
+''',
+
+      'House Robber (1D DP)': '''
+# House Robber (1D DP)
+# At each house, choose the better of: skip it (carry forward the best so
+# far), or rob it (best from two houses back, plus this house's value)
+def rob(nums):
+    prev2, prev1 = 0, 0  # best total up to two houses ago, one house ago
+    for num in nums:
+        prev2, prev1 = prev1, max(prev1, prev2 + num)
+    return prev1
+
+# Example usage
+print(rob([2, 7, 9, 3, 1]))  # Output: 12 (rob houses 0, 2, 4: 2+9+1)
+''',
+    };
+  }
+
+  static Map<String, String> getUnionFindExamples() {
+    return {
+      'Union-Find (Disjoint Set)': '''
+# Union-Find (Disjoint Set)
+# Path compression + union by rank keep find()/union() nearly O(1) amortized
+class UnionFind:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.rank = [0] * n
+
+    def find(self, x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])  # path compression
+        return self.parent[x]
+
+    def union(self, x, y):
+        root_x, root_y = self.find(x), self.find(y)
+        if root_x == root_y:
+            return False  # already connected
+
+        # union by rank: attach the smaller tree under the larger one
+        if self.rank[root_x] < self.rank[root_y]:
+            root_x, root_y = root_y, root_x
+        self.parent[root_y] = root_x
+        if self.rank[root_x] == self.rank[root_y]:
+            self.rank[root_x] += 1
+        return True
+
+# Example usage
+uf = UnionFind(6)
+uf.union(0, 1)
+uf.union(1, 2)
+uf.union(3, 4)
+print(uf.find(0) == uf.find(2))  # Output: True (0 and 2 are connected)
+print(uf.find(0) == uf.find(3))  # Output: False (different components)
+''',
+
+      'Number of Connected Components': '''
+# Number of Connected Components (Union-Find)
+# Start with n separate components; every successful union merges two
+# components into one, so the final count is n minus the number of merges
+class UnionFind:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.count = n
+
+    def find(self, x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+
+    def union(self, x, y):
+        root_x, root_y = self.find(x), self.find(y)
+        if root_x != root_y:
+            self.parent[root_y] = root_x
+            self.count -= 1
+
+def count_components(n, edges):
+    uf = UnionFind(n)
+    for a, b in edges:
+        uf.union(a, b)
+    return uf.count
+
+# Example usage: 5 nodes, edges (0-1), (1-2), (3-4)
+print(count_components(5, [(0, 1), (1, 2), (3, 4)]))  # Output: 2
+''',
+    };
+  }
+
+  static Map<String, String> getIntervalsExamples() {
+    return {
+      'Merge Intervals': '''
+# Merge Intervals
+# Sort by start time, then merge any interval that overlaps the last one kept
+def merge_intervals(intervals):
+    if not intervals:
+        return []
+
+    intervals = sorted(intervals, key=lambda i: i[0])
+    merged = [intervals[0]]
+
+    for start, end in intervals[1:]:
+        last_start, last_end = merged[-1]
+        if start <= last_end:  # overlaps the previous interval
+            merged[-1] = (last_start, max(last_end, end))
+        else:
+            merged.append((start, end))
+
+    return merged
+
+# Example usage
+print(merge_intervals([(1, 3), (2, 6), (8, 10), (15, 18)]))
+# Output: [(1, 6), (8, 10), (15, 18)]
+''',
+
+      'Insert Interval': '''
+# Insert Interval
+# Add all intervals ending before the new one, merge all overlapping ones
+# into the new interval, then add the rest unchanged
+def insert_interval(intervals, new_interval):
+    result = []
+    i = 0
+    n = len(intervals)
+
+    while i < n and intervals[i][1] < new_interval[0]:
+        result.append(intervals[i])
+        i += 1
+
+    while i < n and intervals[i][0] <= new_interval[1]:
+        new_interval = (
+            min(new_interval[0], intervals[i][0]),
+            max(new_interval[1], intervals[i][1]),
+        )
+        i += 1
+    result.append(new_interval)
+
+    while i < n:
+        result.append(intervals[i])
+        i += 1
+
+    return result
+
+# Example usage
+print(insert_interval([(1, 3), (6, 9)], (2, 5)))
+# Output: [(1, 5), (6, 9)]
+''',
+    };
+  }
+
+  static Map<String, String> getTrieExamples() {
+    return {
+      'Insert and Search a Word': '''
+# Trie - Insert and Search a Word
+# Each node holds children keyed by character, plus a flag for word endings
+class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.is_end_of_word = False
+
+class Trie:
+    def __init__(self):
+        self.root = TrieNode()
+
+    def insert(self, word):
+        node = self.root
+        for char in word:
+            node = node.children.setdefault(char, TrieNode())
+        node.is_end_of_word = True
+
+    def search(self, word):
+        node = self.root
+        for char in word:
+            if char not in node.children:
+                return False
+            node = node.children[char]
+        return node.is_end_of_word
+
+# Example usage
+trie = Trie()
+for word in ["cat", "car", "card"]:
+    trie.insert(word)
+
+print(trie.search("car"))   # Output: True
+print(trie.search("ca"))    # Output: False (prefix, but not a full word)
+''',
+
+      'Prefix Matching (Autocomplete)': '''
+# Trie - Prefix Matching (Autocomplete)
+# Walk down the trie following the prefix, then collect every word in the subtree
+class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.is_end_of_word = False
+
+class Trie:
+    def __init__(self):
+        self.root = TrieNode()
+
+    def insert(self, word):
+        node = self.root
+        for char in word:
+            node = node.children.setdefault(char, TrieNode())
+        node.is_end_of_word = True
+
+    def words_with_prefix(self, prefix):
+        node = self.root
+        for char in prefix:
+            if char not in node.children:
+                return []
+            node = node.children[char]
+
+        results = []
+        self._collect(node, prefix, results)
+        return results
+
+    def _collect(self, node, path, results):
+        if node.is_end_of_word:
+            results.append(path)
+        for char, child in node.children.items():
+            self._collect(child, path + char, results)
+
+# Example usage
+trie = Trie()
+for word in ["cat", "car", "card", "care", "dog"]:
+    trie.insert(word)
+
+print(trie.words_with_prefix("car"))  # Output: ['car', 'card', 'care']
+''',
+    };
+  }
+
+  static Map<String, String> getBitManipulationExamples() {
+    return {
+      'Find the Single Number (XOR)': '''
+# Find the Single Number (XOR)
+# XOR-ing every number together cancels out all pairs (x ^ x == 0),
+# leaving only the number that appears once
+def single_number(nums):
+    result = 0
+    for num in nums:
+        result ^= num
+    return result
+
+# Example usage
+print(single_number([4, 1, 2, 1, 2]))  # Output: 4
+''',
+
+      'Count Set Bits': '''
+# Count Set Bits (Brian Kernighan's Algorithm)
+# n & (n - 1) clears the lowest set bit, so counting how many times that
+# takes to reach 0 counts the set bits directly, skipping the 0 bits
+def count_set_bits(n):
+    count = 0
+    while n:
+        n &= n - 1  # clear the lowest set bit
+        count += 1
+    return count
+
+# Example usage
+print(count_set_bits(11))  # Output: 3 (11 is 1011 in binary)
+print(count_set_bits(8))   # Output: 1 (8 is 1000 in binary)
+''',
+    };
+  }
+
+  static Map<String, String> getMatrixTraversalExamples() {
+    return {
+      'Spiral Matrix Traversal': '''
+# Spiral Matrix Traversal
+# Peel the matrix layer by layer: right across the top, down the right
+# side, left across the bottom, up the left side, then shrink the bounds
+def spiral_order(matrix):
+    if not matrix:
+        return []
+
+    result = []
+    top, bottom = 0, len(matrix) - 1
+    left, right = 0, len(matrix[0]) - 1
+
+    while top <= bottom and left <= right:
+        for col in range(left, right + 1):
+            result.append(matrix[top][col])
+        top += 1
+
+        for row in range(top, bottom + 1):
+            result.append(matrix[row][right])
+        right -= 1
+
+        if top <= bottom:
+            for col in range(right, left - 1, -1):
+                result.append(matrix[bottom][col])
+            bottom -= 1
+
+        if left <= right:
+            for row in range(bottom, top - 1, -1):
+                result.append(matrix[row][left])
+            left += 1
+
+    return result
+
+# Example usage
+matrix = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9],
+]
+print(spiral_order(matrix))  # Output: [1, 2, 3, 6, 9, 8, 7, 4, 5]
+''',
+
+      'Rotate Matrix In-Place': '''
+# Rotate Matrix In-Place (90 degrees clockwise)
+# Transpose the matrix (swap rows/columns), then reverse each row -
+# together these two O(n^2) passes rotate it without extra space
+def rotate(matrix):
+    n = len(matrix)
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]  # transpose
+
+    for row in matrix:
+        row.reverse()  # mirror each row left-to-right
+
+    return matrix
+
+# Example usage
+matrix = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9],
+]
+print(rotate(matrix))
+# Output: [[7, 4, 1], [8, 5, 2], [9, 6, 3]]
+''',
+    };
+  }
+
+  /// Looks up the Python examples for any of the 21 algorithm ids, so
+  /// callers don't need their own id-to-getter switch statement.
+  static Map<String, String> examplesFor(String algorithmId) {
+    switch (algorithmId) {
+      case 'two_pointers':
+        return getTwoPointersExamples();
+      case 'sliding_window':
+        return getSlidingWindowExamples();
+      case 'stack':
+        return getStackExamples();
+      case 'queue':
+        return getQueueExamples();
+      case 'linked_list':
+        return getLinkedListExamples();
+      case 'doubly_linked_list':
+        return getDoublyLinkedListExamples();
+      case 'circular_linked_list':
+        return getCircularLinkedListExamples();
+      case 'binary_search':
+        return getBinarySearchExamples();
+      case 'trees':
+        return getTreesExamples();
+      case 'sorting':
+        return getSortingExamples();
+      case 'heap':
+        return getHeapExamples();
+      case 'greedy':
+        return getGreedyExamples();
+      case 'backtracking':
+        return getBacktrackingExamples();
+      case 'graph':
+        return getGraphExamples();
+      case 'hashing':
+        return getHashingExamples();
+      case 'dynamic_programming':
+        return getDynamicProgrammingExamples();
+      case 'union_find':
+        return getUnionFindExamples();
+      case 'intervals':
+        return getIntervalsExamples();
+      case 'trie':
+        return getTrieExamples();
+      case 'bit_manipulation':
+        return getBitManipulationExamples();
+      case 'matrix_traversal':
+        return getMatrixTraversalExamples();
+      default:
+        return {};
+    }
+  }
 }

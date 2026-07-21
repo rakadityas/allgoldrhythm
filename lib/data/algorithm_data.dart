@@ -6,7 +6,7 @@ class AlgorithmData {
       Algorithm(
         id: 'two_pointers',
         name: 'Two Pointers',
-        category: 'Data Structures & Algorithm',
+        category: 'Arrays & Two Pointers',
         description: 'Two pointers is a technique where two pointers iterate through a data structure. '
             'It is often used to search for pairs in a sorted array or linked list, '
             'with O(n) time complexity and O(1) space complexity.',
@@ -217,7 +217,7 @@ class AlgorithmData {
       Algorithm(
         id: 'sliding_window',
         name: 'Sliding Window',
-        category: 'Data Structures & Algorithm',
+        category: 'Arrays & Two Pointers',
         description: 'Sliding Window is a computational technique that aims to reduce the use of nested loops '
             'and replace it with a single loop, thereby reducing the time complexity.',
         steps: [
@@ -355,7 +355,7 @@ class AlgorithmData {
       Algorithm(
         id: 'stack',
         name: 'Stack',
-        category: 'Data Structures & Algorithm',
+        category: 'Stacks & Queues',
         description: 'A stack is a linear data structure that follows the Last In First Out (LIFO) principle. '
             'Elements are added and removed from the same end, called the top of the stack. '
             'Common operations include push (add), pop (remove), peek/top (view top element), and isEmpty.',
@@ -441,7 +441,7 @@ class AlgorithmData {
       Algorithm(
         id: 'queue',
         name: 'Queue',
-        category: 'Data Structures & Algorithm',
+        category: 'Stacks & Queues',
         description: 'A linear data structure that follows the First In First Out (FIFO) principle.',
         steps: [
           'Initialize an empty queue',
@@ -537,7 +537,7 @@ class AlgorithmData {
       Algorithm(
         id: 'linked_list',
         name: 'Linked List',
-        category: 'Data Structures & Algorithm',
+        category: 'Linked Lists',
         description: 'A linked list is a linear data structure where elements are stored in nodes, '
             'and each node contains data and a reference (or link) to the next node. '
             'Unlike arrays, linked lists do not store elements in contiguous memory locations.',
@@ -625,7 +625,7 @@ class AlgorithmData {
       Algorithm(
         id: 'doubly_linked_list',
         name: 'Doubly Linked List',
-        category: 'Data Structures & Algorithm',
+        category: 'Linked Lists',
         description: 'A doubly linked list is like a singly linked list, but each node also stores a pointer '
             'to the previous node, not just the next one. This makes backward traversal possible and lets '
             'you delete a node in O(1) time once you have a reference to it, since its neighbors are already known.',
@@ -701,7 +701,7 @@ class AlgorithmData {
       Algorithm(
         id: 'circular_linked_list',
         name: 'Circular Linked List',
-        category: 'Data Structures & Algorithm',
+        category: 'Linked Lists',
         description: 'A circular linked list is a singly (or doubly) linked list where the last node points '
             'back to the head instead of to null. This lets traversal continue indefinitely, which is ideal '
             'for anything that repeats in a cycle, like round-robin scheduling or a looping playlist.',
@@ -766,7 +766,7 @@ class AlgorithmData {
       Algorithm(
         id: 'binary_search',
         name: 'Binary Search',
-        category: 'Data Structures & Algorithm',
+        category: 'Arrays & Two Pointers',
         description: 'Binary search is an efficient algorithm for finding a target value in a sorted array. '
             'It works by repeatedly dividing the search interval in half, comparing the target with the middle element, '
             'and eliminating half of the remaining elements. Time complexity: O(log n), Space complexity: O(1).',
@@ -924,7 +924,7 @@ class AlgorithmData {
       Algorithm(
         id: 'trees',
         name: 'Trees',
-        category: 'Data Structures & Algorithm',
+        category: 'Trees & Heaps',
         description: 'A tree is a hierarchical data structure consisting of nodes connected by edges. '
             'Each tree has a root node, and every node has zero or more child nodes. '
             'Trees are used for organizing data hierarchically, enabling efficient searching, insertion, and deletion operations.',
@@ -1078,7 +1078,7 @@ class AlgorithmData {
       Algorithm(
         id: 'sorting',
         name: 'Sorting',
-        category: 'Data Structures & Algorithm',
+        category: 'Sorting',
         description: 'Bubble Sort repeatedly steps through the array, comparing each pair of neighboring '
             'elements and swapping them if they\'re in the wrong order. Each full pass "bubbles" the largest '
             'remaining value up to its correct position at the end.',
@@ -1262,7 +1262,7 @@ class AlgorithmData {
       Algorithm(
         id: 'heap',
         name: 'Heap',
-        category: 'Data Structures & Algorithm',
+        category: 'Trees & Heaps',
         description: 'A heap is a tree-shaped structure (usually stored as an array) where every parent is '
             'smaller than its children (min-heap) or larger than its children (max-heap). This guarantees the '
             'smallest (or largest) value is always at the root, making it ideal for priority queues.',
@@ -1317,7 +1317,7 @@ class AlgorithmData {
       Algorithm(
         id: 'greedy',
         name: 'Greedy',
-        category: 'Data Structures & Algorithm',
+        category: 'Dynamic Programming, Backtracking & Greedy',
         description: 'A greedy algorithm builds a solution piece by piece, always choosing the option that '
             'looks best right now, and never reconsidering that choice later. This is fast, but only gives the '
             'correct (globally optimal) answer for problems that have the "greedy choice property."',
@@ -1372,7 +1372,7 @@ class AlgorithmData {
       Algorithm(
         id: 'backtracking',
         name: 'Backtracking',
-        category: 'Data Structures & Algorithm',
+        category: 'Dynamic Programming, Backtracking & Greedy',
         description: 'Backtracking explores a decision tree of choices, one at a time. Whenever a full decision '
             'is reached, it\'s recorded; then the most recent choice is undone ("backtracked") so the alternative '
             'can be tried. This systematically covers every possible combination exactly once.',
@@ -1437,7 +1437,7 @@ class AlgorithmData {
       Algorithm(
         id: 'graph',
         name: 'Graph',
-        category: 'Data Structures & Algorithm',
+        category: 'Graphs',
         description: 'A graph is a set of nodes connected by edges — more general than a tree, since any node '
             'can connect to any number of others and cycles are allowed. Breadth-First Search (BFS) explores a '
             'graph level by level using a queue, which guarantees finding the shortest path in an unweighted graph.',
@@ -1570,7 +1570,7 @@ class AlgorithmData {
       Algorithm(
         id: 'hashing',
         name: 'Hashing',
-        category: 'Data Structures & Algorithm',
+        category: 'Hashing & Bit Manipulation',
         description: 'A hash map (or hash set) gives near-instant O(1) average lookup, insert, and existence '
             'checks. This turns many problems that would otherwise need a nested loop — checking every pair, '
             'or scanning the whole collection for each element — into a single pass.',
@@ -1654,7 +1654,7 @@ class AlgorithmData {
       Algorithm(
         id: 'dynamic_programming',
         name: 'Dynamic Programming',
-        category: 'Data Structures & Algorithm',
+        category: 'Dynamic Programming, Backtracking & Greedy',
         description: 'Dynamic programming solves a problem by breaking it into overlapping subproblems, '
             'solving each subproblem only once, and storing ("memoizing") the answer for reuse. This avoids '
             'the exponential blowup of recomputing the same subproblem again and again.',
@@ -1766,7 +1766,7 @@ class AlgorithmData {
       Algorithm(
         id: 'union_find',
         name: 'Union-Find',
-        category: 'Data Structures & Algorithm',
+        category: 'Graphs',
         description: 'Union-Find (Disjoint Set) tracks a collection of items grouped into non-overlapping sets, '
             'answering "are these two connected?" and "merge these two groups" in nearly constant time each — '
             'ideal for detecting cycles and building connectivity incrementally.',
@@ -1816,7 +1816,7 @@ class AlgorithmData {
       Algorithm(
         id: 'intervals',
         name: 'Intervals',
-        category: 'Data Structures & Algorithm',
+        category: 'Arrays & Two Pointers',
         description: 'Interval problems deal with ranges like [start, end]. Sorting the intervals by start time '
             'first turns most interval problems — merging overlaps, inserting a new range, finding free time — '
             'into a single left-to-right pass.',
@@ -1861,7 +1861,7 @@ class AlgorithmData {
       Algorithm(
         id: 'trie',
         name: 'Trie',
-        category: 'Data Structures & Algorithm',
+        category: 'Trees & Heaps',
         description: 'A trie (prefix tree) stores words letter by letter along shared paths, so words with a '
             'common prefix share the same nodes. This makes inserting, searching, and prefix-matching take time '
             'proportional to the word\'s length — not the number of words stored.',
@@ -1931,7 +1931,7 @@ class AlgorithmData {
       Algorithm(
         id: 'bit_manipulation',
         name: 'Bit Manipulation',
-        category: 'Data Structures & Algorithm',
+        category: 'Hashing & Bit Manipulation',
         description: 'Bitwise operations (AND, OR, XOR, shifts) work directly on a number\'s binary '
             'representation. XOR in particular has a useful property: a number XORed with itself is 0, and '
             'XOR is commutative and associative — order doesn\'t matter, which makes it perfect for pairing things off.',
@@ -1981,7 +1981,7 @@ class AlgorithmData {
       Algorithm(
         id: 'matrix_traversal',
         name: 'Matrix Traversal',
-        category: 'Data Structures & Algorithm',
+        category: 'Arrays & Two Pointers',
         description: 'A matrix (2D grid) generalizes an array to two dimensions — common in problems involving '
             'images, boards, or maps. Spiral traversal visits every cell in a clockwise spiral by shrinking four '
             'boundaries (top, bottom, left, right) inward after each side is fully walked.',

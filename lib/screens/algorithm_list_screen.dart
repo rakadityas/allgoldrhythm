@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../data/algorithm_data.dart';
 import '../models/algorithm.dart';
+import '../services/progress_store.dart';
 import '../theme/app_theme.dart';
+import '../widgets/quiz_score_badge.dart';
 import 'algorithm_detail_screen.dart';
 
 class AlgorithmListScreen extends StatefulWidget {
@@ -151,6 +154,9 @@ class _AlgorithmCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final result = context
+        .watch<ProgressStore>()
+        .resultFor(ProgressDomain.algorithm, algorithm.id);
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -180,7 +186,17 @@ class _AlgorithmCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(algorithm.name, style: theme.textTheme.titleMedium),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(algorithm.name, style: theme.textTheme.titleMedium),
+                        ),
+                        if (result != null) ...[
+                          const SizedBox(width: AppSpacing.sm),
+                          QuizScoreBadge(result: result),
+                        ],
+                      ],
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       algorithm.description,

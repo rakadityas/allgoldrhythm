@@ -281,7 +281,14 @@ class _DesignCanvasState extends State<DesignCanvas> {
                               Positioned(
                                 left: c.position.dx,
                                 top: c.position.dy,
-                                child: GestureDetector(
+                                child: Semantics(
+                                  label: '${c.type.label} component'
+                                      '${_connectFrom == c.id ? ", selected as connection start" : ""}',
+                                  hint: _connectMode
+                                      ? 'Double tap to ${_connectFrom == null ? "start a connection from here" : "connect to here"}'
+                                      : 'Long press to remove',
+                                  button: true,
+                                  child: GestureDetector(
                                   onTap: () => _handleTapComponent(c.id),
                                   onLongPress: () => _deleteComponent(c.id),
                                   child: Draggable<String>(
@@ -322,6 +329,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
                                       type: c.type,
                                       selected: _connectFrom == c.id,
                                     ),
+                                  ),
                                   ),
                                 ),
                               ),

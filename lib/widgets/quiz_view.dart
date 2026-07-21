@@ -10,7 +10,18 @@ class QuizView extends StatefulWidget {
   final List<QuizQuestion> questions;
   final String emptyStateMessage;
 
-  const QuizView({super.key, required this.questions, required this.emptyStateMessage});
+  /// Called once, with the final (score, total), the moment the quiz is
+  /// completed — including on a retake. Callers own what "completed" means
+  /// for their domain (e.g. persisting a best score); this widget stays
+  /// framework-agnostic and doesn't reach into any storage itself.
+  final void Function(int score, int total)? onCompleted;
+
+  const QuizView({
+    super.key,
+    required this.questions,
+    required this.emptyStateMessage,
+    this.onCompleted,
+  });
 
   @override
   State<QuizView> createState() => _QuizViewState();
@@ -39,6 +50,7 @@ class _QuizViewState extends State<QuizView> {
         _selectedOption = null;
       } else {
         _showResult = true;
+        widget.onCompleted?.call(_score, widget.questions.length);
       }
     });
   }

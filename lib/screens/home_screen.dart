@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../data/algorithm_data.dart';
+import '../data/fundamentals_data.dart';
+import '../services/progress_store.dart';
 import '../theme/app_theme.dart';
 import 'algorithm_list_screen.dart';
 import 'system_design_list_screen.dart';
@@ -27,6 +31,13 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final progress = context.watch<ProgressStore>();
+    final algorithmIds = AlgorithmData.getAlgorithms().map((a) => a.id);
+    final fundamentalIds = FundamentalsData.getConcepts().map((c) => c.id);
+    final algorithmsDone = progress.completedCount(ProgressDomain.algorithm, algorithmIds);
+    final fundamentalsDone = progress.completedCount(ProgressDomain.fundamental, fundamentalIds);
+    final algorithmsTotal = algorithmIds.length;
+    final fundamentalsTotal = fundamentalIds.length;
 
     return Scaffold(
       drawer: const _AppDrawer(),
@@ -56,6 +67,8 @@ class HomeScreen extends StatelessWidget {
             description: 'Simulate, review, and quiz yourself on 21 core patterns.',
             color: theme.colorScheme.primaryContainer,
             onColor: theme.colorScheme.onPrimaryContainer,
+            progressDone: algorithmsDone,
+            progressTotal: algorithmsTotal,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const AlgorithmListScreen()),
@@ -68,6 +81,8 @@ class HomeScreen extends StatelessWidget {
             description: 'Learn the fundamentals, then practice on an interactive design canvas.',
             color: theme.colorScheme.tertiaryContainer,
             onColor: theme.colorScheme.onTertiaryContainer,
+            progressDone: fundamentalsDone,
+            progressTotal: fundamentalsTotal,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const SystemDesignListScreen()),
@@ -85,6 +100,8 @@ class _FocusCard extends StatelessWidget {
   final String description;
   final Color color;
   final Color onColor;
+  final int progressDone;
+  final int progressTotal;
   final VoidCallback onTap;
 
   const _FocusCard({
@@ -93,12 +110,15 @@ class _FocusCard extends StatelessWidget {
     required this.description,
     required this.color,
     required this.onColor,
+    required this.progressDone,
+    required this.progressTotal,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final progressFraction = progressTotal == 0 ? 0.0 : progressDone / progressTotal;
     return Card(
       clipBehavior: Clip.antiAlias,
       color: color,
@@ -107,41 +127,66 @@ class _FocusCard extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: onColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Icon(icon, size: 26, color: onColor),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: onColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+              Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: onColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      description,
-                      style: theme.textTheme.bodySmall?.copyWith(color: onColor.withValues(alpha: 0.85)),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    child: Icon(icon, size: 26, color: onColor),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: onColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          description,
+                          style: theme.textTheme.bodySmall?.copyWith(color: onColor.withValues(alpha: 0.85)),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Icon(Icons.arrow_forward_ios, size: 16, color: onColor.withValues(alpha: 0.7)),
+                ],
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Icon(Icons.arrow_forward_ios, size: 16, color: onColor.withValues(alpha: 0.7)),
+              if (progressTotal > 0) ...[
+                const SizedBox(height: AppSpacing.md),
+                Semantics(
+                  label: '$progressDone of $progressTotal quizzes completed',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progressFraction,
+                      minHeight: 6,
+                      backgroundColor: onColor.withValues(alpha: 0.15),
+                      valueColor: AlwaysStoppedAnimation(onColor),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$progressDone/$progressTotal quizzes completed',
+                  style: theme.textTheme.labelMedium?.copyWith(color: onColor.withValues(alpha: 0.85)),
+                ),
+              ],
             ],
           ),
         ),
@@ -153,9 +198,42 @@ class _FocusCard extends StatelessWidget {
 class _AppDrawer extends StatelessWidget {
   const _AppDrawer();
 
+  Future<void> _confirmResetProgress(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Reset progress?'),
+        content: const Text(
+          'This clears every recorded quiz score for both Data Structures & '
+          'Algorithms and System Design. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    await context.read<ProgressStore>().resetAll();
+    if (!context.mounted) return;
+    Navigator.pop(context); // close the drawer
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(content: Text('Progress reset')));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasProgress = context.watch<ProgressStore>().hasAnyProgress;
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -198,6 +276,19 @@ class _AppDrawer extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => const SystemDesignListScreen()),
               );
             },
+          ),
+          const Divider(),
+          ListTile(
+            leading: Icon(
+              Icons.restart_alt,
+              color: hasProgress ? theme.colorScheme.error : theme.disabledColor,
+            ),
+            title: Text(
+              'Reset Progress',
+              style: TextStyle(color: hasProgress ? theme.colorScheme.error : theme.disabledColor),
+            ),
+            enabled: hasProgress,
+            onTap: hasProgress ? () => _confirmResetProgress(context) : null,
           ),
           const Divider(),
           ListTile(
