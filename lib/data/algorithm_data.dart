@@ -2067,6 +2067,104 @@ class AlgorithmData {
           ),
         ],
       ),
+      Algorithm(
+        id: 'math_geometry',
+        name: 'Math & Geometry',
+        category: 'Math & Geometry',
+        description: 'Math problems in interviews usually reduce to a handful of classics: prime generation '
+            '(Sieve of Eratosthenes), greatest common divisor (Euclidean algorithm), modular arithmetic, and '
+            'fast exponentiation. The key skill is recognizing that a clever mathematical identity replaces '
+            'brute force — the sieve crosses out composites instead of testing each number, and Euclid '
+            'shrinks gcd(a, b) to gcd(b, a mod b) instead of scanning divisors.',
+        steps: [
+          'Sieve: list numbers from 2 to n; the smallest unmarked number is prime',
+          'Cross out every multiple of that prime, starting from its square (smaller multiples were already crossed out by smaller primes)',
+          'Advance to the next unmarked number and repeat; stop once the prime\'s square exceeds n',
+          'Everything still unmarked is prime',
+          'Euclid: gcd(a, b) = gcd(b, a mod b) — replace the pair and repeat until the remainder is 0',
+          'When b becomes 0, a is the greatest common divisor',
+        ],
+        visualizations: [
+          AlgorithmVisualization(
+            type: 'simulation',
+            title: 'Sieve of Eratosthenes',
+            description: 'Find every prime up to n by repeatedly crossing out the multiples of each prime found.',
+            mockQuestion: 'Find all primes up to 13 from the list [2..13]. Why does crossing out multiples of '
+                'each prime — starting at the prime\'s square — beat testing every number for divisibility?',
+            values: const [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+            steps: [
+              VisualizationStep(
+                highlightIndices: [0],
+                previousIndices: [],
+                explanation: 'Start at the smallest number, 2. It is unmarked, so 2 is prime. Now cross out every multiple of 2 up to 13.',
+              ),
+              VisualizationStep(
+                highlightIndices: [2, 4, 6, 8, 10],
+                previousIndices: [0],
+                removedIndices: [2, 4, 6, 8, 10],
+                explanation: 'Cross out the multiples of 2, starting from 2² = 4: values 4, 6, 8, 10, 12 are all composite — each has 2 as a factor, so none can be prime.',
+              ),
+              VisualizationStep(
+                highlightIndices: [1],
+                previousIndices: [0],
+                removedIndices: [2, 4, 6, 8, 10],
+                explanation: 'Advance to the next unmarked number: 3. It survived the sieve of 2, so 3 is prime. Now cross out its multiples, starting from 3² = 9.',
+              ),
+              VisualizationStep(
+                highlightIndices: [7],
+                previousIndices: [1],
+                removedIndices: [2, 4, 6, 7, 8, 10],
+                explanation: 'Starting from 3² = 9: value 9 is newly crossed out. 6 and 12 are also multiples of 3, but they were already crossed out as multiples of 2 — starting at the square is exactly what skips that duplicated work.',
+              ),
+              VisualizationStep(
+                highlightIndices: [3],
+                previousIndices: [1],
+                removedIndices: [2, 4, 6, 7, 8, 10],
+                explanation: 'Advance to the next unmarked number: 5. But 5² = 25 is greater than 13 — any composite ≤ 13 must have a factor ≤ √13, so all its multiples in range are already crossed out. Sieving can stop entirely.',
+              ),
+              VisualizationStep(
+                highlightIndices: [0, 1, 3, 5, 9, 11],
+                previousIndices: [],
+                removedIndices: [2, 4, 6, 7, 8, 10],
+                explanation: 'Everything still unmarked is prime: 2, 3, 5, 7, 11, 13. Total work is n·(1/2 + 1/3 + 1/5 + …) = O(n log log n) — far cheaper than trial-dividing each number.',
+              ),
+            ],
+          ),
+          AlgorithmVisualization(
+            type: 'simulation',
+            title: 'Euclidean GCD',
+            description: 'Compute the greatest common divisor by repeatedly replacing (a, b) with (b, a mod b).',
+            mockQuestion: 'Compute gcd(48, 18). Why does any common divisor of a and b also divide a mod b — '
+                'and why does that let the pair shrink so fast?',
+            values: const [48, 18],
+            steps: [
+              VisualizationStep(
+                highlightIndices: [0, 1],
+                previousIndices: [],
+                explanation: 'Start with a = 48, b = 18. Any number dividing both 48 and 18 must also divide 48 mod 18 = 12 (since 48 = 2×18 + 12), so gcd(48, 18) = gcd(18, 12).',
+              ),
+              VisualizationStep(
+                highlightIndices: [0, 1],
+                previousIndices: [0, 1],
+                valuesOverride: [18, 12],
+                explanation: 'Replace the pair: a = 18, b = 12. Now 18 mod 12 = 6, so gcd(18, 12) = gcd(12, 6).',
+              ),
+              VisualizationStep(
+                highlightIndices: [0, 1],
+                previousIndices: [0, 1],
+                valuesOverride: [12, 6],
+                explanation: 'Replace again: a = 12, b = 6. Now 12 mod 6 = 0 — 6 divides 12 exactly, so the next pair will have b = 0.',
+              ),
+              VisualizationStep(
+                highlightIndices: [0],
+                previousIndices: [0, 1],
+                valuesOverride: [6, 0],
+                explanation: 'b reached 0, so the answer is a = 6: gcd(48, 18) = 6. The remainder at least halves every two steps, giving O(log min(a, b)) iterations — logarithmic, not linear.',
+              ),
+            ],
+          ),
+        ],
+      ),
     ];
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:allgoldrhythm/data/algorithm_data.dart';
+import 'package:allgoldrhythm/data/algorithm_python_examples.dart';
 import 'package:allgoldrhythm/data/fundamentals_data.dart';
 import 'package:allgoldrhythm/data/fundamentals_quiz_data.dart';
 import 'package:allgoldrhythm/data/quiz_data.dart';
@@ -76,6 +77,36 @@ void main() {
           'algorithm ${algorithm.id}',
           QuizData.questionsFor(algorithm.id),
         );
+      }
+    });
+
+    test('every algorithm has Python examples', () {
+      for (final algorithm in algorithms) {
+        expect(AlgorithmPythonExamples.examplesFor(algorithm.id), isNotEmpty,
+            reason: 'algorithm ${algorithm.id} has no Python examples');
+      }
+    });
+
+    test('every visualization is structurally valid', () {
+      for (final algorithm in algorithms) {
+        expect(algorithm.visualizations, isNotEmpty, reason: algorithm.id);
+        for (final viz in algorithm.visualizations) {
+          final owner = '${algorithm.id} / ${viz.title}';
+          expect(viz.steps, isNotEmpty, reason: owner);
+          expect(viz.mockQuestion.trim(), isNotEmpty, reason: owner);
+          expect(viz.values, isNotEmpty, reason: owner);
+          final length = viz.arrayLength;
+          for (final step in viz.steps) {
+            for (final i in [
+              ...step.highlightIndices,
+              ...step.previousIndices,
+              ...step.removedIndices,
+            ]) {
+              expect(i, inInclusiveRange(0, length - 1),
+                  reason: '$owner: step index $i out of bounds (length $length)');
+            }
+          }
+        }
       }
     });
   });

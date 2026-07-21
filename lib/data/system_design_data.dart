@@ -10,6 +10,9 @@ class SystemDesignData {
         _notificationSystem,
         _webCrawler,
         _ticketBooking,
+        _topKLeaderboard,
+        _fileStorage,
+        _videoPlatform,
       ];
 
   static const _urlShortener = SystemDesignProblem(
@@ -501,6 +504,211 @@ class SystemDesignData {
         (ComponentType.apiServer, ComponentType.messageQueue),
         (ComponentType.messageQueue, ComponentType.worker),
         (ComponentType.worker, ComponentType.database),
+      ],
+    ),
+  );
+
+  static const _topKLeaderboard = SystemDesignProblem(
+    id: 'top_k_leaderboard',
+    title: 'Design a Top-K Leaderboard',
+    difficulty: Difficulty.medium,
+    prompt: 'Design a real-time leaderboard for a game or contest: millions of players submit scores, and '
+        'anyone can instantly see the top 10 plus their own current rank.',
+    functionalRequirements: [
+      'Record a player\'s score whenever they finish a game',
+      'Show the global top-10 (or top-K) list, updated in near real time',
+      'Show any player their own rank and score',
+      '(Optional) Periodic leaderboards — daily/weekly boards that reset',
+    ],
+    nonFunctionalRequirements: [
+      'Low latency reads — the top-10 and "my rank" queries are hit constantly and must return in milliseconds',
+      'Near-real-time updates — a new high score should be reflected within seconds, not minutes',
+      'Scale — tens of millions of players, thousands of score writes per second at peak',
+      'Ranking correctness under concurrent updates — two simultaneous score submissions must both be reflected',
+    ],
+    capacityEstimation: [
+      'Assume 25M monthly players, 5M daily; each plays ~10 games/day → 50M score writes/day ≈ 600/sec average, several thousand at peak',
+      'Reads dominate: every game-over screen shows the leaderboard → tens of thousands of reads/sec',
+      'A sorted structure of 25M (playerId, score) entries at ~50 bytes each ≈ 1.25GB — fits comfortably in one in-memory sorted set',
+      'A SQL "ORDER BY score DESC" over 25M rows per read is impossible at this rate — ranking must be a data structure, not a query',
+    ],
+    apiDesign: [
+      'POST /scores { playerId, score } → 202 Accepted',
+      'GET /leaderboard?limit=10 → [ { rank, playerId, score } ]',
+      'GET /players/{id}/rank → { rank, score, percentile }',
+    ],
+    highLevelDesign: 'The core insight: ranking is exactly what a cache-resident sorted set (e.g. Redis '
+        'ZSET) is built for. ZADD inserts/updates a player\'s score in O(log n); ZREVRANGE 0 9 returns the '
+        'top-10 and ZREVRANK returns any player\'s exact rank — all in memory, all in microseconds. This '
+        'single data-structure choice eliminates the "sort 25M rows per read" problem entirely, which is '
+        'the central trade-off of this design.\n\n'
+        'Score submissions flow through a queue to a worker rather than writing the sorted set directly '
+        'from the API path: the worker applies business rules (only keep the player\'s best score, detect '
+        'impossible/cheated scores), updates the sorted set, and persists the raw submission to the '
+        'database. The database is the durable source of truth — if the cache node dies, the sorted set is '
+        'rebuilt from it — while the sorted set is the serving layer. Periodic boards fall out naturally: '
+        'key the sorted set by period (leaderboard:2026-07-21) and let old keys expire.\n\n'
+        'The top-10 itself is requested so often that it\'s worth a second micro-cache: the API server '
+        'memoizes the top-10 response for ~1 second, absorbing the read storm while staying visibly '
+        'real-time.',
+    reference: ReferenceArchitecture(
+      components: [
+        ComponentType.client,
+        ComponentType.loadBalancer,
+        ComponentType.apiServer,
+        ComponentType.messageQueue,
+        ComponentType.worker,
+        ComponentType.cache,
+        ComponentType.database,
+      ],
+      connections: [
+        (ComponentType.client, ComponentType.loadBalancer),
+        (ComponentType.loadBalancer, ComponentType.apiServer),
+        (ComponentType.apiServer, ComponentType.cache),
+        (ComponentType.apiServer, ComponentType.messageQueue),
+        (ComponentType.messageQueue, ComponentType.worker),
+        (ComponentType.worker, ComponentType.cache),
+        (ComponentType.worker, ComponentType.database),
+      ],
+    ),
+  );
+
+  static const _fileStorage = SystemDesignProblem(
+    id: 'file_storage',
+    title: 'Design Dropbox',
+    difficulty: Difficulty.hard,
+    prompt: 'Design a cloud file-storage and sync service like Dropbox or Google Drive: users upload files '
+        'from any device and every other device sees the change shortly after.',
+    functionalRequirements: [
+      'Upload and download files of arbitrary size from any device',
+      'Sync: a change made on one device appears on the user\'s other devices automatically',
+      'Share files/folders with other users',
+      'File version history — restore a previous version',
+    ],
+    nonFunctionalRequirements: [
+      'Durability above all — a stored file must essentially never be lost (11 nines is the standard target)',
+      'Bandwidth efficiency — editing one paragraph of a 1GB file must not re-upload the whole gigabyte',
+      'Sync latency — cross-device propagation within seconds, without clients hammering the server with polls',
+      'Large-file resilience — a 4GB upload over flaky Wi-Fi must resume, not restart',
+    ],
+    capacityEstimation: [
+      'Assume 100M users averaging 10GB stored → 1EB logical storage; deduplication (identical chunks across users) typically cuts stored bytes dramatically',
+      'Chunking at 4MB: a 4GB file = 1,000 chunks; an edit touching one chunk re-uploads 4MB, not 4GB — this is why chunking is non-negotiable',
+      'Metadata (file → chunk list, versions, sharing) is tiny compared to blob data but read constantly — a classic metadata/data split',
+      'Assume 10M devices online concurrently, each needing a cheap way to learn "something changed" — a notification channel, not polling',
+    ],
+    apiDesign: [
+      'POST /files { path, chunkHashes[] } → { fileId, missingChunks[] } — server says which chunks it already has (dedup)',
+      'PUT chunks directly to object storage via pre-signed URLs (one per missing chunk, resumable per chunk)',
+      'GET /files/{id} → metadata + pre-signed download URLs for its chunks',
+      'WebSocket/long-poll: server pushes { event: "changed", fileId, version } to the user\'s other devices',
+    ],
+    highLevelDesign: 'The defining decision is the metadata/data split. File content is chunked '
+        'client-side (~4MB, content-addressed by hash) and moves directly between the client and object '
+        'storage via pre-signed URLs — the API servers never proxy file bytes, only authorize transfers. '
+        'This keeps the expensive path (bulk bytes) on infrastructure built for it, and makes uploads '
+        'resumable and dedupable for free: the client sends its chunk hashes first, and the server '
+        'responds with only the chunks it doesn\'t already have.\n\n'
+        'The metadata service owns the small-but-hot truth: which chunks compose each file version, '
+        'folder structure, and sharing ACLs, stored in the database. A new upload commits a new version '
+        'row pointing at its chunk list — version history is then just keeping old rows, and restoring a '
+        'version is a metadata operation that moves no bytes at all.\n\n'
+        'Sync is push, not poll. When a version commits, the metadata service emits a change event onto a '
+        'queue; a notification service holding each online device\'s persistent connection (WebSocket '
+        'servers, like a chat system\'s delivery path) pushes "file X changed" to the user\'s other '
+        'devices, which then fetch the new metadata and download only missing chunks. Offline devices '
+        'catch up on reconnect by asking for changes since their last-known version cursor.',
+    reference: ReferenceArchitecture(
+      components: [
+        ComponentType.client,
+        ComponentType.loadBalancer,
+        ComponentType.apiServer,
+        ComponentType.database,
+        ComponentType.objectStorage,
+        ComponentType.messageQueue,
+        ComponentType.webSocketServer,
+      ],
+      connections: [
+        (ComponentType.client, ComponentType.loadBalancer),
+        (ComponentType.loadBalancer, ComponentType.apiServer),
+        (ComponentType.apiServer, ComponentType.database),
+        (ComponentType.client, ComponentType.objectStorage),
+        (ComponentType.apiServer, ComponentType.messageQueue),
+        (ComponentType.messageQueue, ComponentType.webSocketServer),
+        (ComponentType.client, ComponentType.webSocketServer),
+      ],
+    ),
+  );
+
+  static const _videoPlatform = SystemDesignProblem(
+    id: 'video_platform',
+    title: 'Design YouTube',
+    difficulty: Difficulty.hard,
+    prompt: 'Design a video-sharing platform: creators upload videos of any size and quality, and viewers '
+        'around the world stream them smoothly on any device and connection speed.',
+    functionalRequirements: [
+      'Upload a video with title/description; it becomes watchable after processing',
+      'Stream playback that adapts to the viewer\'s bandwidth (no fixed single quality)',
+      'Video metadata: views, listings, search by title',
+      '(Optional) Thumbnails, captions, and processing-status notifications to the uploader',
+    ],
+    nonFunctionalRequirements: [
+      'Smooth playback globally — startup in under a second, minimal buffering, from any region',
+      'Upload-to-available latency of minutes is acceptable — transcoding is legitimately async work',
+      'Massive read skew — a tiny fraction of videos serve the vast majority of views',
+      'Durability of originals — the uploaded master file must never be lost, it\'s the source for all re-processing',
+    ],
+    capacityEstimation: [
+      'Assume 500 hours of video uploaded per minute; at ~1GB per hour of raw upload that\'s ~8GB/sec of ingest — straight into object storage, never through app servers',
+      'Each video is transcoded into ~5 resolutions × segments: processing is embarrassingly parallel and sized by a worker fleet, not the API tier',
+      'Views dominate: assume 1B watch-hours/day; at ~1GB/hour that\'s ~10PB/day egress — >95% of it must come from CDN edge caches, or the economics collapse',
+      'Metadata (title, views, segment manifests) is small and cacheable; the view-count write storm is batched, not written per view',
+    ],
+    apiDesign: [
+      'POST /videos { title, description } → { videoId, presignedUploadUrl }',
+      'Client PUTs the raw file to object storage via the pre-signed URL (multipart, resumable)',
+      'GET /videos/{id} → metadata + manifest URL (HLS/DASH playlist of segment URLs at multiple bitrates)',
+      'Playback: client GETs the manifest, then streams small segments from the CDN, switching bitrate as bandwidth changes',
+    ],
+    highLevelDesign: 'Upload and playback are two nearly independent systems joined by object storage. On '
+        'upload, the client sends metadata to the API (which records it in the database) and pushes the '
+        'raw bytes directly to object storage with a pre-signed URL. Completion drops a job onto a '
+        'message queue, and a fleet of transcoding workers picks it up: each worker splits the video into '
+        'small segments and encodes each segment at multiple bitrates (240p → 4K), writing the results '
+        'back to object storage and marking the video ready in the database. The queue is what lets a '
+        'viral upload spike simply deepen the backlog while the worker fleet autoscales through it.\n\n'
+        'Playback is adaptive bitrate streaming: the client fetches a manifest (HLS/DASH) listing every '
+        'segment at every quality, then pulls segments over plain HTTP — measuring its own bandwidth and '
+        'switching quality segment-by-segment. Because segments are small, immutable, and identical for '
+        'every viewer, they are perfectly cacheable: the CDN serves the overwhelming majority of bytes '
+        'from edge locations near the viewer, and only cache misses ever reach object storage. The '
+        'read-skew problem (a few hot videos, most cold) is thus absorbed by the cache hierarchy '
+        'automatically.\n\n'
+        'Metadata reads (titles, manifests, view counts) go API → cache → database, with view counts '
+        'accumulated in the cache and flushed to the database in batches — nobody needs a per-view '
+        'durable write, and the database would melt under one.',
+    reference: ReferenceArchitecture(
+      components: [
+        ComponentType.client,
+        ComponentType.loadBalancer,
+        ComponentType.apiServer,
+        ComponentType.cache,
+        ComponentType.database,
+        ComponentType.objectStorage,
+        ComponentType.messageQueue,
+        ComponentType.worker,
+        ComponentType.cdn,
+      ],
+      connections: [
+        (ComponentType.client, ComponentType.loadBalancer),
+        (ComponentType.loadBalancer, ComponentType.apiServer),
+        (ComponentType.apiServer, ComponentType.cache),
+        (ComponentType.apiServer, ComponentType.database),
+        (ComponentType.client, ComponentType.objectStorage),
+        (ComponentType.apiServer, ComponentType.messageQueue),
+        (ComponentType.messageQueue, ComponentType.worker),
+        (ComponentType.worker, ComponentType.objectStorage),
+        (ComponentType.client, ComponentType.cdn),
       ],
     ),
   );

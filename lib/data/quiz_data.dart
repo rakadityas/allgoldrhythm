@@ -28,6 +28,7 @@ class QuizData {
     'trie': _trie,
     'bit_manipulation': _bitManipulation,
     'matrix_traversal': _matrixTraversal,
+    'math_geometry': _mathGeometry,
   };
 
   static const _twoPointers = [
@@ -1985,6 +1986,99 @@ class QuizData {
       options: ['An infinite loop', 'A simple left-to-right walk across that single row (the right-column, bottom-row, and left-column passes each cover zero cells)', 'Traversal in reverse order', 'An error, since spiral traversal requires at least 2 rows'],
       correctIndex: 1,
       explanation: 'With only one row, top and bottom start equal; after the first pass top exceeds bottom, so every other direction contributes nothing.',
+    ),
+  ];
+
+  static final _mathGeometry = [
+    QuizQuestion(
+      question: 'In the Sieve of Eratosthenes, why does crossing out a prime p\'s multiples start at p² rather than 2p?',
+      options: ['Starting at 2p would mark primes by mistake', 'Every smaller multiple of p has a factor smaller than p, so it was already crossed out by an earlier prime', 'p² is easier to compute than 2p', 'It makes the sieve use less memory'],
+      correctIndex: 1,
+      explanation: 'e.g. for p=3, the multiple 6 = 2×3 was already crossed out while sieving 2 — starting at 9 skips duplicated work.',
+    ),
+    QuizQuestion(
+      question: 'When sieving primes up to 13, why can the algorithm stop once it reaches 5?',
+      options: ['5 is not prime', 'The list runs out of numbers', 'Because 5² = 25 > 13 — any composite ≤ 13 must have a factor ≤ √13, so all composites are already crossed out', '13 is odd'],
+      correctIndex: 2,
+      explanation: 'Sieving only needs primes up to √n; beyond that, every remaining unmarked number is guaranteed prime.',
+    ),
+    QuizQuestion(
+      question: 'What is the time complexity of the Sieve of Eratosthenes up to n?',
+      options: ['O(n²)', 'O(n log log n)', 'O(n!)', 'O(log n)'],
+      correctIndex: 1,
+      explanation: 'Total crossing-out work is n(1/2 + 1/3 + 1/5 + …) over primes, which sums to O(n log log n) — nearly linear.',
+    ),
+    QuizQuestion(
+      question: 'After sieving [2..13] with the primes 2 and 3, which numbers remain unmarked?',
+      options: ['2, 3, 5, 7, 9, 11', '2, 3, 5, 7, 11, 13', 'All odd numbers', '3, 5, 7, 9, 11, 13'],
+      correctIndex: 1,
+      explanation: 'Sieving 2 removes 4,6,8,10,12; sieving 3 removes 9; what survives — 2,3,5,7,11,13 — is exactly the primes.',
+    ),
+    QuizQuestion(
+      question: 'Why is the sieve preferable to testing each number 2..n for primality individually?',
+      options: ['It uses less memory', 'Trial division does O(√n) work per number; the sieve shares the work of each prime across all its multiples at once', 'Individual testing can give wrong answers', 'The sieve also finds negative primes'],
+      correctIndex: 1,
+      explanation: 'Crossing out multiples amortizes the work: the whole sieve costs about as much as trial-dividing a handful of numbers.',
+    ),
+    QuizQuestion(
+      question: 'What identity drives the Euclidean algorithm?',
+      options: ['gcd(a, b) = gcd(a − 1, b − 1)', 'gcd(a, b) = gcd(b, a mod b)', 'gcd(a, b) = a × b', 'gcd(a, b) = gcd(a/2, b/2) always'],
+      correctIndex: 1,
+      explanation: 'Any common divisor of a and b also divides a mod b, so the pair can be replaced without changing the gcd.',
+    ),
+    QuizQuestion(
+      question: 'Trace gcd(48, 18). What sequence of pairs does Euclid produce, and what is the answer?',
+      options: ['(48,18) → (30,18) → (12,18); gcd = 12', '(48,18) → (18,12) → (12,6) → (6,0); gcd = 6', '(48,18) → (24,9) → (8,3); gcd = 3', '(48,18) → (6,0) directly; gcd = 18'],
+      correctIndex: 1,
+      explanation: '48 mod 18 = 12, then 18 mod 12 = 6, then 12 mod 6 = 0 — when b hits 0, a = 6 is the gcd.',
+    ),
+    QuizQuestion(
+      question: 'Why does any common divisor of a and b also divide a mod b?',
+      options: ['Because mod is commutative', 'a mod b = a − q·b for some integer q — a difference of two multiples of the divisor is itself a multiple', 'It only holds when a and b are prime', 'Because divisors are always smaller than b'],
+      correctIndex: 1,
+      explanation: 'If d divides both a and b, it divides a − q·b = a mod b. That is the whole correctness proof of Euclid.',
+    ),
+    QuizQuestion(
+      question: 'How many iterations does the Euclidean algorithm take in the worst case?',
+      options: ['O(min(a, b)) — linear', 'O(log min(a, b)) — the remainder at least halves every two steps', 'Always exactly 3', 'O(a × b)'],
+      correctIndex: 1,
+      explanation: 'The worst case is consecutive Fibonacci numbers; even then growth is logarithmic, never linear.',
+    ),
+    QuizQuestion(
+      question: 'How do you compute lcm(a, b) once you have gcd?',
+      options: ['lcm = gcd(a, b) × 2', 'lcm = a × b − gcd(a, b)', 'lcm = a / gcd(a, b) × b', 'lcm cannot be derived from gcd'],
+      correctIndex: 2,
+      explanation: 'a × b = gcd × lcm. Dividing before multiplying (a / gcd × b) avoids overflowing the intermediate product.',
+    ),
+    QuizQuestion(
+      question: 'Why does fast (binary) exponentiation compute xⁿ in O(log n) multiplications?',
+      options: ['It caches every previous power', 'It repeatedly squares: xⁿ = (x²)ⁿᐟ² for even n, halving the exponent each step', 'Multiplication is O(1) only for powers of two', 'It converts the problem to addition'],
+      correctIndex: 1,
+      explanation: 'Squaring halves the exponent each round (times an extra factor when n is odd) — log₂(n) halvings total.',
+    ),
+    QuizQuestion(
+      question: 'In modular arithmetic problems (e.g. "answer mod 10⁹+7"), when should you apply the mod?',
+      options: ['Only once, at the very end', 'After every addition/multiplication, since (a×b) mod m = ((a mod m) × (b mod m)) mod m — keeping intermediates small', 'Only after subtractions', 'Mod placement never matters'],
+      correctIndex: 1,
+      explanation: 'Mod distributes over + and ×, so reducing at every step prevents overflow without changing the result.',
+    ),
+    QuizQuestion(
+      question: 'What subtlety does (a − b) mod m have in most programming languages?',
+      options: ['It always throws an exception', 'The result can be negative when a < b; fix with ((a − b) mod m + m) mod m', 'Subtraction is not defined under mod', 'It silently rounds toward zero'],
+      correctIndex: 1,
+      explanation: 'Many languages return negative remainders for negative operands — adding m before the final mod normalizes it.',
+    ),
+    QuizQuestion(
+      question: 'A number n > 1 is prime if no integer in which range divides it?',
+      options: ['2 to n − 1, no shortcuts exist', '2 to ⌊√n⌋ — a factor pair (d, n/d) always has one member ≤ √n', '2 to n/2 exactly', 'Only even numbers need checking'],
+      correctIndex: 1,
+      explanation: 'If n = d × e with d ≤ e, then d ≤ √n — so finding no divisor up to √n proves primality in O(√n).',
+    ),
+    QuizQuestion(
+      question: 'Which tool fits: (a) list all primes below 1,000,000, (b) test whether one 12-digit number is prime?',
+      options: ['(a) trial division, (b) sieve', '(a) Sieve of Eratosthenes, (b) trial division up to √n (or a probabilistic test) — a 10¹²-slot sieve would waste memory for one query', 'Sieve for both', 'Trial division for both'],
+      correctIndex: 1,
+      explanation: 'The sieve amortizes across many numbers in a bounded range; single large-number queries want per-number tests.',
     ),
   ];
 }

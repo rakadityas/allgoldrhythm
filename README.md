@@ -141,6 +141,52 @@ flutter install
 - Enable Developer Options and USB Debugging on your device
 - Or use Android Emulator
 
+#### Installing to a Physical Android Device via `adb`
+
+If `flutter run` / `flutter install` can't see your device (or you just want to
+sideload a prebuilt APK without a full Flutter toolchain in the way), install
+directly with `adb`:
+
+1. **Enable Developer Options and USB debugging** on the phone (Settings →
+   About phone → tap "Build number" 7 times → Developer options → enable
+   "USB debugging").
+2. **Connect the phone via USB** and check it's visible:
+   ```bash
+   adb devices -l
+   ```
+   You should see your device listed as `device` (not `unauthorized` or
+   `offline`). If prompted on the phone, tap **Allow** on the "Allow USB
+   debugging?" dialog.
+   - **Device shows `unauthorized`**: unlock the phone and accept the RSA key
+     prompt.
+   - **Device shows `offline`**: the adb daemon's connection to the device got
+     stuck (common after sleep/reconnect). Restart it and recheck:
+     ```bash
+     adb kill-server && adb start-server && adb devices -l
+     ```
+   - **`adb: command not found`**: the Android SDK's `platform-tools` isn't on
+     your `PATH`. Either add it (`export PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"`
+     on macOS) or call the binary by its full path, e.g.
+     `~/Library/Android/sdk/platform-tools/adb`.
+3. **Build a release APK**:
+   ```bash
+   flutter build apk --release
+   ```
+4. **Install it** (`-r` reinstalls over an existing copy, keeping app data):
+   ```bash
+   adb install -r build/app/outputs/flutter-apk/app-release.apk
+   ```
+   With multiple devices attached, target one explicitly with `-s <serial>`:
+   ```bash
+   adb -s <serial-from-adb-devices> install -r build/app/outputs/flutter-apk/app-release.apk
+   ```
+5. Find the app on the device's home screen / app drawer as **AllGoldRhythm**
+   and launch it.
+
+To reinstall after every code change without repeating steps 3–4 by hand, use
+`flutter run --release -d <serial>` instead — it builds, installs, and
+launches in one command, over the same USB connection.
+
 ### Building for Web (Chrome)
 
 #### Development Server

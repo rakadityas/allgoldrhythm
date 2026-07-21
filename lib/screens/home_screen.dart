@@ -5,7 +5,10 @@ import '../data/algorithm_data.dart';
 import '../data/fundamentals_data.dart';
 import '../services/progress_store.dart';
 import '../theme/app_theme.dart';
+import '../widgets/quiz_score_badge.dart';
+import 'algorithm_detail_screen.dart';
 import 'algorithm_list_screen.dart';
+import 'fundamental_detail_screen.dart';
 import 'system_design_list_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -87,7 +90,132 @@ class HomeScreen extends StatelessWidget {
               MaterialPageRoute(builder: (context) => const SystemDesignListScreen()),
             ),
           ),
+          ..._buildReviewSection(context, progress),
         ],
+      ),
+    );
+  }
+
+  /// Up to 3 imperfect quiz results, weakest first — a lightweight
+  /// "retake your weakest quizzes" loop. Perfect scores and design-canvas
+  /// completions (which are only recorded when perfect) never appear.
+  List<Widget> _buildReviewSection(BuildContext context, ProgressStore progress) {
+    final theme = Theme.of(context);
+    final algorithms = {for (final a in AlgorithmData.getAlgorithms()) a.id: a};
+    final concepts = {for (final c in FundamentalsData.getConcepts()) c.id: c};
+
+    final suggestions = <_ReviewSuggestion>[];
+    for (final (domain, id, result) in progress.allResults) {
+      if (result.percent >= 1.0) continue;
+      switch (domain) {
+        case ProgressDomain.algorithm:
+          final algorithm = algorithms[id];
+          if (algorithm != null) {
+            suggestions.add(_ReviewSuggestion(
+              title: algorithm.name,
+              subtitle: 'Data Structures & Algorithms',
+              result: result,
+              destination: () => AlgorithmDetailScreen(algorithm: algorithm),
+            ));
+          }
+        case ProgressDomain.fundamental:
+          final concept = concepts[id];
+          if (concept != null) {
+            suggestions.add(_ReviewSuggestion(
+              title: concept.title,
+              subtitle: 'System Design · ${concept.category}',
+              result: result,
+              destination: () => FundamentalDetailScreen(concept: concept),
+            ));
+          }
+        case ProgressDomain.designProblem:
+          break;
+      }
+    }
+    if (suggestions.isEmpty) return const [];
+
+    suggestions.sort((a, b) {
+      final byScore = a.result.percent.compareTo(b.result.percent);
+      if (byScore != 0) return byScore;
+      return a.result.completedAt.compareTo(b.result.completedAt);
+    });
+
+    return [
+      const SizedBox(height: AppSpacing.lg),
+      Text('Suggested review', style: theme.textTheme.titleMedium),
+      const SizedBox(height: 2),
+      Text(
+        'Your weakest quiz scores — retake them to lock the material in.',
+        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      for (final suggestion in suggestions.take(3)) ...[
+        _ReviewSuggestionCard(suggestion: suggestion),
+        const SizedBox(height: AppSpacing.sm),
+      ],
+    ];
+  }
+}
+
+class _ReviewSuggestion {
+  final String title;
+  final String subtitle;
+  final QuizResult result;
+  final Widget Function() destination;
+
+  const _ReviewSuggestion({
+    required this.title,
+    required this.subtitle,
+    required this.result,
+    required this.destination,
+  });
+}
+
+class _ReviewSuggestionCard extends StatelessWidget {
+  final _ReviewSuggestion suggestion;
+  const _ReviewSuggestionCard({required this.suggestion});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => suggestion.destination()),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.refresh, size: 22, color: theme.colorScheme.primary),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(suggestion.title, style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 2),
+                    Text(
+                      suggestion.subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              QuizScoreBadge(result: suggestion.result),
+              const SizedBox(width: AppSpacing.xs),
+              Icon(Icons.chevron_right, color: theme.colorScheme.outline),
+            ],
+          ),
+        ),
       ),
     );
   }

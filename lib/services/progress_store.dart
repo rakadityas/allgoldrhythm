@@ -90,6 +90,25 @@ class ProgressStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Every recorded result as (domain, id, result) tuples, in no particular
+  /// order. Parses the (domain, id) pair back out of the storage key; domain
+  /// names never contain '_', so the first matching domain prefix is
+  /// unambiguous even though ids themselves contain underscores.
+  List<(ProgressDomain, String, QuizResult)> get allResults {
+    final out = <(ProgressDomain, String, QuizResult)>[];
+    _results.forEach((key, result) {
+      final body = key.substring(_prefsPrefix.length);
+      for (final domain in ProgressDomain.values) {
+        final prefix = '${domain.name}_';
+        if (body.startsWith(prefix)) {
+          out.add((domain, body.substring(prefix.length), result));
+          break;
+        }
+      }
+    });
+    return out;
+  }
+
   /// How many of [ids] have at least one recorded result in [domain].
   /// Used for "X/Y completed" progress summaries.
   int completedCount(ProgressDomain domain, Iterable<String> ids) =>

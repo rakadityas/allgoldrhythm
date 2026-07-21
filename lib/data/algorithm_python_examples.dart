@@ -2129,8 +2129,53 @@ print(rotate(matrix))
         return getBitManipulationExamples();
       case 'matrix_traversal':
         return getMatrixTraversalExamples();
+      case 'math_geometry':
+        return getMathGeometryExamples();
       default:
         return {};
     }
+  }
+
+  static Map<String, String> getMathGeometryExamples() {
+    return {
+      'Sieve of Eratosthenes': '''
+# Sieve of Eratosthenes
+# Find all primes up to n in O(n log log n)
+def sieve(n):
+    is_prime = [True] * (n + 1)
+    is_prime[0] = is_prime[1] = False
+
+    p = 2
+    while p * p <= n:          # stop once p^2 exceeds n
+        if is_prime[p]:
+            # start at p*p: smaller multiples were already
+            # crossed out by smaller primes
+            for multiple in range(p * p, n + 1, p):
+                is_prime[multiple] = False
+        p += 1
+
+    return [i for i, prime in enumerate(is_prime) if prime]
+
+# Example usage
+print(sieve(13))  # Output: [2, 3, 5, 7, 11, 13]
+''',
+
+      'Euclidean GCD': '''
+# Euclidean Algorithm
+# gcd(a, b) = gcd(b, a mod b), in O(log min(a, b)) steps
+def gcd(a, b):
+    while b:
+        a, b = b, a % b
+    return a
+
+# Least common multiple falls out for free
+def lcm(a, b):
+    return a // gcd(a, b) * b
+
+# Example usage
+print(gcd(48, 18))  # Output: 6   (48,18) -> (18,12) -> (12,6) -> (6,0)
+print(lcm(4, 6))    # Output: 12
+''',
+    };
   }
 }

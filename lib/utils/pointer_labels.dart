@@ -96,6 +96,18 @@ class PointerLabels {
       case 'bit_manipulation':
         return indices.length == 1 ? {indices[0]: 'XOR'} : const {};
 
+      case 'math_geometry':
+        if (visualizationTitle == 'Euclidean GCD') {
+          if (indices.length == 2) return {indices[0]: 'a', indices[1]: 'b'};
+          if (indices.length == 1) return {indices[0]: 'gcd'};
+        }
+        // Sieve: single highlight is the current prime candidate; a group of
+        // highlights is the batch of multiples being crossed out (no labels).
+        if (visualizationTitle == 'Sieve of Eratosthenes' && indices.length == 1) {
+          return {indices[0]: 'p'};
+        }
+        return const {};
+
       default:
         return const {};
     }
